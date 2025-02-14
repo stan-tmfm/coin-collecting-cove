@@ -1,21 +1,40 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const windSound = document.getElementById('wind-sound');
+let currentSlotId = null;
+let manageMode = false;
 
-    // Wait for user interaction before playing sounds
-    document.body.addEventListener('click', () => {
-        // Start wind sound loop after first interaction
-        windSound.play().catch((error) => {
-            console.error('Failed to play wind sound:', error);
-        });
-    });
-});
+let windSoundInitialized = false;
+
+function initializeWindSound() {
+    const windSound = document.getElementById('wind-sound');
+    
+    document.body.addEventListener('click', async (event) => {
+        if (windSoundInitialized) return;
+        
+        // Only play sound if clicking an empty save slot
+        const saveSlot = event.target.closest('.save-slot');
+        if (!saveSlot || saveSlot.classList.contains('has-data')) return;
+
+        // Don't play if clicking management UI
+        if (event.target.closest('.manage-saves-btn')) return;
+
+        try {
+            if (windSound.context) await windSound.context.resume();
+            await windSound.play();
+            windSoundInitialized = true;
+        } catch (err) {
+            console.error('Sound error:', err);
+        }
+    }, { once: true });
+}
+
+let windSoundTimeout = null;
 
 // Save slot data structure
-let saveSlots = [
-    { id: 1, isData: false, element: null },
-    { id: 2, isData: false, element: null },
-    { id: 3, isData: false, element: null }
-];
+let saveSlots = [1, 2, 3].map(id => ({
+    id,
+    data: JSON.parse(localStorage.getItem(`saveSlot${id}`)),
+    element: null,
+    get isData() { return this.data !== null }
+}));
 
 // Cinematic slideshow data
 const cinematicSlides = [
@@ -35,50 +54,62 @@ let cinematicTimeout = null; // Tracks the delay timeout
 // Initialize save slots
 function initializeSaveSlots() {
     const saveMenu = document.querySelector('.save-menu');
-    
-    // Clear existing slots
     saveMenu.innerHTML = '';
 
-    // Create new slots
     saveSlots.forEach((slot) => {
         const slotElement = document.createElement('div');
-        slotElement.className = `save-slot ${slot.isData ? '' : 'empty'}`;
+        // Fix this line (remove duplicate class assignment):
+        slotElement.className = `save-slot ${slot.isData ? 'has-data' : 'empty'} ${manageMode ? 'manage-mode' : ''}`;
+        
         slotElement.innerHTML = `
             <div class="slot-number">Slot ${slot.id}</div>
-            ${!slot.isData ? '<div class="no-data">No Save Data</div>' : ''}
+            ${slot.isData ? 
+                `<div class="slot-data">
+                    <div>Coins: ${slot.data.coins}</div>
+                    <div>${new Date(slot.data.timestamp).toLocaleDateString()}</div>
+                </div>` : 
+                '<div class="no-data">No Save Data</div>'}
         `;
 
-        // Store reference
         slot.element = slotElement;
         saveMenu.appendChild(slotElement);
-
-        // Add click handler
-        slotElement.addEventListener('click', () => handleSlotClick(slot));
+        slotElement.addEventListener('click', (e) => {
+            if (e.target.closest('.save-slot')) handleSlotClick(slot);
+        });
     });
 }
 
 let isSlotClickable = true;
 
 function handleSlotClick(slot) {
+    if (manageMode) {
+        if (slot.isData) {
+            if (confirm(`Delete save slot ${slot.id}?`)) {
+                document.getElementById('wind-sound').pause();
+                localStorage.removeItem(`saveSlot${slot.id}`);
+                slot.data = null;
+                initializeSaveSlots();
+                
+                // Reset sound initialization
+                windSoundInitialized = false;
+                initializeWindSound();
+            }
+        }
+        return;
+    }
+
     if (!isSlotClickable) return;
-    isSlotClickable = false; // Disable further clicks temporarily
+    isSlotClickable = false;
+    currentSlotId = slot.id;
 
-    const windSound = document.getElementById('wind-sound');
-        
-    setTimeout(() => {
-      windSound.currentTime = 0;
-      windSound.play().catch((error) => {
-        console.error('Failed to play wind sound:', error);
-    });
-  }, 100);
-
+    if (slot.isData) {
+        loadGame(slot.data);
+    } else {
         startCinematic();
+    }
+
+    setTimeout(() => isSlotClickable = true, 1000);
 }
-
-    setTimeout(() => {
-        isSlotClickable = true; // Re-enable clicks after a delay
-    }, 1000); // Adjust delay as needed
-
 
 function updateSlotDisplay(slot) {
     const element = slot.element;
@@ -94,6 +125,11 @@ function updateSlotDisplay(slot) {
 
 // Cinematic Slideshow Functions
 function startCinematic() {
+    const windSound = document.getElementById('wind-sound');
+    // Ensure sound plays even if initialization missed
+    if (windSound.paused) {
+        windSound.play().catch(console.error);
+    }
     const overlay = document.querySelector('.cinematic-overlay');
     const bars = document.querySelectorAll('.top-bar, .bottom-bar');
     
@@ -180,20 +216,38 @@ function showContinueButton() {
     // Safely remove skip button
     if (skipBtn) skipBtn.remove();
     
-    // Wait 1 second before showing continue button
-    setTimeout(() => {
-        btn.style.display = 'block';
-        btn.style.opacity = '0';
-        setTimeout(() => btn.style.opacity = '1', 100);
-    }, 1000); // 1 second delay before starting fade-in
+    // Show immediately with animation
+    btn.style.display = 'block';
+    btn.style.opacity = '0';
     
+    // Animate fade-in
+    setTimeout(() => {
+        btn.style.opacity = '1';
+    }, 100);
+
     // Continue button handler
     btn.addEventListener('click', () => {
         overlay.style.display = 'none';
         document.getElementById('wind-sound').pause();
+        
+        // Create new save data
+        const newSave = {
+            coins: 0,
+            upgrades: {},
+            timestamp: Date.now()
+        };
+        
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(newSave));
+        saveSlots.find(s => s.id === currentSlotId).data = newSave;
+        initializeSaveSlots();
+        startGame();
     });
     
-    hideClickPrompt();
+    // Immediately hide click prompt
+    const prompt = document.querySelector('.click-prompt');
+    if (prompt) {
+        prompt.style.display = 'none';
+    }
 }
 
 // Skip Button Functionality
@@ -221,14 +275,159 @@ function showClickPrompt() {
     }, 100);
 }
 
-document.querySelectorAll(".save-slot").forEach(slot => {
-    slot.addEventListener("click", () => {
-        // Ensure audio is loaded
-        windSound.currentTime = 0; // Reset sound to start
-        windSound.play().catch(e => console.error("Audio play failed:", e));
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeSaveSlots);
+
+let coinCount = 0;
+let gameActive = false;
+const beachContainer = document.querySelector('.beach-container');
+const coinCounter = document.querySelector('.coin-counter');
+
+function loadGame(saveData) {
+    coinCount = saveData.coins;
+    startGame();
+    coinCounter.textContent = `Coins: ${coinCount}`;
+}
+
+function startGame() {
+    const windSound = document.getElementById('wind-sound');
+    
+    // Clear any pending wind sound timeout
+    if (windSoundTimeout) {
+        clearTimeout(windSoundTimeout);
+        windSoundTimeout = null;
+    }
+
+    // Stop wind sound
+    windSound.pause();
+    windSound.currentTime = 0;
+
+    gameActive = true;
+    
+    document.body.classList.add('game-active');
+    document.querySelector('.game-screen').style.display = 'block';
+    
+    // Clear existing elements
+    beachContainer.innerHTML = '';
+    document.querySelector('.menu-container').style.display = 'none';
+    
+    // Start coin spawning
+    spawnCoin();
+    const spawnInterval = setInterval(() => {
+        if (!gameActive) clearInterval(spawnInterval);
+        else spawnCoin();
+    }, 3000);
+}
+
+function spawnCoin() {
+    if (!gameActive) return;
+
+    const coin = document.createElement('div');
+    coin.className = 'coin';
+    
+    // Force DOM update before animation
+    requestAnimationFrame(() => {
+        // Set initial position
+        const startX = Math.random() * (beachContainer.offsetWidth - 40);
+        coin.style.left = `${startX}px`;
+        coin.style.top = `-50px`;
+        beachContainer.appendChild(coin);
+
+        // Force layout recalculation
+        void coin.offsetHeight;
+
+        // Animate with transition
+        coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
+        coin.style.left = `${startX + (Math.random() * 100 - 50)}px`;
+        coin.style.top = `${Math.random() * (beachContainer.offsetHeight - 40) + 20}px`;
+
+        // Enable collection after 300ms
+        setTimeout(() => {
+            coin.classList.add('collectable');
+            addHoverEffect(coin);
+        }, 100);
+    });
+}
+
+function addHoverEffect(coin) {
+    let collected = false;
+    
+   function collectCoin() {
+    if (collected) return;
+    collected = true;
+
+    const coinSound = document.getElementById('coin-sound').cloneNode();
+    coinSound.volume = 0.3;
+    coinSound.play().catch(console.error);
+    
+    // Update counter
+    coinCount++;
+    coinCounter.textContent = `Coins: ${coinCount}`;
+    
+    // Animate collection
+    coin.style.transform = 'scale(2) translateY(-20px)';
+    coin.style.opacity = '0';
+    
+    // Remove after animation
+    setTimeout(() => coin.remove(), 500);
+    
+    // THEN add the save code
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`));
+    saveData.coins = coinCount;
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    
+    // Update slot display
+    const slot = saveSlots.find(s => s.id === currentSlotId);
+    if (slot?.element) {
+        slot.element.querySelector('.slot-data').innerHTML = `
+            <div>Coins: ${saveData.coins}</div>
+            <div>${new Date(saveData.timestamp).toLocaleDateString()}</div>
+        `;
+    }
+}
+
+    // Desktop hover
+    coin.addEventListener('mouseenter', collectCoin);
+    
+    // Mobile touch
+    coin.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        collectCoin();
+    });
+}
+
+// Mobile hover simulation
+beachContainer.addEventListener('touchmove', (e) => {
+    if (!gameActive) return;
+    const touch = e.touches[0];
+    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+    
+    elements.forEach(element => {
+        if (element.classList.contains('coin')) {
+            element.dispatchEvent(new Event('mouseenter'));
+        }
     });
 });
 
+function resetGame() {
+    const windSound = document.getElementById('wind-sound');
+    gameActive = false;
+    windSound.pause();
+    windSound.currentTime = 0;
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', initializeSaveSlots);
+    coinCount = 0;
+    document.body.classList.remove('game-active');
+    document.querySelector('.game-screen').style.display = 'none';
+    beachContainer.innerHTML = '';
+    coinCounter.textContent = 'Coins: 0';
+    document.querySelector('.menu-container').style.display = 'flex';
+}
+
+document.querySelector('.manage-saves-btn').textContent = 'Manage Save Slots';
+document.querySelector('.manage-saves-btn').addEventListener('click', () => {
+    manageMode = !manageMode;
+    document.querySelectorAll('.save-slot').forEach(slot => {
+        slot.classList.toggle('manage-mode', manageMode);
+    });
+    if (!manageMode) initializeSaveSlots();
+});
