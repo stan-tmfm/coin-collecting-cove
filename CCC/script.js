@@ -44,7 +44,7 @@ const cinematicSlides = [
     { text: "Where am 𝘐?.." },
     { text: "..." },
     { text: "What.. What is that in the water?.." },
-    { text: "Is that.. 𝘨𝘰𝘭𝘥?.." },
+    { text: "Is that.. Are those.. 𝘤𝘰𝘪𝘯𝘴?.." },
 ];
 
 let currentSlide = 0;
