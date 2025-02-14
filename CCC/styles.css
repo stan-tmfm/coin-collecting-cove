@@ -101,7 +101,7 @@ body {
     opacity: 1;
 }
 
-.import-export-btn {
+.manage-saves-btn {
     position: fixed;
     bottom: 20px;
     left: 20px;
@@ -115,7 +115,7 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.import-export-btn:hover {
+.manage-saves-btn:hover {
     background: rgba(255, 255, 255, 1);
 }
 
@@ -242,6 +242,7 @@ body {
     opacity: 0;
     display: none;
     transition: opacity 3s ease-in-out;
+    z-index: 10009
 }
 
 .click-prompt {
@@ -281,3 +282,147 @@ body {
     100% { transform: translateX(-50%) scale(1); }
 }
 
+/* Game Screen */
+.game-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; /* Higher than background */
+}
+
+.beach-container {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 612px;
+    height: 408px;
+    background: url('Images/sand_water.png');
+    background-size: cover;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+.coin-counter {
+    position: fixed;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 4em;
+    color: #ede509;
+    text-shadow: 
+        2px 2px 4px rgba(94,66,47,0.8),
+        0 0 12px rgba(255,215,0,0.4),
+        0 0 20px rgba(0, 0, 0, 0.5); /* Fixed semicolon */
+    animation: coin-glow 2s ease-in-out infinite alternate;
+    font-family: serif; /* Added semicolon here */
+    background: url('Images/water.png');
+    background-size: cover;
+    background-position: center;
+    padding: 0px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+    min-width: 25%;
+    min-height: 10%;
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: flex-end; /* Push content to bottom */
+    padding-bottom: 20px; /* Space from bottom edge */
+}
+
+/* Coin styling */
+.coin {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: url('Images/coin.png') center/contain no-repeat;
+    cursor: pointer;
+    transition: all 0.5s ease-out !important;
+    pointer-events: none;
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.coin.collectable {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+body.game-active {
+    background: white !important;
+    transition: background 0.5s ease;
+}
+
+body.game-active .menu-container,
+body.game-active .manage-saves-btn {
+    display: none;
+}
+
+.game-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('Images/sand.png') center/cover;
+    z-index: 1; /* Lower than game elements but higher than menu */
+    display: none;
+}
+
+body.game-active .background-container {
+    display: none;
+}
+
+body.game-active .game-background {
+    display: block;
+}
+
+/* Add to styles.css */
+.slot-data {
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 15px;
+}
+
+.slot-data div:first-child {
+    color: #ede509;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.slot-data div:last-child {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.delete-mode {
+    position: relative;
+    overflow: hidden;
+}
+
+.delete-mode::after {
+    content: '×';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: red;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.save-slot.manage-mode {
+    outline: 2px solid red;
+    position: relative;
+}
+
+.save-slot.manage-mode::after {
+    content: "✕";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: red;
+    font-size: 1.2em;
+}
