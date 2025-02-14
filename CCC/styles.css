@@ -326,7 +326,7 @@ body {
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     z-index: 1001;
-    min-width: 25%;
+    min-width: 37%;
     min-height: 10%;
     display: flex;
     justify-content: center; /* Horizontal centering */
