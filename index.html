@@ -53,5 +53,17 @@
 </div>
 
     <script src="script.js"></script>
+    <script>
+    // Check if running on GitHub Pages
+    const isGitHubPages = window.location.hostname === 'stan-tmfm.github.io';
+
+    // Fix coin.png path if on GitHub Pages
+    if (isGitHubPages) {
+        const coinImages = document.querySelectorAll('img[src="Images/coin.png"]');
+        coinImages.forEach(img => {
+            img.src = '/coin-collecting-cove/Images/coin.png';
+        });
+    }
+    </script>
 </body>
 </html>
