@@ -303,6 +303,10 @@ function startGame() {
     windSound.currentTime = 0;
 
     gameActive = true;
+
+    if(musicManager.isMusicOn) {
+         	musicManager.playRandom();
+      }
     
     document.body.classList.add('game-active');
     document.querySelector('.game-screen').style.display = 'block';
@@ -415,6 +419,8 @@ function resetGame() {
     windSound.pause();
     windSound.currentTime = 0;
 
+    musicManager.audio.pause();
+
     coinCount = 0;
     document.body.classList.remove('game-active');
     document.querySelector('.game-screen').style.display = 'none';
@@ -430,4 +436,134 @@ document.querySelector('.manage-saves-btn').addEventListener('click', () => {
         slot.classList.toggle('manage-mode', manageMode);
     });
     if (!manageMode) initializeSaveSlots();
+});
+
+// Music System
+const musicManager = {
+    audio: new Audio(),
+    tracks: [
+        'DEAF KEV - Invincible  Glitch Hop  NCS - Copyright Free Music.mp3',
+        'Different Heaven & EH!DE - My Heart  Drumstep  NCS - Copyright Free Music.mp3',
+        'Elektronomia - Sky High  Progressive House  NCS - Copyright Free Music.mp3',
+        'Disfigure - Blank  Melodic Dubstep  NCS - Copyright Free Music.mp3',
+        'Different Heaven - Nekozilla  Electro  NCS - Copyright Free Music.mp3',
+        'Jim Yosef - Firefly  Progressive House  NCS - Copyright Free Music.mp3',
+        'Desmeon - Hellcat  Drumstep  NCS - Copyright Free Music.mp3',
+        'JPB - High  Trap  NCS - Copyright Free Music.mp3',
+        'K-391 - Earth  Drumstep  NCS - Copyright Free Music.mp3',
+        'Jim Yosef & Anna Yvette - Linked  House  NCS - Copyright Free Music.mp3',
+        'LFZ - Popsicle  House  NCS - Copyright Free Music.mp3',
+        'Jim Yosef - Eclipse  House  NCS - Copyright Free Music.mp3',
+        'Electro-Light - Symbolism  Trap  NCS - Copyright Free Music.mp3',
+        'Cartoon, Jéja - On & On (feat. Daniel Levi)  Electronic Pop  NCS - Copyright Free Music.mp3',
+        'Julius Dreisig & Zeus X Crona - Invisible  Trap  NCS - Copyright Free Music.mp3',
+        'Killercats - Tell Me (feat. Alex Skrindo)  Future Bass  NCS - Copyright Free Music.mp3',
+        'Distrion & Alex Skrindo - Entropy  House  NCS - Copyright Free Music.mp3',
+        'Distrion & Electro-Light - Rubik  House  NCS - Copyright Free Music.mp3',
+        'Lensko - Lets Go!  House  NCS - Copyright Free Music.mp3',
+        'Kovan & Electro-Light - Skyline  House  NCS - Copyright Free Music.mp3',
+    ],
+    currentTrackIndex: 0,
+    shuffledTracks: [],
+    isMusicOn: localStorage.getItem('musicEnabled') !== 'false',
+    
+    init() {
+        this.shuffleTracks();
+        this.audio.addEventListener('ended', () => this.playNext());
+        this.updateToggleButton();
+        
+        // Load music state from localStorage
+        if(this.isMusicOn) this.audio.volume = 0.5;
+    },
+
+    shuffleTracks() {
+        this.shuffledTracks = [...this.tracks].sort(() => Math.random() - 0.5);
+    },
+
+    playRandom() {
+        if(!this.shuffledTracks.length) this.shuffleTracks();
+        this.currentTrackIndex = 0;
+        this.playCurrent();
+    },
+
+   playCurrent() {
+      if (!this.isMusicOn) return;
+    
+         const track = this.shuffledTracks[this.currentTrackIndex];
+         this.audio.src = `Sounds/${track}`;
+      this.audio.play().catch(() => {});
+    
+         const songTitle = track.replace('.mp3', '');
+         document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
+    },
+
+    playNext() {
+        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.shuffledTracks.length;
+        this.playCurrent();
+    },
+
+    playPrev() {
+        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.shuffledTracks.length) % 
+                                this.shuffledTracks.length;
+        this.playCurrent();
+    },
+
+    toggleMusic() {
+        this.isMusicOn = !this.isMusicOn;
+        localStorage.setItem('musicEnabled', this.isMusicOn);
+        this.updateToggleButton();
+        
+        if(this.isMusicOn) {
+            this.playCurrent();
+        } else {
+            this.audio.pause();
+        }
+    },
+
+    updateToggleButton() {
+        const btn = document.getElementById('music-toggle');
+        btn.textContent = `Music: ${this.isMusicOn ? 'ON' : 'OFF'}`;
+        btn.classList.toggle('off', !this.isMusicOn);
+    }
+};
+
+// Initialize music when DOM loads
+document.addEventListener('DOMContentLoaded', () => musicManager.init());
+
+// Settings functionality
+const settingsBtn = document.querySelector('.settings-btn');
+const settingsModal = document.querySelector('.settings-modal');
+const closeSettingsBtn = document.querySelector('.close-settings-btn');
+document.querySelector('.shuffle-btn').addEventListener('click', () => {
+    musicManager.shuffleTracks();
+    musicManager.currentTrackIndex = -1;
+    musicManager.playNext();
+});
+
+document.querySelector('.prev-btn').addEventListener('click', () => musicManager.playPrev());
+document.querySelector('.next-btn').addEventListener('click', () => musicManager.playNext());
+document.getElementById('music-toggle').addEventListener('click', () => musicManager.toggleMusic());
+
+// Open settings
+settingsBtn.addEventListener('click', () => {
+    settingsModal.style.display = 'flex';
+});
+
+// Close settings
+closeSettingsBtn.addEventListener('click', () => {
+    settingsModal.style.display = 'none';
+});
+
+// Close when clicking outside
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.style.display = 'none';
+    }
+});
+
+// Close when pressing esc
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settingsModal.style.display === 'flex') {
+        settingsModal.style.display = 'none';
+    }
 });
