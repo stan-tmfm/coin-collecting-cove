@@ -13,57 +13,75 @@
     
     <!-- Wrapped title and save menu in container -->
     <div class="menu-container">
-    <h1 class="title-overlay">
-	<!-- Spells out "Coin Collecting Cove but with the o's replaced with coins -->
-        C<img src="Images/coin.png" alt="o" class="coin-image">in‎ ‎ C<img src="Images/coin.png" alt="o" class="coin-image">llecting‎ ‎ C<img src="Images/coin.png" alt="o" class="coin-image">ve
-    </h1>
-    
-    <div class="save-menu">
+        <h1 class="title-overlay">
+            <!-- Spells out "Coin Collecting Cove but with the o's replaced with coins -->
+            C<img src="Images/coin.png" alt="o" class="coin-image">in‎ ‎ C<img src="Images/coin.png" alt="o" class="coin-image">llecting‎ ‎ C<img src="Images/coin.png" alt="o" class="coin-image">ve
+        </h1>
+        <div class="save-menu"></div>
     </div>
-</div>
 
     <button class="manage-saves-btn">Manage Save Slots</button>
 
-  <div class="cinematic-overlay">
-      <div class="cinematic-bars">
-        <div class="top-bar"></div>
-	  <div class="click-prompt">
-      	    Click to continue
-          </div>
-        <div class="bottom-bar"></div>
-     </div>
-     
-     <div class="slideshow-container">
-        <div class="slide active">
-            <p class="lore-text"></p>
+    <div class="cinematic-overlay">
+        <div class="cinematic-bars">
+            <div class="top-bar"></div>
+            <div class="click-prompt">Click to continue</div>
+            <div class="bottom-bar"></div>
+        </div>
+        <div class="slideshow-container">
+            <div class="slide active">
+                <p class="lore-text"></p>
+            </div>
+        </div>
+        <button class="continue-btn">Continue</button>
+    </div>
+
+    <audio id="wind-sound" loop>
+        <source src="Sounds/wind_ambience.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="coin-sound" src="Sounds/coin_pickup.mp3"></audio>
+
+    <div class="game-background"></div>
+
+    <!-- Game Screen -->
+    <div class="game-screen" style="display: none;">
+        <div class="coin-counter">Coins: 0</div>
+        <div class="beach-container"></div>
+        <!-- Settings Button -->
+        <button class="settings-btn">⚙️ Settings</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-modal">
+        <div class="settings-content">
+            <h2>Settings</h2>
+            <div class="music-controls">
+                <div id="now-playing">🎵 Now Playing - </div>
+                <div class="playback-controls">
+                    <button class="music-control prev-btn">⏮</button>
+                    <button class="music-control shuffle-btn">🔀 Shuffle</button>
+                    <button class="music-control next-btn">⏭</button>
+                </div>
+            </div>
+	    <div class="settings-buttons">
+                <button id="music-toggle" class="toggle-btn">Music: ON</button>
+                <button class="close-settings-btn">Close</button>
+	    </div>
         </div>
     </div>
-    <button class="continue-btn">Continue</button>
-  </div>
-
-<audio id="wind-sound" loop>
-    <source src="Sounds/wind_ambience.mp3" type="audio/mpeg">
-</audio>
-<audio id="coin-sound" src="Sounds/coin_pickup.mp3"></audio>
-
-<div class="game-background"></div>
-<div class="game-screen" style="display: none;">
-    <div class="coin-counter">Coins: 0</div>
-    <div class="beach-container"></div>
-</div>
 
     <script src="script.js"></script>
     <script>
-    // Check if running on GitHub Pages
-    const isGitHubPages = window.location.hostname === 'stan-tmfm.github.io';
+        // Check if running on GitHub Pages
+        const isGitHubPages = window.location.hostname === 'stan-tmfm.github.io';
 
-    // Fix coin.png path if on GitHub Pages
-    if (isGitHubPages) {
-        const coinImages = document.querySelectorAll('img[src="Images/coin.png"]');
-        coinImages.forEach(img => {
-            img.src = '/coin-collecting-cove/Images/coin.png';
-        });
-    }
+        // Fix coin.png path if on GitHub Pages
+        if (isGitHubPages) {
+            const coinImages = document.querySelectorAll('img[src="Images/coin.png"]');
+            coinImages.forEach(img => {
+                img.src = '/coin-collecting-cove/Images/coin.png';
+            });
+        }
     </script>
 </body>
 </html>
