@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Collecting Cove</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="background-container"></div>
+    
+    <!-- Wrapped title and save menu in container -->
+    <div class="menu-container">
+    <h1 class="title-overlay">
+	<!-- Spells out "Coin Collecting Cove but with the o's replaced with coins -->
+        C<img src="/Images/coin.png" alt="o" class="coin-image">in‎ ‎ C<img src="/Images/coin.png" alt="o" class="coin-image">llecting‎ ‎ C<img src="/Images/coin.png" alt="o" class="coin-image">ve
+    </h1>
+    
+    <div class="save-menu">
+    </div>
+</div>
+
+    <button class="manage-saves-btn">Manage Save Slots</button>
+
+  <div class="cinematic-overlay">
+      <div class="cinematic-bars">
+        <div class="top-bar"></div>
+	  <div class="click-prompt">
+      	    Click to continue
+          </div>
+        <div class="bottom-bar"></div>
+     </div>
+     
+     <div class="slideshow-container">
+        <div class="slide active">
+            <p class="lore-text"></p>
+        </div>
+    </div>
+    <button class="continue-btn">Continue</button>
+  </div>
+
+<audio id="wind-sound" loop>
+    <source src="/Sounds/wind_ambience.mp3" type="audio/mpeg">
+</audio>
+<audio id="coin-sound" src="/Sounds/coin_pickup.mp3"></audio>
+
+<div class="game-background"></div>
+<div class="game-screen" style="display: none;">
+    <div class="coin-counter">Coins: 0</div>
+    <div class="beach-container"></div>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>

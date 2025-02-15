@@ -1,0 +1,428 @@
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    user-select: none;
+}
+
+.background-container {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: url('/Images/cove.png') no-repeat center center fixed;
+    background-size: cover;
+    filter: blur(10px);
+    z-index: -1;
+}
+
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    padding: 40px;
+    box-sizing: border-box;
+}
+
+.title-overlay {
+    color: white;
+    font-size: 5.5em;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    text-align: center;
+    margin-top: 15%;
+    margin-bottom: 5%;
+}
+
+.coin-image {
+    width: 1em; /* Adjust size relative to font size */
+    height: 1em; /* Keep it square */
+    vertical-align: middle; /* Align with the text */
+}
+
+.save-menu {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+    max-width: 1200px;
+    flex-wrap: wrap;
+}
+
+.save-slot {
+    width: 30%;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Glow Effect */
+.save-slot::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 15px;
+    padding: 2px;
+    background: linear-gradient(45deg, 
+        rgba(255, 223, 0, 0.3), 
+        rgba(255, 165, 0, 0.3));
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Hover Effects */
+.save-slot:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+}
+
+.save-slot:hover::before {
+    opacity: 1;
+}
+
+.manage-saves-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    z-index: 2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.manage-saves-btn:hover {
+    background: rgba(255, 255, 255, 1);
+}
+
+.no-data {
+    color: #666;
+    font-style: italic;
+    margin-top: 15px;
+}
+
+.save-indicator {
+    color: #2ecc71;
+    font-size: 1.5em;
+    margin-top: 15px;
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); }
+    90% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@media (max-width: 768px) {
+    .title-overlay {
+        font-size: 2em;
+        margin-bottom: 30px;
+    }
+    
+    .save-menu {
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+}
+
+.cinematic-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    z-index: 9999;
+    display: none;
+    color: white;
+}
+
+.cinematic-bars {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.top-bar, .bottom-bar {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: #000;
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 2s ease-in-out;
+}
+
+.bottom-bar {
+    top: auto;
+    bottom: 0;
+    transform-origin: bottom;
+}
+
+.slideshow-container {
+    position: absolute;
+    width: 80%;
+    height: 60%;
+    top: 20%;
+    left: 10%;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    z-index: 10001;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: none;
+    text-align: center;
+    padding: 20px;
+    font-size: 1.5em;
+}
+
+.slide.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lore-text {
+    max-width: 800px;
+    line-height: 1.6;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 2s ease-in-out;
+    margin-right: 1%;
+}
+
+.lore-text.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.continue-btn {
+    position: fixed;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background: #ffffff22;
+    border: 2px solid white;
+    color: white;
+    cursor: pointer;
+    opacity: 0;
+    display: none;
+    transition: opacity 3s ease-in-out;
+    z-index: 10009
+}
+
+.click-prompt {
+    position: fixed;
+    bottom: 5%;
+    left: 50.5%;
+    transform: translateX(-50%);
+    opacity: 0;
+    display: none;
+    transition: opacity 2s ease;
+    color: white;
+    text-align: center;
+    z-index: 10002;
+}
+
+/* Skip button */
+.skip-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    cursor: pointer;
+    z-index: 10000;
+    transition: all 2s ease;
+}
+
+.skip-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes pulse {
+    0% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.1); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Game Screen */
+.game-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; /* Higher than background */
+}
+
+.beach-container {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 612px;
+    height: 408px;
+    background: url('/Images/sand_water.png');
+    background-size: cover;
+    overflow: hidden;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
+}
+
+.coin-counter {
+    position: fixed;
+    top: 0px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 4em;
+    color: #ede509;
+    text-shadow: 
+        2px 2px 4px rgba(94,66,47,0.8),
+        0 0 12px rgba(255,215,0,0.4),
+        0 0 20px rgba(0, 0, 0, 0.5); /* Fixed semicolon */
+    animation: coin-glow 2s ease-in-out infinite alternate;
+    font-family: serif; /* Added semicolon here */
+    background: url('/Images/water.png');
+    background-size: cover;
+    background-position: center;
+    padding: 0px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    z-index: 1001;
+    min-width: 570px;
+    min-height: 85px;
+    display: flex;
+    justify-content: center; /* Horizontal centering */
+    align-items: flex-end; /* Push content to bottom */
+    padding-bottom: 20px; /* Space from bottom edge */
+}
+
+/* Coin styling */
+.coin {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    background: url('/Images/coin.png') center/contain no-repeat;
+    cursor: pointer;
+    transition: all 0.5s ease-out !important;
+    pointer-events: none;
+    transform: translateZ(0); /* Force hardware acceleration */
+}
+
+.coin.collectable {
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+body.game-active {
+    background: white !important;
+    transition: background 0.5s ease;
+}
+
+body.game-active .menu-container,
+body.game-active .manage-saves-btn {
+    display: none;
+}
+
+.game-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('/Images/sand.png') center/cover;
+    z-index: 1; /* Lower than game elements but higher than menu */
+    display: none;
+}
+
+body.game-active .background-container {
+    display: none;
+}
+
+body.game-active .game-background {
+    display: block;
+}
+
+/* Add to styles.css */
+.slot-data {
+    text-align: center;
+    font-size: 1.2em;
+    margin-top: 15px;
+}
+
+.slot-data div:first-child {
+    color: #ede509;
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.slot-data div:last-child {
+    font-size: 0.8em;
+    color: #666;
+}
+
+.delete-mode {
+    position: relative;
+    overflow: hidden;
+}
+
+.delete-mode::after {
+    content: '×';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: red;
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.save-slot.manage-mode {
+    outline: 2px solid red;
+    position: relative;
+}
+
+.save-slot.manage-mode::after {
+    content: "✕";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: red;
+    font-size: 1.2em;
+}
