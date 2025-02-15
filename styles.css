@@ -10,7 +10,7 @@ body {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: url('/Images/cove.png') no-repeat center center fixed;
+    background: url('Images/cove.png') no-repeat center center fixed;
     background-size: cover;
     filter: blur(10px);
     z-index: -1;
@@ -299,7 +299,7 @@ body {
     transform: translateX(-50%);
     width: 612px;
     height: 408px;
-    background: url('/Images/sand_water.png');
+    background: url('Images/sand_water.png');
     background-size: cover;
     overflow: hidden;
     border-radius: 10px;
@@ -319,7 +319,7 @@ body {
         0 0 20px rgba(0, 0, 0, 0.5); /* Fixed semicolon */
     animation: coin-glow 2s ease-in-out infinite alternate;
     font-family: serif; /* Added semicolon here */
-    background: url('/Images/water.png');
+    background: url('Images/water.png');
     background-size: cover;
     background-position: center;
     padding: 0px 20px;
@@ -339,7 +339,7 @@ body {
     position: absolute;
     width: 40px;
     height: 40px;
-    background: url('/Images/coin.png') center/contain no-repeat;
+    background: url('Images/coin.png') center/contain no-repeat;
     cursor: pointer;
     transition: all 0.5s ease-out !important;
     pointer-events: none;
@@ -367,7 +367,7 @@ body.game-active .manage-saves-btn {
     left: 0;
     width: 100%;
     height: 100%;
-    background: url('/Images/sand.png') center/cover;
+    background: url('Images/sand.png') center/cover;
     z-index: 1; /* Lower than game elements but higher than menu */
     display: none;
 }
