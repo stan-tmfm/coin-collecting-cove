@@ -66,7 +66,7 @@ function initializeSaveSlots() {
             ${slot.isData ? 
                 `<div class="slot-data">
                     <div>Coins: ${slot.data.coins}</div>
-                    <div>${new Date(slot.data.timestamp).toLocaleDateString()}</div>
+                    <div>Created on: ${new Date(slot.data.timestamp).toLocaleDateString()}</div>
                 </div>` : 
                 '<div class="no-data">No Save Data</div>'}
         `;
