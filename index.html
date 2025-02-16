@@ -49,26 +49,49 @@
         <div class="beach-container"></div>
         <!-- Settings Button -->
         <button class="settings-btn">⚙️ Settings</button>
+	<div class="goal-message"></div>
+        	<button class="merchant-btn" style="display: none;">Visit Merchant</button>
+        </div>
+
+    <!-- Merchant Modal -->
+    <div class="merchant-modal">
+      <div class="merchant-content">
+        <h2>Magnificent Merchant</h2>
+        <div class="current-effects"></div>
+        <div class="upgrades-container"></div>
+
+        <div class="merchant-footer">
+          <div class="balance-display">Your Coins: <span id="merchant-coin-count">0</span></div>
+          <button class="talk-to-merchant-btn">🗨️ Talk to Merchant</button>
+          <button class="close-merchant-btn">Leave Shop</button>
+        </div>
+      </div>
     </div>
 
     <!-- Settings Modal -->
-    <div class="settings-modal">
-        <div class="settings-content">
-            <h2>Settings</h2>
-            <div class="music-controls">
-                <div id="now-playing">🎵 Now Playing - </div>
-                <div class="playback-controls">
-                    <button class="music-control prev-btn">⏮</button>
-                    <button class="music-control shuffle-btn">🔀 Shuffle</button>
-                    <button class="music-control next-btn">⏭</button>
-                </div>
+<div class="settings-modal">
+    <div class="settings-content">
+        <h2>Settings</h2>
+        <div class="music-controls">
+            <div id="now-playing">🎵 Now Playing - </div>
+            <div class="playback-controls">
+                <button class="music-control prev-btn">⏮</button>
+                <button class="music-control shuffle-btn">🔀 Shuffle</button>
+                <button class="music-control next-btn">⏭</button>
             </div>
-	    <div class="settings-buttons">
-                <button id="music-toggle" class="toggle-btn">Music: ON</button>
-                <button class="close-settings-btn">Close</button>
-	    </div>
+        </div>
+        <!-- Name Change Section (Initially Hidden) -->
+        <div class="name-change-section">
+    <label for="player-name-input">Change Your Name:</label>
+    <input type="text" id="player-name-input" placeholder="Enter a new name">
+    <button id="change-name-btn">Change Name</button>
+</div>
+        <div class="settings-buttons">
+            <button id="music-toggle" class="toggle-btn">Music: ON</button>
+            <button class="close-settings-btn">Close</button>
         </div>
     </div>
+</div>
 
     <script src="script.js"></script>
     <script>
