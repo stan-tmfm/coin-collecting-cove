@@ -161,6 +161,7 @@ body {
     z-index: 9999;
     display: none;
     color: white;
+    overflow: hidden;
 }
 
 .cinematic-bars {
@@ -206,12 +207,15 @@ body {
     text-align: center;
     padding: 20px;
     font-size: 1.5em;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
 }
 
 .slide.active {
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 1;
 }
 
 .lore-text {
@@ -219,7 +223,7 @@ body {
     line-height: 1.6;
     opacity: 0;
     transform: translateY(20px);
-    transition: all 2s ease-in-out;
+    transition: all 2s ease-in-out !important;
     margin-right: 1%;
 }
 
@@ -537,4 +541,529 @@ body.game-active .game-background {
 
 .toggle-btn.off {
     background: #f44336;
+}
+
+/* Goal Message */
+.goal-message {
+    position: fixed;
+    bottom: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-style: italic;
+    text-align: center;
+    padding: 15px 30px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    font-size: 1.2em;
+    display: block !important;
+    opacity: 1 !important;
+}
+
+/* Merchant Button */
+.merchant-btn {
+    font-size: 1em;
+    position: absolute;
+    bottom: 35%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 24px;
+    background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+    border: 2px solid transparent;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+    z-index: 1002;
+}
+
+.merchant-btn:hover {
+    transform: translateX(-50%) scale(1.05);
+}
+
+.merchant-unlocked {
+    color: #00ff00;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+/* Merchant Modal */
+.merchant-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 1005;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.merchant-content {
+    position: relative;
+    background: rgba(30, 30, 30, 0.95);
+    padding: 30px;
+    border-radius: 15px;
+    width: 80%;
+    max-width: 600px;
+    color: white;
+    border: 2px solid transparent;
+    display: flex;
+    flex-direction: column;
+    min-height: 60vh;
+    max-height: 80vh;
+}
+
+.upgrade-item {
+    background: rgba(50, 50, 50, 0.8);
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+    border: 1px solid transparent;
+}
+
+.upgrade-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.buy-btn {
+    background: #4CAF50;
+    border: 2px solid transparent;
+    padding: 8px 15px;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+
+.buy-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+.merchant-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    position: relative;
+    padding: 15px 20px;
+    background: rgba(40, 40, 40, 0.9);
+    border-radius: 8px;
+    border-top: 2px solid transparent;
+    gap: 15px; /* Space between elements */
+    padding-top: 20px;
+}
+
+.balance-display {
+    white-space: nowrap;
+    margin-right: auto; /* Pushes other elements to the right */
+}
+
+.close-merchant-btn {
+    padding: 8px 16px;
+    background: #666;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    order: 3;
+    transition: border-color 0.2s ease;
+}
+
+.close-merchant-btn:hover {
+    border-color: black;
+}
+
+.current-effects {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border-left: 4px solid transparent;
+}
+
+.current-effects div {
+    margin: 5px 0;
+    font-size: 0.9em;
+    color: #ddd;
+}
+
+.talk-to-merchant-btn {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom, #2a2a2a, #1a1a1a);
+    border: 2px solid #444;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    order: 2; /* Positions between balance and close button */
+}
+
+.talk-to-merchant-btn:hover {
+    background: #333;
+    border-color: #FFD700;
+}
+
+/* Dialogue System */
+.dialogue-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1006;
+}
+
+.dialogue-box {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    color: white;
+    position: relative;
+}
+
+.merchant-message {
+    font-style: italic;
+    margin-bottom: 20px;
+    border-left: 3px solid transparent;
+    padding-left: 10px;
+}
+
+.dialogue-options {
+    margin: 20px 0;
+}
+
+.dialogue-option {
+    background: #333;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    position: relative;
+}
+
+.dialogue-option.completed {
+    position: relative;
+    background: #2a2a2a;
+    cursor: default;
+}
+
+.dialogue-option.completed::after {
+    content: '✓';
+    position: absolute;
+    right: 10px;
+    color: #4CAF50;
+}
+
+.reward-indicator {
+    color: #FFD700;
+    font-size: 0.8em;
+    margin-left: 10px;
+}
+
+.replay-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.dialogue-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.coin-icon {
+    width: 16px;
+    height: 16px;
+    vertical-align: text-bottom;
+}
+
+.reward-notice {
+    color: #4CAF50;
+    text-align: center;
+    margin: 15px 0;
+    animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0% { opacity: 0.8; text-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+    50% { opacity: 1; text-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
+    100% { opacity: 0.8; text-shadow: 0 0 5px rgba(76, 175, 80, 0.5); }
+}
+
+.ask-again-btn {
+    background: transparent;
+    border: 1px solid #666;
+    color: #888;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px; /* Space between checkmark and button */
+    transition: all 0.2s ease;
+}
+
+.ask-again-btn:hover {
+    border-color: gold;
+    color: #fff;
+}
+
+/* Merchant Dialogue Continue Button */
+.merchant-continue-btn {
+    padding: 8px 16px;
+    background: linear-gradient(to bottom, #4a4a4a, #2a2a2a);
+    border: 1px solid #666;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.merchant-continue-btn:hover {
+    background: linear-gradient(to bottom, #5a5a5a, #3a3a3a);
+    border-color: gold;
+}
+
+.cancel-dialogue-btn {
+    background: transparent;
+    border: 1px solid #666;
+    color: #888;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 10px; /* Space between checkmark and button */
+    transition: all 0.2s ease;
+}
+
+.cancel-dialogue-btn:hover {
+    border-color: gold;
+    color: #fff;
+}
+
+/* Name Input Modal */
+.name-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.name-modal-content {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 10px;
+    border: 2px solid gold;
+    text-align: center;
+    max-width: 400px;
+}
+
+#playerName {
+    display: block;
+    width: 80%;
+    margin: 1rem auto;
+    padding: 0.5rem;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    color: white;
+    font-family: 'Cinzel', serif;
+    text-align: center;
+}
+
+#confirmName {
+    background: #4CAF50;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#confirmName:hover {
+    transform: scale(1.05);
+}
+
+.name-change-section {
+    display: none; /* Hidden by default */
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.name-change-section.visible {
+    display: flex;
+}
+
+.name-change-section label {
+    margin: 0; /* Remove default margin */
+    white-space: nowrap; /* Prevent the label from wrapping */
+}
+
+.name-change-section input {
+    flex: 1; /* Allow the input to grow and fill available space */
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: auto; /* Let flexbox handle the width */
+}
+
+.name-change-section button {
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap; /* Prevent the button text from wrapping */
+}
+
+.name-change-section button:hover {
+    background-color: #45a049;
+}
+
+#player-name-input {
+    padding: 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 80%;
+    max-width: 300px;
+}
+
+#change-name-btn {
+    padding: 5px 10px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#change-name-btn:hover {
+    background-color: #45a049;
+}
+
+.name-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1006;
+}
+
+.name-modal {
+    background: rgba(30, 30, 30, 0.95);
+    padding: 20px; /* Reduced padding for a more compact look */
+    border-radius: 15px;
+    width: 80%; /* Responsive width */
+    max-width: 500px; /* Wider max-width for a horizontal rectangle */
+    max-height: 50vh; /* Shorter max-height for a horizontal rectangle */
+    color: white;
+    border: 2px solid #FFD700;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    margin: 0; /* Remove any default margin */
+    position: relative; /* Ensure it respects flexbox centering */
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    gap: 15px; /* Space between elements */
+}
+
+.name-modal h2 {
+    margin: 0; /* Remove default margin for the heading */
+    font-size: 1.5em; /* Adjust font size as needed */
+}
+
+.name-modal input {
+    width: 80%; /* Input width relative to modal */
+    padding: 10px;
+    font-size: 1em;
+    border: 1px solid #444;
+    border-radius: 5px;
+    background: #2a2a2a;
+    color: white;
+    text-align: center;
+}
+
+.name-modal input::placeholder {
+    color: #888;
+}
+
+.name-modal button {
+    padding: 10px 20px;
+    font-size: 1em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.name-modal button:hover {
+    background-color: #45a049;
+}
+
+/* Speaker name styling */
+.speaker-name {
+    font-family: 'Cinzel', serif;
+    font-size: 1.1em;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid rgba(207, 162, 60, 0.5);
+}
+
+.merchant-name {
+    color: #cfa23c; /* Gold color */
+}
+
+/* Player Name Styling */
+.player-name {
+    color: #4a90e2; /* Blue color */
+    border-bottom: 2px solid rgba(74, 144, 226, 0.5); /* Matching blue */
+}
+
+/* Dialogue Message Styling */
+.merchant-message {
+    margin-top: 10px;
+    font-size: 1em;
+    line-height: 1.4;
+    min-height: 60px;
 }
