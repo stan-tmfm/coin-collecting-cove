@@ -652,13 +652,16 @@ body.game-active .game-background {
     justify-content: space-between;
     align-items: center;
     margin-top: auto;
-    position: relative;
     padding: 15px 20px;
-    background: rgba(40, 40, 40, 0.9);
+    background: rgba(30, 30, 30, 0.95);
     border-radius: 8px;
     border-top: 2px solid transparent;
     gap: 15px; /* Space between elements */
     padding-top: 20px;
+    position: sticky;
+    bottom: 0;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    z-index: 1;
 }
 
 .balance-display {
@@ -1080,4 +1083,185 @@ body.game-active .game-background {
 
 .upgrade-item.mysterious-upgrade .buy-btn:disabled {
     background: #1a1a1a;
+}
+
+.xp-container {
+    position: fixed;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 4px;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 1002; /* Ensure it's above coin counter */
+}
+
+.xp-bar {
+    position: relative;
+    width: 100%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.xp-progress {
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(76, 175, 80, 0.9) 0%, 
+        rgba(56, 142, 60, 0.9) 100%);
+    transition: width 0.3s ease;
+}
+
+.xp-info {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Merchant Modal Scrollable Area */
+.merchant-scrollable {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin-bottom: 15px;
+}
+
+/* Custom Scrollbar */
+.merchant-scrollable::-webkit-scrollbar {
+    width: 8px;
+}
+
+.merchant-scrollable::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.merchant-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.merchant-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Fixed Connection Styles */
+.upgrade-item.special-coins-upgrade {
+    position: relative;
+    margin-bottom: 0;
+    border-radius: 8px 8px 0 0;
+
+}
+
+.special-coins-section {
+    margin-top: -8px;
+    padding: 20px 15px 15px;
+    background: rgba(0, 188, 212, 0.1);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    position: relative;
+}
+
+.special-coins-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(0, 188, 212, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.special-coins-header {
+    text-align: center;
+}
+
+.upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.upgrade-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 188, 212, 0.2);
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    color: #90caf9;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.special-coin {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: url('Images/special_coin.png') center/contain no-repeat;
+    cursor: pointer;
+
+    pointer-events: none;
+    transform: translateZ(0);
+    z-index: 2; /* Higher than regular coins */
+    filter: drop-shadow(0 0 5px rgba(0, 188, 212, 0.5));
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform-style: preserve-3d;
+}
+
+@keyframes collectAnimation {
+    0% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2) rotate(360deg) translateY(-50px);
+        opacity: 0;
+    }
+}
+
+.special-coin.collected {
+    animation: collectAnimation 0.6s forwards;
+}
+
+.special-coin.collectable {
+    pointer-events: auto;
+}
+
+.special-coin-balance {
+    color: #00bcd4;
+    font-size: 1em;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.special-coin::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, 
+        rgba(0, 188, 212, 0.4) 0%, 
+        transparent 70%);
 }
