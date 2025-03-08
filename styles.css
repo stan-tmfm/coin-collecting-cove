@@ -564,7 +564,7 @@ body.game-active .game-background {
 .merchant-btn {
     font-size: 1em;
     position: absolute;
-    bottom: 35%;
+    bottom: 31%;
     left: 50%;
     transform: translateX(-50%);
     padding: 12px 24px;
@@ -1066,4 +1066,18 @@ body.game-active .game-background {
     font-size: 1em;
     line-height: 1.4;
     min-height: 60px;
+}
+
+.upgrade-item.mysterious-upgrade {
+    background: rgba(30, 30, 30, 0.9);
+    border-color: #333;
+}
+
+.upgrade-item.mysterious-upgrade .buy-btn {
+    background: #2d2d2d;
+    border-color: #444;
+}
+
+.upgrade-item.mysterious-upgrade .buy-btn:disabled {
+    background: #1a1a1a;
 }
