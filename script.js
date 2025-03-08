@@ -650,6 +650,19 @@ function loadGame(saveData) {
     if (!fullSaveData.upgrades) fullSaveData.upgrades = {};
     if (!fullSaveData.upgrades[1]) fullSaveData.upgrades[1] = { level: 0 };
 
+    // XP System initialization
+    const xpContainer = document.querySelector('.xp-container');
+    if (saveData.upgrades?.[2]?.level >= 1) {
+        xpContainer.style.display = 'block';
+        updateXPDisplay(
+            saveData.xp || 0,
+            saveData.level || 0,
+            saveData.xpNeeded || 10
+        );
+    } else {
+        xpContainer.style.display = 'none';
+    }
+
     // Update storage with normalized data
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(fullSaveData));
 
@@ -669,7 +682,8 @@ function loadGame(saveData) {
 
  updateGoalDisplay();
  loadDialogueProgress();
-   startGame();
+ startGame();
+ applyUpgradeEffects(); 
 }
 
 function startGame() {
@@ -752,50 +766,88 @@ function spawnCoin() {
 
 function addHoverEffect(coin) {
     let collected = false;
-    
-   function collectCoin() {
-    if (collected) return;
-    collected = true;
+    let previousLevel = 0;
 
-    const coinSound = document.getElementById('coin-sound').cloneNode();
-    coinSound.volume = 0.3;
-    coinSound.play().catch(console.error);
-    
-  // Update counter with integer values
-     coinCount = Math.round(coinCount + 1);
-     coinCounter.textContent = `Coins: ${coinCount}`;
+    function collectCoin() {
+        if (collected) return;
+        collected = true;
 
-  // Update save data PROPERLY
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const updatedData = {
-        ...saveData,
-        coins: coinCount,
-        merchantCinematicShown: merchantCinematicShown,
-        timestamp: saveData.timestamp || Date.now()
-    };
-    
-    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-    
-    // Update goal display
-    updateGoalDisplay();
-    
-    // Animate collection
-    coin.style.transform = 'scale(2) translateY(-20px)';
-    coin.style.opacity = '0';
-    
-    // Remove after animation
-    setTimeout(() => coin.remove(), 500);
-    
-     // Update slot display
-    const slot = saveSlots.find(s => s.id === currentSlotId);
-    if (slot) {
-        slot.data = updatedData;
-        initializeSaveSlots(); // Refresh UI
+        // Play coin sound
+        const coinSound = document.getElementById('coin-sound').cloneNode();
+        coinSound.volume = 0.3;
+        coinSound.play().catch(console.error);
+        
+        // Update coin count
+        coinCount = Math.round(coinCount + 1);
+        coinCounter.textContent = `Coins: ${coinCount}`;
+
+        // Get current save data
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        
+        // Store previous level before updating
+        previousLevel = saveData.level || 0;
+
+        // Check if Special Coins upgrade is active
+        const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
+        
+        // Handle XP if upgrade is active
+        if (hasSpecialCoins) {
+            // Initialize XP data if not present
+            if (typeof saveData.xp === 'undefined') {
+                saveData.xp = 1; // Start with 1 XP for first coin
+                saveData.level = 0;
+                saveData.xpNeeded = 10;
+            } else {
+                // Add XP and handle level progression
+                saveData.xp += 1;
+                
+                // Process level up
+                while (saveData.xp >= saveData.xpNeeded) {
+                    saveData.xp -= saveData.xpNeeded;
+                    saveData.level += 1;
+                    saveData.xpNeeded = 10 * Math.pow(1.2, saveData.level);
+                }
+            }
+            
+            // Check for level up and spawn special coin
+            if (saveData.level > previousLevel) {
+                spawnSpecialCoin();
+            }
+            
+            // Update XP display
+            updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
+        }
+
+        // Create updated save data
+        const updatedData = {
+            ...saveData,
+            coins: coinCount,
+            merchantCinematicShown: merchantCinematicShown,
+            timestamp: saveData.timestamp || Date.now()
+        };
+        
+        // Save updated data
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+        
+        // Animate coin collection
+        coin.style.transform = 'scale(2) translateY(-20px)';
+        coin.style.opacity = '0';
+        
+        // Remove coin after animation
+        setTimeout(() => coin.remove(), 500);
+        
+        // Update slot display
+        const slot = saveSlots.find(s => s.id === currentSlotId);
+        if (slot) {
+            slot.data = updatedData;
+            initializeSaveSlots(); // Refresh UI
+        }
+
+        // Update goal display if needed
+        if (coinCount < currentGoal || !merchantCinematicShown) {
+            updateGoalDisplay();
+        }
     }
-    if (coinCount < currentGoal || !merchantCinematicShown) {
-              updateGoalDisplay();
-          }
-}
 
     // Desktop hover
     coin.addEventListener('mouseenter', collectCoin);
@@ -807,43 +859,121 @@ function addHoverEffect(coin) {
     });
 }
 
-// Mobile hover simulation
-beachContainer.addEventListener('touchmove', (e) => {
+function spawnSpecialCoin() {
     if (!gameActive) return;
-    const touch = e.touches[0];
-    const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
     
-    elements.forEach(element => {
-        if (element.classList.contains('coin')) {
-            element.dispatchEvent(new Event('mouseenter'));
-        }
+    const coin = document.createElement('div');
+    coin.className = 'special-coin';
+    
+    // Get container dimensions
+    const containerWidth = beachContainer.offsetWidth;
+    const containerHeight = beachContainer.offsetHeight;
+    
+    requestAnimationFrame(() => {
+        // Random starting position across full width
+        const startX = Math.random() * (containerWidth - 50);
+        coin.style.left = `${startX}px`;
+        coin.style.top = `-60px`; // Start slightly higher
+        beachContainer.appendChild(coin);
+
+        // Force layout recalculation
+        void coin.offsetHeight;
+
+        // Animate with transition
+        coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
+        
+        // Random end position within container bounds
+        const endX = Math.max(10, Math.min(
+            startX + (Math.random() * 100 - 50),
+            containerWidth - 50
+        ));
+        
+        const endY = Math.random() * (containerHeight - 50) + 20;
+        
+        coin.style.left = `${endX}px`;
+        coin.style.top = `${endY}px`;
+
+        // Enable collection after 300ms
+        setTimeout(() => {
+            coin.classList.add('collectable');
+            addSpecialCoinHoverEffect(coin);
+        }, 300);
     });
-});
-
-function resetGame() {
-    const windSound = document.getElementById('wind-sound');
-    gameActive = false;
-    windSound.pause();
-    windSound.currentTime = 0;
-
-    musicManager.audio.pause();
-
-    coinCount = 0;
-    document.body.classList.remove('game-active');
-    document.querySelector('.game-screen').style.display = 'none';
-    beachContainer.innerHTML = '';
-    coinCounter.textContent = 'Coins: 0';
-    document.querySelector('.menu-container').style.display = 'flex';
 }
 
-document.querySelector('.manage-saves-btn').textContent = 'Manage Save Slots';
-document.querySelector('.manage-saves-btn').addEventListener('click', () => {
-    manageMode = !manageMode;
-    document.querySelectorAll('.save-slot').forEach(slot => {
-        slot.classList.toggle('manage-mode', manageMode);
+function addSpecialCoinHoverEffect(coin) {
+    let collected = false;
+    
+    function collectSpecialCoin() {
+        if (collected) return;
+        collected = true;
+        coin.classList.add('collected');
+
+        // Play sound
+        const specialCoinSound = document.getElementById('special-coin-sound').cloneNode(true);
+        specialCoinSound.volume = 0.6;
+        
+        // Ensure sound plays
+        specialCoinSound.play()
+            .then(() => {
+                // Sound played successfully
+            })
+            .catch((error) => {
+                console.error('Error playing special coin sound:', error);
+                // Fallback to regular coin sound
+                const fallbackSound = document.getElementById('coin-sound').cloneNode(true);
+                fallbackSound.volume = 0.6;
+                fallbackSound.play();
+            });
+
+        // Update special coin count
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        saveData.specialCoins = (saveData.specialCoins || 0) + 1;
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+        // Update display
+        const specialCoinDisplay = document.querySelector('.special-coin-balance');
+        if (specialCoinDisplay) {
+            specialCoinDisplay.textContent = `Special Coins: ${saveData.specialCoins}`;
+        }
+
+        // Remove after animation
+        setTimeout(() => coin.remove(), 600);
+    }
+
+    // Add interaction handlers
+    coin.addEventListener('mouseenter', collectSpecialCoin);
+    coin.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        collectSpecialCoin();
     });
-    if (!manageMode) initializeSaveSlots();
-});
+
+    // Hover effects
+    coin.addEventListener('mouseenter', () => {
+        if (!collected) {
+            coin.style.transform = 'scale(1.1) rotate(15deg)';
+        }
+    });
+    
+    coin.addEventListener('mouseleave', () => {
+        if (!collected) {
+            coin.style.transform = 'scale(1) rotate(0deg)';
+        }
+    });
+}
+
+function updateXPDisplay(currentXP, currentLevel, xpNeeded) {
+    const xpProgress = document.querySelector('.xp-progress');
+    const xpLevel = document.querySelector('.xp-level');
+    const xpCurrent = document.querySelector('.xp-current');
+    const xpNeededSpan = document.querySelector('.xp-needed');
+
+    const progressPercent = (currentXP / xpNeeded) * 100;
+    xpProgress.style.width = `${progressPercent}%`;
+    xpLevel.textContent = currentLevel;
+    xpCurrent.textContent = currentXP.toFixed(1);
+    xpNeededSpan.textContent = `${xpNeeded.toFixed(1)} XP`;
+}
 
 // Music System
 const musicManager = {
@@ -1138,11 +1268,17 @@ function updateMerchantDisplay() {
 
     container.innerHTML = '';
 
+    // Check if Special Coins upgrade is purchased
+    const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
+    const specialCoins = saveData.specialCoins || 0;
+
+    // Render existing upgrades
     Object.values(upgrades).forEach(upg => {
         const upgradeData = saveData.upgrades?.[upg.id] || { level: 0 };
         const currentLevel = upgradeData.level;
         const isLocked = upg.mysterious && currentLevel === 0 && coinCount < upg.baseCost;
         const isMaxed = currentLevel >= upg.maxLevel;
+        const isSpecialUpgrade = upg.id === 2;
 
         // Calculate cost
         const cost = upg.mysterious ? upg.baseCost : 
@@ -1158,7 +1294,7 @@ function updateMerchantDisplay() {
         }
 
         const upgradeHTML = `
-            <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''}">
+            <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''} ${isSpecialUpgrade ? 'special-coins-upgrade' : ''}">
                 <div class="upgrade-header">
                     <h3>${isLocked ? '???' : statusText}</h3>
                     ${!isMaxed ? `
@@ -1179,6 +1315,27 @@ function updateMerchantDisplay() {
         `;
         container.innerHTML += upgradeHTML;
     });
+
+    // Add Special Coins section if upgrade is purchased
+    if (hasSpecialCoins) {
+        const specialSection = document.createElement('div');
+        specialSection.className = 'special-coins-section';
+        specialSection.innerHTML = `
+            <div class="special-coins-header">
+                Collect normal coins to gain XP.<br>Gain enough XP and level up to spawn a special coin!
+                <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
+            </div>
+            <div class="upgrades-grid">
+                ${Array.from({length: 6}, (_, i) => `
+                    <div class="upgrade-placeholder">
+                        Special Upgrade ${i + 1}<br>
+                        <em>(Coming Soon)</em>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+        container.appendChild(specialSection);
+    }
 
     // Rebind event listeners
     container.querySelectorAll('.buy-btn').forEach(btn => {
@@ -1211,10 +1368,20 @@ function purchaseUpgrade(upgradeId) {
             coins: coinCount,
             upgrades: saveData.upgrades
         }));
-        
+        if (upgradeId === 2) {
+            if (!saveData.xp) {
+                saveData.xp = 0;
+                saveData.level = 0;
+                saveData.xpNeeded = 10;
+            }
+            document.querySelector('.xp-container').style.display = 'block';
+            updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
+        }
+
         updateCoinDisplay();
         updateMerchantDisplay();
         applyUpgradeEffects();
+	
     }
 }
 
@@ -1308,4 +1475,29 @@ document.querySelector('.talk-to-merchant-btn').addEventListener('click', () => 
         loadDialogueProgress();
         showDialogue();
     }
+});
+
+function resetGame() {
+    const windSound = document.getElementById('wind-sound');
+    gameActive = false;
+    windSound.pause();
+    windSound.currentTime = 0;
+
+    musicManager.audio.pause();
+
+    coinCount = 0;
+    document.body.classList.remove('game-active');
+    document.querySelector('.game-screen').style.display = 'none';
+    beachContainer.innerHTML = '';
+    coinCounter.textContent = 'Coins: 0';
+    document.querySelector('.menu-container').style.display = 'flex';
+}
+
+document.querySelector('.manage-saves-btn').textContent = 'Manage Save Slots';
+document.querySelector('.manage-saves-btn').addEventListener('click', () => {
+    manageMode = !manageMode;
+    document.querySelectorAll('.save-slot').forEach(slot => {
+        slot.classList.toggle('manage-mode', manageMode);
+    });
+    if (!manageMode) initializeSaveSlots();
 });
