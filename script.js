@@ -26,7 +26,7 @@ const merchantDialogues = {
             {speaker: "player", text: "???"}
         ]
     },
-    reward: 10,
+    reward: 25,
     completed: false
 },
             {
@@ -53,7 +53,7 @@ const merchantDialogues = {
 
         ]
     },
-    reward: 10,
+    reward: 25000, // reward is so high for testing purposes
     completed: false
 },
             {
@@ -75,7 +75,7 @@ const merchantDialogues = {
 	    {speaker: "player", text: "..."},
         ]
     },
-    reward: 10,
+    reward: 25,
     completed: false
 },
         ]
@@ -246,42 +246,51 @@ function promptPlayerName() {
 }
 
 function showNameModal() {
-    // Create the modal container
     const nameModal = document.createElement('div');
     nameModal.className = 'name-modal-overlay';
     nameModal.innerHTML = `
         <div class="name-modal">
             <h2>What should I call you, traveler?</h2>
-	    <br>
+            <br>
             <input type="text" id="player-name-input" placeholder="Enter your name">
             <button id="confirm-name-btn">Confirm</button>
         </div>
     `;
 
-    // Append the modal to the body
     document.body.appendChild(nameModal);
 
-    // Add event listener to the "Confirm" button
+    // Get references to elements
+    const input = nameModal.querySelector('#player-name-input');
     const confirmBtn = nameModal.querySelector('#confirm-name-btn');
-    confirmBtn.addEventListener('click', () => {
-        const newName = nameModal.querySelector('#player-name-input').value.trim();
+
+    // Add click handler
+    confirmBtn.addEventListener('click', handleNameConfirm);
+
+    // Add Enter key handler
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            handleNameConfirm();
+        }
+    });
+
+    // Focus the input immediately
+    input.focus();
+
+    function handleNameConfirm() {
+        const newName = input.value.trim();
         if (newName) {
-            // Save the player's name under the current save slot
             const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
             saveData.playerName = newName;
             localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
             
-            // Remove the name modal
             nameModal.remove();
-
-            // Proceed to the merchant's dialogue
             currentDialogue = merchantDialogues.introduction;
             loadDialogueProgress();
             showDialogue();
         } else {
             alert("Please enter a valid name.");
         }
-    });
+    }
 }
 
 const upgrades = {
@@ -294,6 +303,17 @@ const upgrades = {
         maxLevel: 10,
         currentLevel: 0,
         scaling: (baseCost, level) => (baseCost + 2 * level) * Math.pow(1.1, level)
+    },
+    2: {
+        id: 2,
+        upgName: "Special Coins",
+        upgDesc: "Unlock the magical power of Special Coins, a new special type of coin that can be used to buy cool things!",
+        upgBenefits: "Unlocks Special Coins",
+        baseCost: 100,
+        maxLevel: 1,
+        currentLevel: 0,
+        scaling: (baseCost) => baseCost,
+        mysterious: true // New property for styling
     }
 };
 
@@ -396,7 +416,7 @@ function initializeSaveSlots() {
                 <div class="slot-data">
                     <div>Coins: ${slot.data.coins || 0}</div>
                     ${hasMerchant ? '<div class="merchant-unlocked">Merchant Unlocked</div>' : ''}
-                    <div>${timestamp}</div>
+                    <div>Created on: ${timestamp}</div>
                 </div>` : 
                 '<div class="no-data">No Save Data</div>'}
         `;
@@ -647,7 +667,6 @@ function loadGame(saveData) {
     const slot = saveSlots.find(s => s.id === currentSlotId);
     if (slot) slot.data = fullSaveData;
 
- coinCount = Math.round(fullSaveData.coins || 0);
  updateGoalDisplay();
  loadDialogueProgress();
    startGame();
@@ -1102,99 +1121,100 @@ window.addEventListener('beforeunload', () => {
 function showMerchantUI() {
     const modal = document.querySelector('.merchant-modal');
     modal.style.display = 'flex';
+    
+    // Force immediate update of all elements
+    updateCoinDisplay();
     updateMerchantDisplay();
+    applyUpgradeEffects();
+    
+    document.addEventListener('keydown', handleMerchantEscape);
+    document.querySelector('.merchant-modal').addEventListener('click', handleMerchantClickOutside);
 }
 
 function updateMerchantDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgradeData = saveData.upgrades?.[1] || { level: 0 };
-    
-    // Update coin display
-    document.getElementById('merchant-coin-count').textContent = coinCount;
-    
-    // Update upgrade display
     const container = document.querySelector('.upgrades-container');
+    if (!container) return;
+
     container.innerHTML = '';
-    
-    const upg = upgrades[1];
-    const currentLevel = upgradeData.level;
-    
-   const roundedCoins = Math.round(coinCount);
-   const nextCost = Math.round(upg.scaling(upg.baseCost, currentLevel));
-    
-    const upgradeHTML = `
-        <div class="upgrade-item">
-            <div class="upgrade-header">
-                <h3>${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})</h3>
-                <button class="buy-btn" ${currentLevel >= upg.maxLevel || roundedCoins < nextCost ? 'disabled' : ''}>
-                    ${currentLevel < upg.maxLevel ? `Buy - ${nextCost} Coins` : 'MAXED'}
-                </button>
+
+    Object.values(upgrades).forEach(upg => {
+        const upgradeData = saveData.upgrades?.[upg.id] || { level: 0 };
+        const currentLevel = upgradeData.level;
+        const isLocked = upg.mysterious && currentLevel === 0 && coinCount < upg.baseCost;
+        const isMaxed = currentLevel >= upg.maxLevel;
+
+        // Calculate cost
+        const cost = upg.mysterious ? upg.baseCost : 
+            Math.round(upg.scaling(upg.baseCost, currentLevel));
+        const canAfford = Math.round(coinCount) >= cost;
+
+        // Determine the status text
+        let statusText;
+        if (isMaxed) {
+            statusText = upg.maxLevel === 1 ? `${upg.upgName} - PURCHASED` : `${upg.upgName} - MAXED`;
+        } else {
+            statusText = upg.maxLevel > 1 ? `${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})` : upg.upgName;
+        }
+
+        const upgradeHTML = `
+            <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''}">
+                <div class="upgrade-header">
+                    <h3>${isLocked ? '???' : statusText}</h3>
+                    ${!isMaxed ? `
+                        <button class="buy-btn" 
+                            data-upgrade-id="${upg.id}"
+                            ${!canAfford ? 'disabled' : ''}>
+                            Cost: ${isLocked ? `${upg.baseCost}` : `${cost}`} Coins
+                        </button>
+                    ` : ''}
+                </div>
+                ${isLocked ? `
+                    <p>???</p>
+                    <p><em>???</em></p>
+                ` : `
+                    <p>${upg.upgDesc}</p>
+                `}
             </div>
-            <p>${upg.upgDesc}</p>
-            <p><em>${upg.upgBenefits}</em></p>
-        </div>
-    `;
-    
-    container.innerHTML = upgradeHTML;
-    updateEffectsDisplay();
-    
-    // Add buy button handler
-    container.querySelector('.buy-btn').addEventListener('click', () => {
-        purchaseUpgrade(1);
-        // Update immediately
-        updateEffectsDisplay();
-        applyUpgradeEffects();
+        `;
+        container.innerHTML += upgradeHTML;
     });
+
+    // Rebind event listeners
+    container.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const upgradeId = parseInt(this.dataset.upgradeId);
+            purchaseUpgrade(upgradeId);
+        });
+    });
+
+    updateEffectsDisplay();
 }
 
 function purchaseUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgradeData = saveData.upgrades[upgradeId] || { level: 0 };
     const upg = upgrades[upgradeId];
-    
+    if (!upg) return;
+
+    const upgradeData = saveData.upgrades[upgradeId] || { level: 0 };
     const currentLevel = upgradeData.level;
     const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
-    
-    if (coinCount >= cost && currentLevel < upg.maxLevel) {
+
+    if (currentLevel < upg.maxLevel && Math.round(coinCount) >= cost) {
         coinCount -= cost;
         coinCount = Math.round(coinCount);
-        upgradeData.level++;
+        upgradeData.level = currentLevel + 1;
         saveData.upgrades[upgradeId] = upgradeData;
         
-        // Update save data
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify({
             ...saveData,
             coins: coinCount,
             upgrades: saveData.upgrades
         }));
         
-        // Update game state
         updateCoinDisplay();
         updateMerchantDisplay();
-        updateEffectsDisplay();
         applyUpgradeEffects();
-   
-        // Get fresh reference to button after DOM update
-        const btn = container.querySelector('.buy-btn');
-        btn.textContent = "Purchased!";
-        
-        setTimeout(() => {
-            // Recalculate cost with new level
-            const newLevel = upgradeData.level;
-            const newCost = Math.round(upg.scaling(upg.baseCost, newLevel));
-            
-            btn.textContent = `Buy - ${newCost} Coins`;
-            btn.disabled = coinCount < newCost || newLevel >= upg.maxLevel;
-        }, 1000);
- 
-        updateMerchantDisplay();
-        updateCoinDisplay();
-
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify({
-            ...saveData,
-            coins: coinCount, // Already rounded
-            upgrades: saveData.upgrades
-        }));
     }
 }
 
@@ -1213,13 +1233,12 @@ function updateEffectsDisplay() {
 
 function applyUpgradeEffects() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgradeLevel = saveData.upgrades?.[1]?.level || 0;
+    const speedUpgrade = saveData.upgrades?.[1] || { level: 0 };
     
-    // Adjust spawn interval based on upgrade level
-    const spawnRateMultiplier = Math.pow(0.9, upgradeLevel); // 10% faster per level
+    // Only adjust spawn rate for the speed upgrade
+    const spawnRateMultiplier = Math.pow(0.9, speedUpgrade.level);
     const newInterval = 3000 * spawnRateMultiplier;
     
-    // Update spawn interval
     clearInterval(window.spawnInterval);
     window.spawnInterval = setInterval(() => {
         if (gameActive) spawnCoin();
@@ -1238,10 +1257,23 @@ document.querySelector('.close-merchant-btn').addEventListener('click', () => {
 });
 
 function updateCoinDisplay() {
-    document.getElementById('merchant-coin-count').textContent = Math.round(coinCount);
-    document.querySelector('.coin-counter').textContent = `Coins: ${Math.round(coinCount)}`;
+    // Always update both displays
+    const currentCoins = Math.round(coinCount);
+    
+    // Update game UI
+    document.querySelector('.coin-counter').textContent = `Coins: ${currentCoins}`;
+    
+    // Update merchant UI
+    const merchantCoinDisplay = document.getElementById('merchant-coin-count');
+    if (merchantCoinDisplay) {
+        merchantCoinDisplay.textContent = currentCoins;
+    }
+    
+    // Force merchant refresh if open
+    if (document.querySelector('.merchant-modal').style.display === 'flex') {
+        updateMerchantDisplay();
+    }
 }
-
 function handleMerchantEscape(e) {
     if (e.key === 'Escape') {
         closeMerchantUI();
