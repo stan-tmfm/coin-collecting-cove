@@ -40,12 +40,21 @@
         <source src="Sounds/wind_ambience.mp3" type="audio/mpeg">
     </audio>
     <audio id="coin-sound" src="Sounds/coin_pickup.mp3"></audio>
+    <audio id="special-coin-sound">
+      <source src="Sounds/special_coin_pickup.mp3" type="audio/mpeg">
+    </audio>
 
     <div class="game-background"></div>
 
     <!-- Game Screen -->
     <div class="game-screen" style="display: none;">
         <div class="coin-counter">Coins: 0</div>
+	<div class="xp-container" style="display: none;">
+    	  <div class="xp-bar">
+            <div class="xp-progress"></div>
+            <div class="xp-info">Level <span class="xp-level">0</span> - <span class="xp-current">0</span>/<span class="xp-needed">10</span></div>
+          </div>
+        </div>
         <div class="beach-container"></div>
         <!-- Settings Button -->
         <button class="settings-btn">⚙️ Settings</button>
@@ -55,13 +64,14 @@
 
     <!-- Merchant Modal -->
     <div class="merchant-modal">
-      <div class="merchant-content">
-        <h2>Magnificent Merchant</h2>
+    <div class="merchant-content">
+      <h2>Magnificent Merchant</h2>
+      <div class="merchant-scrollable">
         <div class="current-effects"></div>
         <div class="upgrades-container"></div>
-
-        <div class="merchant-footer">
-          <div class="balance-display">Your Coins: <span id="merchant-coin-count">0</span></div>
+      </div>
+      <div class="merchant-footer">
+        <div class="balance-display">Your Coins: <span id="merchant-coin-count">0</span></div>
           <button class="talk-to-merchant-btn">🗨️ Talk to Merchant</button>
           <button class="close-merchant-btn">Leave Shop</button>
         </div>
