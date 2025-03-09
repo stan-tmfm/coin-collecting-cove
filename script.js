@@ -3,98 +3,214 @@ const merchantDialogues = {
         id: 'intro',
         speaker: "merchant",
         text: [
-            "Ah, [Player]! Curious about anything?<br>", 
-            "Ask me, the Magnificent Merchant, anything and I'll give you an answer.<br>", 
+            "Ah, [Player]! Curious about anything?<br>",
+            "Ask me, the Magnificent Merchant, anything and I'll give you an answer.<br>",
             "I'll even give you some coins in return because I'm so nice!"
         ],
-        options: [
-            {
-    id: 1,
-    question: "What is this place?",
-    response: {
-        speaker: "merchant",
-        lines: [
-            {speaker: "player", text: "I washed up here after.. well honestly I don't remember what happened. Where exactly am I and what is this place?"},
-            {speaker: "merchant", text: "This island is by no means ordinary, and I can't expect you to understand this place just by taking my words."},
-            {speaker: "merchant", text: "To be frank, I'm just as clueless to how you got here as you are, but I'm glad you did."},
-            {speaker: "player", text: "Ok but what is this place though? I still don't understand what's going on."},
-            {speaker: "merchant", text: "As I said, I can't expect you to understand this place just by taking my words."},
-            {speaker: "merchant", text: "This island has a rich history and it's impossible to exactly describe this island to an outsider."},
-            {speaker: "player", text: "What about this island's history is so rich? Why is it so hard for you to just tell me where I am, or how I can at least get back home?"},
-            {speaker: "merchant", text: "I'm afraid it's not that simple.."},
-            {speaker: "merchant", text: "The cove has chosen you, so I wouldn't think about going back \"home\" any time soon."},
-            {speaker: "player", text: "???"}
-        ]
-    },
-    reward: 25,
-    completed: false
-},
-            {
-    id: 2,
-    question: "Who are you really?",
-    response: {
-        speaker: "merchant",
-        lines: [
-            {speaker: "player", text: "I know you call yourself the Magnificent Merchant, but who are you really?"},
-            {speaker: "merchant", text: "Why, what do you mean? I am the Magnificent Merchant, it's that simple really."},
-            {speaker: "player", text: "No but I mean like, where did you come from? What is your origin story?"},
-            {speaker: "merchant", text: "I was born on this island many years ago. I never knew my parents, so I had to raise myself on this island, alone."},
-            {speaker: "merchant", text: "There used to be a thriving community on this island, and my job was being a common merchantman."},
-	    {speaker: "merchant", text: "I wasn't respected very much, and I was quite poor because my sales were failing."},
-	    {speaker: "merchant", text: "That was until one day, while going out for a jog, I discovered coins flowing in from a nearby cove."},
-	    {speaker: "merchant", text: "I stared at the coins and started picking them up, and then more coins came, and more, and more."},
-	    {speaker: "merchant", text: "But then suddenly the coins stopped coming, and.. I don't remember what happened next.."},
-            {speaker: "player", text: "What do you mean you don't remember what happened next???"},
-            {speaker: "merchant", text: "All I remember is that the coins stopped coming and.. next thing I know I'm still at the same cove but the area looks different."},
-            {speaker: "merchant", text: "I look around the area, and the entire community of people is gone. Extinct. I was the only person on the island."},
-	    {speaker: "merchant", text: "So I came back to this cove, and made it my new living space."},
-            {speaker: "merchant", text: "Then you showed up."},
-	    {speaker: "player", text: "..."},
+        options: [{
+                id: 1,
+                question: "What is this place?",
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "player",
+                            text: "I washed up here after.. well honestly I don't remember what happened. Where exactly am I and what is this place?"
+                        }, {
+                            speaker: "merchant",
+                            text: "This island is by no means ordinary, and I can't expect you to understand this place just by taking my words."
+                        }, {
+                            speaker: "merchant",
+                            text: "To be frank, I'm just as clueless to how you got here as you are, but I'm glad you did."
+                        }, {
+                            speaker: "player",
+                            text: "Ok but what is this place though? I still don't understand what's going on."
+                        }, {
+                            speaker: "merchant",
+                            text: "As I said, I can't expect you to understand this place just by taking my words."
+                        }, {
+                            speaker: "merchant",
+                            text: "This island has a rich history and it's impossible to exactly describe this island to an outsider."
+                        }, {
+                            speaker: "player",
+                            text: "What about this island's history is so rich? Why is it so hard for you to just tell me where I am, or how I can at least get back home?"
+                        }, {
+                            speaker: "merchant",
+                            text: "I'm afraid it's not that simple.."
+                        }, {
+                            speaker: "merchant",
+                            text: "The Cove has chosen you, so I wouldn't think about going back \"home\" any time soon."
+                        }, {
+                            speaker: "player",
+                            text: "???"
+                        }
+                    ]
+                },
+                reward: 25,
+                completed: false
+            }, {
+                id: 2,
+                question: "Who are you really?",
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "player",
+                            text: "I know you call yourself the Magnificent Merchant, but who are you really?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Why, what do you mean? I am the Magnificent Merchant, it's that simple really."
+                        }, {
+                            speaker: "player",
+                            text: "No but I mean like, where did you come from? What is your origin story?"
+                        }, {
+                            speaker: "merchant",
+                            text: "I was born on this island many years ago. I never knew my parents, so I had to raise myself on this island, alone."
+                        }, {
+                            speaker: "merchant",
+                            text: "There used to be a thriving community on this island, and my job was being a common merchantman."
+                        }, {
+                            speaker: "merchant",
+                            text: "I wasn't respected very much, and I was quite poor because my sales were failing."
+                        }, {
+                            speaker: "merchant",
+                            text: "That was until one day, while going out for a jog, I discovered coins flowing in from a nearby cove."
+                        }, {
+                            speaker: "merchant",
+                            text: "I stared at the coins and started picking them up, and then more coins came, and more, and more."
+                        }, {
+                            speaker: "merchant",
+                            text: "But then suddenly the coins stopped coming, and.. I don't remember what happened next.."
+                        }, {
+                            speaker: "player",
+                            text: "What do you mean you don't remember what happened next???"
+                        }, {
+                            speaker: "merchant",
+                            text: "All I remember is that the coins stopped coming and.. next thing I know I'm still at the same cove but the area looks different."
+                        }, {
+                            speaker: "merchant",
+                            text: "I look around the area, and the entire community of people is gone. Extinct. I was the only person on the island."
+                        }, {
+                            speaker: "merchant",
+                            text: "So I came back to this Cove, and made it my new living space."
+                        }, {
+                            speaker: "merchant",
+                            text: "Then you showed up."
+                        }, {
+                            speaker: "player",
+                            text: "..."
+                        },
 
-        ]
-    },
-    reward: 25000, // reward is so high for testing purposes
-    completed: false
-},
-            {
-    id: 3,
-    question: "Why do the coins keep appearing?",
-    response: {
-        speaker: "merchant",
-        lines: [
-            {speaker: "player", text: "Where are all these coins coming from?"},
-            {speaker: "merchant", text: "The Coin Cove is a very mysterious place, and it'd be hard to exactly tell you how it works."},
-            {speaker: "merchant", text: "Just know that I am able to use my magnificent magic to control the flow of these coins, though I require coins to do so in the first place."},
-            {speaker: "player", text: "What the hell are you talking about??? What do you mean magic???"},
-            {speaker: "merchant", text: "[Player], it would be too hard to explain what I mean when I say magic, but you should know that I have a powerful connection to this cove."},
-            {speaker: "player", text: "What so is the cove a living being or something??? Why are you speaking in riddles???"},
-            {speaker: "merchant", text: "You will learn more about this island in due time, if you just keep collecting coins."},
-            {speaker: "merchant", text: "Everyone loves collecting coins, and you should too."},
-	    {speaker: "player", text: "But where are the coins coming from.."},
-	    {speaker: "merchant", text: "As I have said, that is something too difficult for me to explain at the moment."},
-	    {speaker: "player", text: "..."},
-        ]
-    },
-    reward: 25,
-    completed: false
-},
+                    ]
+                },
+                reward: 25000, // reward is so high for testing purposes
+                completed: false
+            }, {
+                id: 3,
+                question: "Why do the coins keep appearing?",
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "player",
+                            text: "Where are all these coins coming from?"
+                        }, {
+                            speaker: "merchant",
+                            text: "The Coin Cove is a very mysterious place, and it'd be hard to exactly tell you how it works."
+                        }, {
+                            speaker: "merchant",
+                            text: "Just know that I am able to use my magnificent magic to control the flow of these coins, though I require coins to do so in the first place."
+                        }, {
+                            speaker: "player",
+                            text: "What the hell are you talking about??? What do you mean magic???"
+                        }, {
+                            speaker: "merchant",
+                            text: "[Player], it would be too hard to explain what I mean when I say magic, but you should know that I have a powerful connection to this Cove."
+                        }, {
+                            speaker: "player",
+                            text: "What so is the cove a living thing or something??? Why are you speaking in riddles???"
+                        }, {
+                            speaker: "merchant",
+                            text: "You will learn more about this island in due time, if you just keep collecting coins."
+                        }, {
+                            speaker: "merchant",
+                            text: "Everyone loves collecting coins, and you should too."
+                        }, {
+                            speaker: "player",
+                            text: "But where are the coins coming from.."
+                        }, {
+                            speaker: "merchant",
+                            text: "As I have said, that is something too difficult for me to explain at the moment."
+                        }, {
+                            speaker: "player",
+                            text: "..."
+                        },
+                    ]
+                },
+                reward: 25,
+                completed: false
+            }, {
+                id: 4,
+                hidden: true,
+                question: "What are special coins?",
+                requirement: (saveData) => (saveData.upgrades?.[2]?.level || 0) >= 1,
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "merchant",
+                            text: "Ah, you've discovered the special coins..."
+                        }, {
+                            speaker: "player",
+                            text: "Yes, where are they coming from? Why are they blue?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Well, these coins are very special."
+                        }, {
+                            speaker: "merchant",
+                            text: "These coins are imbued with magical energy, and only those who are wise enough (i.e., have enough XP) can understand the true power they hold."
+                        }, {
+                            speaker: "merchant",
+                            text: "Long ago, many of these special coins were formed in the deep depths where no one has ever been."
+                        }, {
+                            speaker: "merchant",
+                            text: "The Cove can feel your energy residing through each and every coin you pick up, which empowers it, which gives it more energy."
+                        }, {
+                            speaker: "merchant",
+                            text: "You may not realize it now, but each special coin you pick up brings you closer to understand the Cove's true power."
+                        }, {
+                            speaker: "merchant",
+                            text: "The Cove chose you, [Player], because it sensed something special within you."
+                        }, {
+                            speaker: "merchant",
+                            text: "With each coin you collect, you'll come to understand more about why you're here—about why you're meant to be collecting coins here at the Cove."
+                        }, {
+                            speaker: "player",
+                            text: "The Cove is a living thing???"
+                        }, {
+                            speaker: "player",
+                            text: "???"
+                        }
+                    ]
+                },
+                reward: 250,
+                completed: false
+            }
         ]
     }
 };
-
-
 
 function showDialogue() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const playerName = saveData.playerName || "Traveler";
 
+    // Remove existing dialogue container if it exists
+    const existingContainer = document.querySelector('.dialogue-container');
+    if (existingContainer)
+        existingContainer.remove();
+
     const container = document.createElement('div');
     container.className = 'dialogue-container';
     container.innerHTML = `
         <div class="dialogue-box">
-            <!-- Merchant name plate only for merchant dialogue -->
             ${currentDialogue.speaker === 'merchant' ? 
-                `<div class="speaker-name merchant-name">Magnificent Merchant</div>` : ''}
+        `<div class="speaker-name merchant-name">Magnificent Merchant</div>` : ''}
             <div class="merchant-message">${currentDialogue.text.join('<br>').replace(/\[Player\]/g, playerName)}</div>
             <div class="dialogue-options"></div>
             <div class="replay-container"></div>
@@ -105,28 +221,42 @@ function showDialogue() {
     `;
 
     const optionsContainer = container.querySelector('.dialogue-options');
+
     merchantDialogues.introduction.options.forEach(option => {
+        const requirementMet = option.requirement ? option.requirement(saveData) : true;
+        const isMysterious = option.hidden && !requirementMet;
+
         const optionElement = document.createElement('div');
-        optionElement.className = `dialogue-option ${option.completed ? 'completed' : ''}`;
+        optionElement.className = `dialogue-option
+            ${option.completed ? 'completed' : ''} 
+            ${isMysterious ? 'mysterious' : ''}`;
+
+        // Use the actual question text if the requirement is met, otherwise show "???"
+        const questionText = isMysterious ? "???" : option.question;
+
         optionElement.innerHTML = `
-            ${option.question}
-            ${!option.completed ? `<span class="reward-indicator">(+${option.reward} <img src="Images/coin.png" class="coin-icon">)</span>` : ''}
+            ${questionText}
+            ${!option.completed && requirementMet ? 
+`<span class="reward-indicator">(+${option.reward} <img src="Images/coin.png" class="coin-icon">)</span>`
+             : ''}
         `;
 
-        // Add the "Ask Again" button if the option is completed
+        // Add ask-again button if completed
         if (option.completed) {
             const askAgainButton = document.createElement('button');
             askAgainButton.className = 'ask-again-btn';
             askAgainButton.textContent = '↻ Ask Again';
-            askAgainButton.addEventListener('click', () => {
-                handleDialogueChoice(option, optionElement);
-            });
+            askAgainButton.addEventListener('click', () => handleDialogueChoice(option, optionElement));
             optionElement.appendChild(askAgainButton);
         }
 
-        // Add click handler for incomplete options
+        // Handle clickability
         if (!option.completed) {
-            optionElement.addEventListener('click', () => handleDialogueChoice(option, optionElement));
+            optionElement.style.cursor = requirementMet ? 'pointer' : 'not-allowed';
+            optionElement.style.opacity = requirementMet ? 1 : 0.6;
+            if (requirementMet) {
+                optionElement.addEventListener('click', () => handleDialogueChoice(option, optionElement));
+            }
         }
 
         optionsContainer.appendChild(optionElement);
@@ -134,7 +264,8 @@ function showDialogue() {
 
     // Add close handlers
     container.addEventListener('click', (e) => {
-        if (e.target === container) closeDialogue();
+        if (e.target === container)
+            closeDialogue();
     });
 
     document.addEventListener('keydown', handleDialogueEscape);
@@ -160,6 +291,13 @@ function closeDialogue() {
 
 function handleDialogueChoice(option, element) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+    if (option.requirement && !option.requirement(saveData)) {
+        element.classList.add('disabled');
+        element.style.pointerEvents = 'none';
+        return;
+    }
+
     if (!saveData.playerName) {
         showNameModal();
         return; // Exit if the player hasn't set a name
@@ -173,13 +311,13 @@ function handleDialogueChoice(option, element) {
     let currentDialoguePart = 0; // Track the current part of the dialogue
 
     // Function to show the current part of the dialogue
-       const showDialoguePart = () => {
+    const showDialoguePart = () => {
         const currentLine = option.response.lines[currentDialoguePart];
         const playerName = saveData.playerName || "Traveler";
-        
-        const speakerName = currentLine.speaker === 'merchant' 
-            ? '<div class="speaker-name merchant-name">Magnificent Merchant</div>'
-            : `<div class="speaker-name player-name">${playerName}</div>`;
+
+        const speakerName = currentLine.speaker === 'merchant'
+             ? '<div class="speaker-name merchant-name">Magnificent Merchant</div>'
+             : `<div class="speaker-name player-name">${playerName}</div>`;
 
         const responseHTML = `
             ${speakerName}
@@ -202,14 +340,16 @@ function handleDialogueChoice(option, element) {
                 showDialoguePart();
             } else {
                 if (!option.completed) {
+                    // ADD THE MISSING REWARD LOGIC HERE
                     coinCount += option.reward;
                     updateCoinDisplay();
+
                     option.completed = true;
                     saveDialogueProgress();
+                    updateGoalDisplay();
                 }
                 closeDialogue();
                 showDialogue();
-		updateGoalDisplay();
             }
         });
     };
@@ -220,9 +360,9 @@ function handleDialogueChoice(option, element) {
 function saveDialogueProgress() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     saveData.dialogues = merchantDialogues.introduction.options.map(option => ({
-        id: option.id,
-        completed: option.completed
-    }));
+                id: option.id,
+                completed: option.completed
+            }));
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 }
 
@@ -231,7 +371,8 @@ function loadDialogueProgress() {
     if (saveData.dialogues) {
         merchantDialogues.introduction.options.forEach(option => {
             const saved = saveData.dialogues.find(d => d.id === option.id);
-            if (saved) option.completed = saved.completed;
+            if (saved)
+                option.completed = saved.completed;
         });
     }
 }
@@ -282,7 +423,7 @@ function showNameModal() {
             const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
             saveData.playerName = newName;
             localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-            
+
             nameModal.remove();
             currentDialogue = merchantDialogues.introduction;
             loadDialogueProgress();
@@ -316,15 +457,15 @@ const upgrades = {
         mysterious: true // New property for styling
     },
     3: {
-         	id: 3,
-          	upgName: "Educated Coins",
-        	upgDesc: "Make those coins become educated, improving their XP output!",
-        	upgBenefits: "1.1x XP per level",
-       	baseCost: 1000,
-       	maxLevel: 10,
-       	currentLevel: 0,
-        	scaling: (baseCost, level) => (baseCost + 2 * level) * Math.pow(1.1, level),
-       	mysterious: true
+        id: 3,
+        upgName: "Educated Coins",
+        upgDesc: "Make those coins become educated, improving their XP output!",
+        upgBenefits: "1.1x XP per level",
+        baseCost: 1000,
+        maxLevel: 10,
+        currentLevel: 0,
+        scaling: (baseCost, level) => (baseCost + 2 * level) * Math.pow(1.1, level),
+        mysterious: true
     }
 };
 
@@ -429,46 +570,61 @@ let windSoundInitialized = false;
 
 function initializeWindSound() {
     const windSound = document.getElementById('wind-sound');
-    
-    document.body.addEventListener('click', async (event) => {
-        if (windSoundInitialized) return;
-        
+
+    document.body.addEventListener('click', async(event) => {
+        if (windSoundInitialized)
+            return;
+
         // Only play sound if clicking an empty save slot
         const saveSlot = event.target.closest('.save-slot');
-        if (!saveSlot || saveSlot.classList.contains('has-data')) return;
+        if (!saveSlot || saveSlot.classList.contains('has-data'))
+            return;
 
         // Don't play if clicking management UI
-        if (event.target.closest('.manage-saves-btn')) return;
+        if (event.target.closest('.manage-saves-btn'))
+            return;
 
         try {
-            if (windSound.context) await windSound.context.resume();
+            if (windSound.context)
+                await windSound.context.resume();
             await windSound.play();
             windSoundInitialized = true;
         } catch (err) {
             console.error('Sound error:', err);
         }
-    }, { once: true });
+    }, {
+        once: true
+    });
 }
 
 let windSoundTimeout = null;
 
 // Save slot data structure
 let saveSlots = [1, 2, 3].map(id => ({
-    id,
-    data: JSON.parse(localStorage.getItem(`saveSlot${id}`)),
-    element: null,
-    get isData() { return this.data !== null }
-}));
+        id,
+        data: JSON.parse(localStorage.getItem(`saveSlot${id}`)),
+        element: null,
+        get isData() {
+            return this.data !== null
+        }
+    }));
 
 // Cinematic slideshow data
-const cinematicSlides = [
-    { text: "🌊 🌊 🌊.. 𝘵𝘩𝘦 𝘸𝘢𝘷𝘦𝘴 𝘨𝘳𝘰𝘸 𝘭𝘰𝘶𝘥𝘦𝘳.." },
-    { text: "It must have been a bad dream, a terribly bad nightmare.." },
-    { text: "Where is the boat?.. Where are my friends?.." },
-    { text: "Where am 𝘐?.." },
-    { text: "..." },
-    { text: "What.. What is that in the water?.." },
-    { text: "Is that.. Are those.. 𝘤𝘰𝘪𝘯𝘴?.." },
+const cinematicSlides = [{
+        text: "🌊 🌊 🌊.. 𝘵𝘩𝘦 𝘸𝘢𝘷𝘦𝘴 𝘨𝘳𝘰𝘸 𝘭𝘰𝘶𝘥𝘦𝘳.."
+    }, {
+        text: "It must have been a bad dream, a terribly bad nightmare.."
+    }, {
+        text: "Where is the boat?.. Where are my friends?.."
+    }, {
+        text: "Where am 𝘐?.."
+    }, {
+        text: "..."
+    }, {
+        text: "What.. What is that in the water?.."
+    }, {
+        text: "Is that.. Are those.. 𝘤𝘰𝘪𝘯𝘴?.."
+    },
 ];
 
 let currentSlide = 0;
@@ -483,14 +639,14 @@ function initializeSaveSlots() {
     saveSlots.forEach((slot) => {
         const slotElement = document.createElement('div');
         slotElement.className = `save-slot ${slot.data ? 'has-data' : 'empty'} ${manageMode ? 'manage-mode' : ''}`;
-        
+
         // Safely check merchant status
         const hasMerchant = slot.data?.merchantCinematicShown || false;
         const timestamp = slot.data?.timestamp ? new Date(slot.data.timestamp).toLocaleDateString() : 'No date';
-        
+
         // Round the displayed coin value
         const displayCoins = slot.data ? Math.round(slot.data.coins || 0) : 0;
-        
+
         slotElement.innerHTML = `
             <div class="slot-number">Slot ${slot.id}</div>
             ${slot.data ? `
@@ -498,13 +654,14 @@ function initializeSaveSlots() {
                     <div>Coins: ${displayCoins}</div>
                     ${hasMerchant ? '<div class="merchant-unlocked">Merchant Unlocked</div>' : ''}
                     <div>Created on: ${timestamp}</div>
-                </div>` : 
-                '<div class="no-data">No Save Data</div>'}
+                </div>` :
+            '<div class="no-data">No Save Data</div>'}
         `;
 
         // Reattach click handler
         slotElement.addEventListener('click', (e) => {
-            if (e.target.closest('.save-slot')) handleSlotClick(slot);
+            if (e.target.closest('.save-slot'))
+                handleSlotClick(slot);
         });
 
         slot.element = slotElement;
@@ -522,7 +679,7 @@ function handleSlotClick(slot) {
                 localStorage.removeItem(`saveSlot${slot.id}`);
                 slot.data = null;
                 initializeSaveSlots();
-                
+
                 // Reset sound initialization
                 windSoundInitialized = false;
                 initializeWindSound();
@@ -531,7 +688,8 @@ function handleSlotClick(slot) {
         return;
     }
 
-    if (!isSlotClickable) return;
+    if (!isSlotClickable)
+        return;
     isSlotClickable = false;
     currentSlotId = slot.id;
 
@@ -548,7 +706,7 @@ function updateSlotDisplay(slot) {
     const element = slot.element;
     element.classList.remove('empty');
     element.querySelector('.no-data')?.remove();
-    
+
     if (!slot.isData) {
         element.innerHTML += '<div class="no-data">No Save Data</div>';
     }
@@ -563,37 +721,39 @@ function startCinematic() {
     }
     const overlay = document.querySelector('.cinematic-overlay');
     const bars = document.querySelectorAll('.top-bar, .bottom-bar');
-    
+
     // Reset state
     currentSlide = 0;
     canAdvance = false; // Start with advancing disabled
     overlay.style.display = 'block';
-    
+
     // Add skip button
     addSkipButton();
 
     // Animate bars
-        bars.forEach(bar => bar.style.transform = 'scaleY(1)');
-        document.querySelector('.slideshow-container').style.opacity = '1';
-        showNextSlide();
-        
-        // Start 3-second delay for first slide
-        cinematicTimeout = setTimeout(() => {
-            showClickPrompt();
-            canAdvance = true; // Enable advancing after delay
-        }, 5000);
+    bars.forEach(bar => bar.style.transform = 'scaleY(1)');
+    document.querySelector('.slideshow-container').style.opacity = '1';
+    showNextSlide();
+
+    // Start 3-second delay for first slide
+    cinematicTimeout = setTimeout(() => {
+        showClickPrompt();
+        canAdvance = true; // Enable advancing after delay
+    }, 5000);
 
     // Click handler for advancing slides
     overlay.addEventListener('click', handleCinematicClick);
 }
 
 function handleCinematicClick() {
-    if (!canAdvance) return;
+    if (!canAdvance)
+        return;
 
     const container = document.querySelector('.slideshow-container');
     const currentText = container.querySelector('.lore-text');
 
-    if (cinematicTimeout) clearTimeout(cinematicTimeout);
+    if (cinematicTimeout)
+        clearTimeout(cinematicTimeout);
 
     canAdvance = false;
     currentText.classList.remove('visible');
@@ -613,13 +773,12 @@ function handleCinematicClick() {
     }, 2000);
 }
 
-
 function showNextSlide() {
     const container = document.querySelector('.slideshow-container');
     const slide = container.querySelector('.slide');
-    
+
     slide.innerHTML = `<p class="lore-text">${cinematicSlides[currentSlide].text}</p>`;
-    
+
     // Wait 100ms for DOM update before starting animation
     setTimeout(() => {
         slide.querySelector('.lore-text').classList.add('visible');
@@ -640,17 +799,18 @@ function showContinueButton() {
     const btn = document.querySelector('.continue-btn');
     const overlay = document.querySelector('.cinematic-overlay');
     const skipBtn = document.querySelector('.skip-btn');
-    
+
     // Remove click handler for slides
     overlay.removeEventListener('click', handleCinematicClick);
-    
+
     // Safely remove skip button
-    if (skipBtn) skipBtn.remove();
-    
+    if (skipBtn)
+        skipBtn.remove();
+
     // Show immediately with animation
     btn.style.display = 'block';
     btn.style.opacity = '0';
-    
+
     // Animate fade-in
     setTimeout(() => {
         btn.style.opacity = '1';
@@ -660,21 +820,21 @@ function showContinueButton() {
     btn.addEventListener('click', () => {
         overlay.style.display = 'none';
         document.getElementById('wind-sound').pause();
-        
+
         // Create new save data
         const newSave = {
             coins: 0,
             upgrades: {},
-	    merchantCinematicShown: false,
+            merchantCinematicShown: false,
             timestamp: Date.now()
         };
-        
+
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(newSave));
         saveSlots.find(s => s.id === currentSlotId).data = newSave;
         initializeSaveSlots();
         startGame();
     });
-    
+
     // Immediately hide click prompt
     const prompt = document.querySelector('.click-prompt');
     if (prompt) {
@@ -694,7 +854,7 @@ function addSkipButton() {
         currentSlide = cinematicSlides.length - 1;
         handleCinematicClick();
     });
-    
+
     document.querySelector('.cinematic-overlay').appendChild(skipBtn);
 }
 
@@ -719,22 +879,31 @@ function loadGame(saveData) {
     // Get the name from the save slot's data
     const playerName = saveData.playerName || "Traveler";
     console.log(`Welcome back, ${playerName}!`);
-    
+
     // Create normalized save data
     const fullSaveData = {
         coins: 0,
-        upgrades: { 1: { level: 0 } }, // Default structure
+        upgrades: {
+            1: {
+                level: 0
+            }
+        }, // Default structure
         merchantCinematicShown: false,
         timestamp: Date.now(),
         ...saveData
     };
 
     // Initialize upgrades data
-    if (!fullSaveData.upgrades) fullSaveData.upgrades = {};
-    if (!fullSaveData.upgrades[1]) fullSaveData.upgrades[1] = { level: 0 };
+    if (!fullSaveData.upgrades)
+        fullSaveData.upgrades = {};
+    if (!fullSaveData.upgrades[1])
+        fullSaveData.upgrades[1] = {
+            level: 0
+        };
 
     // Initialize special upgrades data
-    if (!fullSaveData.specialUpgrades) fullSaveData.specialUpgrades = {};
+    if (!fullSaveData.specialUpgrades)
+        fullSaveData.specialUpgrades = {};
 
     // Load state
     coinCount = fullSaveData.coins || 0; // Load precise coin count
@@ -751,8 +920,7 @@ function loadGame(saveData) {
         updateXPDisplay(
             saveData.xp || 0,
             saveData.level || 0,
-            saveData.xpNeeded || 10
-        );
+            saveData.xpNeeded || 10);
     } else {
         xpContainer.style.display = 'none';
     }
@@ -762,23 +930,25 @@ function loadGame(saveData) {
 
     // Update slot data reference
     const slot = saveSlots.find(s => s.id === currentSlotId);
-    if (slot) slot.data = fullSaveData;
+    if (slot)
+        slot.data = fullSaveData;
 
     // Update goal display
-    if (merchantCinematicShown) currentGoal = 10;
+    if (merchantCinematicShown)
+        currentGoal = 10;
     updateGoalDisplay();
 
     // Load dialogue progress
     loadDialogueProgress();
 
     // Start game and apply upgrades
-    startGame();
     applyUpgradeEffects();
+    startGame();
 }
 
 function startGame() {
     const windSound = document.getElementById('wind-sound');
-    
+
     // Clear any pending wind sound timeout
     if (windSoundTimeout) {
         clearTimeout(windSoundTimeout);
@@ -794,24 +964,26 @@ function startGame() {
     if (musicManager.isMusicOn) {
         musicManager.playRandom();
     }
-    
+
     document.body.classList.add('game-active');
     document.querySelector('.game-screen').style.display = 'block';
-    
+
     // Clear existing elements
     beachContainer.innerHTML = '';
     document.querySelector('.menu-container').style.display = 'none';
-    
+
     // Clear any existing intervals
     if (window.spawnInterval) {
         clearInterval(window.spawnInterval);
     }
-    
+
     // Start coin spawning
     spawnCoin();
     window.spawnInterval = setInterval(() => {
-        if (!gameActive) clearInterval(window.spawnInterval);
-        else spawnCoin();
+        if (!gameActive)
+            clearInterval(window.spawnInterval);
+        else
+            spawnCoin();
     }, 3000);
 
     // Show goal message and merchant button
@@ -820,8 +992,9 @@ function startGame() {
 }
 
 function spawnCoin() {
-    if (!gameActive) return;
-    
+    if (!gameActive)
+        return; // Prevent spawning when game is inactive
+
     // Get current spawn rate
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const upgradeLevel = saveData.upgrades?.[1]?.level || 0;
@@ -829,25 +1002,25 @@ function spawnCoin() {
 
     const coin = document.createElement('div');
     coin.className = 'coin';
-    
-    // Force DOM update before animation
+
     requestAnimationFrame(() => {
-        // Set initial position
+        if (!gameActive)
+            return; // Additional safety check
+
         const startX = Math.random() * (beachContainer.offsetWidth - 40);
         coin.style.left = `${startX}px`;
         coin.style.top = `-50px`;
         beachContainer.appendChild(coin);
 
-        // Force layout recalculation
-        void coin.offsetHeight;
+        void coin.offsetHeight; // Force layout recalculation
 
-        // Animate with transition
         coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
         coin.style.left = `${startX + (Math.random() * 100 - 50)}px`;
         coin.style.top = `${Math.random() * (beachContainer.offsetHeight - 40) + 20}px`;
 
-        // Enable collection after 300ms
         setTimeout(() => {
+            if (!gameActive)
+                return; // Final safety check
             coin.classList.add('collectable');
             addHoverEffect(coin);
         }, 100);
@@ -859,87 +1032,88 @@ function addHoverEffect(coin) {
     let previousLevel = 0;
 
     function collectCoin() {
-    if (collected) return;
-    collected = true;
+        if (collected)
+            return;
+        collected = true;
 
-    // Play coin sound
-    const coinSound = document.getElementById('coin-sound').cloneNode();
-    coinSound.volume = 0.3;
-    coinSound.play().catch(console.error);
+        // Play coin sound
+        const coinSound = document.getElementById('coin-sound').cloneNode();
+        coinSound.volume = 0.3;
+        coinSound.play().catch(console.error);
 
-    // Get current save data
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        // Get current save data
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
 
-    // Apply coin value multiplier
-    const coinValueMultiplier = getCoinValueMultiplier();
-    coinCount += 1 * coinValueMultiplier;
-    updateCoinDisplay(); // Update display with rounded value
+        // Apply coin value multiplier
+        const coinValueMultiplier = getCoinValueMultiplier();
+        coinCount += 1 * coinValueMultiplier;
+        updateCoinDisplay(); // Update display with rounded value
 
-    // Store previous level before updating
-    previousLevel = saveData.level || 0;
+        // Store previous level before updating
+        previousLevel = saveData.level || 0;
 
-    // Check if Special Coins upgrade is active
-    const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
+        // Check if Special Coins upgrade is active
+        const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
 
-    // Handle XP if upgrade is active
-    if (hasSpecialCoins) {
-        // Initialize XP data if not present
-        if (typeof saveData.xp === 'undefined') {
-            saveData.xp = 0; // Start with 0 XP
-            saveData.level = 0;
-            saveData.xpNeeded = 10;
+        // Handle XP if upgrade is active
+        if (hasSpecialCoins) {
+            // Initialize XP data if not present
+            if (typeof saveData.xp === 'undefined') {
+                saveData.xp = 0; // Start with 0 XP
+                saveData.level = 0;
+                saveData.xpNeeded = 10;
+            }
+
+            // Calculate XP gain with multiplier
+            const xpGain = 1 * getXPMultiplier(); // Apply multiplier here
+            saveData.xp += xpGain;
+
+            // Process level up
+            while (saveData.xp >= saveData.xpNeeded) {
+                saveData.xp -= saveData.xpNeeded;
+                saveData.level += 1;
+                saveData.xpNeeded = 10 * Math.pow(1.1, saveData.level);
+            }
+
+            // Check for level up and spawn special coin
+            if (saveData.level > previousLevel) {
+                spawnSpecialCoin();
+            }
+
+            // Update XP display
+            updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
         }
 
-        // Calculate XP gain with multiplier
-        const xpGain = 1 * getXPMultiplier(); // Apply multiplier here
-        saveData.xp += xpGain;
+        // Create updated save data
+        const updatedData = {
+            ...saveData,
+            coins: coinCount, // Store precise value
+            merchantCinematicShown: merchantCinematicShown,
+            timestamp: saveData.timestamp || Date.now()
+        };
 
-        // Process level up
-        while (saveData.xp >= saveData.xpNeeded) {
-            saveData.xp -= saveData.xpNeeded;
-            saveData.level += 1;
-            saveData.xpNeeded = 10 * Math.pow(1.1, saveData.level);
+        // Save updated data
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+
+        // Animate coin collection
+        coin.style.transform = 'scale(2) translateY(-20px)';
+        coin.style.opacity = '0';
+
+        // Remove coin after animation
+        setTimeout(() => coin.remove(), 500);
+
+        // Update slot display
+        const slot = saveSlots.find(s => s.id === currentSlotId);
+        if (slot) {
+            slot.data = updatedData;
+            initializeSaveSlots(); // Refresh UI
         }
 
-        // Check for level up and spawn special coin
-        if (saveData.level > previousLevel) {
-            spawnSpecialCoin();
+        // Update goal display if needed
+        if (coinCount < currentGoal || !merchantCinematicShown) {
+            updateGoalDisplay();
         }
-
-        // Update XP display
-        updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
     }
-
-    // Create updated save data
-    const updatedData = {
-        ...saveData,
-        coins: coinCount, // Store precise value
-        merchantCinematicShown: merchantCinematicShown,
-        timestamp: saveData.timestamp || Date.now()
-    };
-
-    // Save updated data
-    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-
-    // Animate coin collection
-    coin.style.transform = 'scale(2) translateY(-20px)';
-    coin.style.opacity = '0';
-
-    // Remove coin after animation
-    setTimeout(() => coin.remove(), 500);
-
-    // Update slot display
-    const slot = saveSlots.find(s => s.id === currentSlotId);
-    if (slot) {
-        slot.data = updatedData;
-        initializeSaveSlots(); // Refresh UI
-    }
-
-    // Update goal display if needed
-    if (coinCount < currentGoal || !merchantCinematicShown) {
-        updateGoalDisplay();
-    }
-}
 
     // Desktop hover
     coin.addEventListener('mouseenter', collectCoin);
@@ -952,15 +1126,16 @@ function addHoverEffect(coin) {
 }
 
 function spawnSpecialCoin() {
-    if (!gameActive) return;
-    
+    if (!gameActive)
+        return;
+
     const coin = document.createElement('div');
     coin.className = 'special-coin';
-    
+
     // Get container dimensions
     const containerWidth = beachContainer.offsetWidth;
     const containerHeight = beachContainer.offsetHeight;
-    
+
     requestAnimationFrame(() => {
         // Random starting position across full width
         const startX = Math.random() * (containerWidth - 50);
@@ -973,15 +1148,14 @@ function spawnSpecialCoin() {
 
         // Animate with transition
         coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
-        
+
         // Random end position within container bounds
         const endX = Math.max(10, Math.min(
-            startX + (Math.random() * 100 - 50),
-            containerWidth - 50
-        ));
-        
+                    startX + (Math.random() * 100 - 50),
+                    containerWidth - 50));
+
         const endY = Math.random() * (containerHeight - 50) + 20;
-        
+
         coin.style.left = `${endX}px`;
         coin.style.top = `${endY}px`;
 
@@ -997,7 +1171,8 @@ function addSpecialCoinHoverEffect(coin) {
     let collected = false;
 
     function collectSpecialCoin() {
-        if (collected) return;
+        if (collected)
+            return;
         collected = true;
         coin.classList.add('collected');
 
@@ -1007,16 +1182,16 @@ function addSpecialCoinHoverEffect(coin) {
 
         // Ensure sound plays
         specialCoinSound.play()
-            .then(() => {
-                // Sound played successfully
-            })
-            .catch((error) => {
-                console.error('Error playing special coin sound:', error);
-                // Fallback to regular coin sound
-                const fallbackSound = document.getElementById('coin-sound').cloneNode(true);
-                fallbackSound.volume = 0.6;
-                fallbackSound.play();
-            });
+        .then(() => {
+            // Sound played successfully
+        })
+        .catch((error) => {
+            console.error('Error playing special coin sound:', error);
+            // Fallback to regular coin sound
+            const fallbackSound = document.getElementById('coin-sound').cloneNode(true);
+            fallbackSound.volume = 0.6;
+            fallbackSound.play();
+        });
 
         // Update special coin count
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
@@ -1069,8 +1244,12 @@ function updateXPDisplay(currentXP, currentLevel, xpNeeded) {
 
 function getXPMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const specialUpgrade1 = saveData.specialUpgrades?.[1] || { level: 0 }; // Wisdom Boost
-    const upgrade3 = saveData.upgrades?.[3] || { level: 0 }; // Educated Coins
+    const specialUpgrade1 = saveData.specialUpgrades?.[1] || {
+        level: 0
+    }; // Wisdom Boost
+    const upgrade3 = saveData.upgrades?.[3] || {
+        level: 0
+    }; // Educated Coins
 
     // Combine multipliers: 1.25^WisdomBoostLevel * 1.1^EducatedCoinsLevel
     return Math.pow(1.25, specialUpgrade1.level) * Math.pow(1.1, upgrade3.level);
@@ -1078,9 +1257,11 @@ function getXPMultiplier() {
 
 function getCoinValueMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgrade = saveData.specialUpgrades?.[2] || { level: 0 };
+    const upgrade = saveData.specialUpgrades?.[2] || {
+        level: 0
+    };
     const playerLevel = saveData.level || 0;
-    
+
     // Combine both multipliers: 1.25^upgradeLevel * 1.05^playerLevel
     return Math.pow(1.25, upgrade.level) * Math.pow(1.05, playerLevel);
 }
@@ -1088,7 +1269,7 @@ function getCoinValueMultiplier() {
 function updateCoinDisplay() {
     // Always show rounded value but keep precise internal count
     coinCounter.textContent = `Coins: ${Math.round(coinCount)}`;
-    
+
     // Update merchant display if open
     const merchantCoinCount = document.getElementById('merchant-coin-count');
     if (merchantCoinCount) {
@@ -1124,14 +1305,15 @@ const musicManager = {
     currentTrackIndex: 0,
     shuffledTracks: [],
     isMusicOn: localStorage.getItem('musicEnabled') !== 'false',
-    
+
     init() {
         this.shuffleTracks();
         this.audio.addEventListener('ended', () => this.playNext());
         this.updateToggleButton();
-        
+
         // Load music state from localStorage
-        if(this.isMusicOn) this.audio.volume = 0.5;
+        if (this.isMusicOn)
+            this.audio.volume = 0.5;
     },
 
     shuffleTracks() {
@@ -1139,20 +1321,22 @@ const musicManager = {
     },
 
     playRandom() {
-        if(!this.shuffledTracks.length) this.shuffleTracks();
+        if (!this.shuffledTracks.length)
+            this.shuffleTracks();
         this.currentTrackIndex = 0;
         this.playCurrent();
     },
 
-   playCurrent() {
-      if (!this.isMusicOn) return;
-    
-         const track = this.shuffledTracks[this.currentTrackIndex];
-         this.audio.src = `Sounds/${track}`;
-      this.audio.play().catch(() => {});
-    
-         const songTitle = track.replace('.mp3', '');
-         document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
+    playCurrent() {
+        if (!this.isMusicOn)
+            return;
+
+        const track = this.shuffledTracks[this.currentTrackIndex];
+        this.audio.src = `Sounds/${track}`;
+        this.audio.play().catch(() => {});
+
+        const songTitle = track.replace('.mp3', '');
+        document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
     },
 
     playNext() {
@@ -1161,8 +1345,8 @@ const musicManager = {
     },
 
     playPrev() {
-        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.shuffledTracks.length) % 
-                                this.shuffledTracks.length;
+        this.currentTrackIndex = (this.currentTrackIndex - 1 + this.shuffledTracks.length) %
+        this.shuffledTracks.length;
         this.playCurrent();
     },
 
@@ -1170,8 +1354,8 @@ const musicManager = {
         this.isMusicOn = !this.isMusicOn;
         localStorage.setItem('musicEnabled', this.isMusicOn);
         this.updateToggleButton();
-        
-        if(this.isMusicOn) {
+
+        if (this.isMusicOn) {
             this.playCurrent();
         } else {
             this.audio.pause();
@@ -1227,32 +1411,54 @@ document.addEventListener('keydown', (e) => {
 });
 
 function updateGoalDisplay() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const goalMessage = document.querySelector('.goal-message');
-    const allCompleted = merchantDialogues.introduction.options.every(opt => opt.completed);
-    
-    // Always check completion status first
-    if (allCompleted) {
-        goalMessage.style.display = 'block';
-        goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
-        return;
-    }
+    const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
+    const specialDialogue = merchantDialogues.introduction.options[3];
 
-    // Existing logic
-    if (merchantCinematicShown) {
-        goalMessage.style.display = 'block';
-        goalMessage.innerHTML = '"Maybe I should go talk to the merchant..<br>he can answer some of my questions.."';
-        return;
-    }
+    // Check if first 3 dialogues are completed (excluding mysterious one)
+    const initialDialoguesCompleted = merchantDialogues.introduction.options
+        .slice(0, 3) // Only check first 3 dialogues
+        .every(opt => opt.completed);
 
-    if (coinCount >= currentGoal) {
+    // 1. Check for merchant cinematic trigger
+    if (!merchantCinematicShown && coinCount >= currentGoal) {
         startMerchantCinematic();
         goalMessage.style.display = 'none';
-    } else {
-        goalMessage.style.display = 'block';
-        goalMessage.innerHTML = coinCount === 0 
-            ? `"Hmm.. I wonder what would happen<br>if I collected some of these coins..."`
-            : `"Hmm.. I wonder what would happen<br>if I collected some of these coins..."`;
+        return;
     }
+
+    // 2. Check for special coins state
+    if (hasSpecialCoinsUpgrade && !specialDialogue.completed) {
+        goalMessage.innerHTML = '"Maybe the merchant can explain what these special coins are..."';
+        goalMessage.style.display = 'block';
+        return;
+    }
+
+    // 3. Check if initial 3 dialogues are completed
+    if (initialDialoguesCompleted && !specialDialogue.completed) {
+        goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
+        goalMessage.style.display = 'block';
+        return;
+    }
+
+    // 4. Check if ALL dialogues are completed
+    if (merchantDialogues.introduction.options.every(opt => opt.completed)) {
+        goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
+        goalMessage.style.display = 'block';
+        return;
+    }
+
+    // 5. Default merchant unlocked state
+    if (merchantCinematicShown) {
+        goalMessage.innerHTML = '"Maybe I should go talk to the merchant..<br>he can answer some of my questions.."';
+        goalMessage.style.display = 'block';
+        return;
+    }
+
+    // 6. Fallback for new players
+    goalMessage.innerHTML = '"Hmm.. I wonder what would happen<br>if I collected some of these coins..."';
+    goalMessage.style.display = 'block';
 }
 
 function allDialoguesCompleted() {
@@ -1260,33 +1466,42 @@ function allDialoguesCompleted() {
 }
 
 function startMerchantCinematic() {
-    if (merchantCinematicShown) return;
+    if (merchantCinematicShown)
+        return;
 
-    // Save FIRST before any cinematic UI changes
+    // Pause game activity
+    gameActive = false;
+
+    // Clear existing intervals and timeouts
+    if (window.spawnInterval) {
+        clearInterval(window.spawnInterval);
+        window.spawnInterval = null;
+    }
+
+    // Save state
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const updatedData = {
         ...saveData,
         merchantCinematicShown: true,
-        coins: coinCount, // <-- Capture current coins
-        timestamp: Date.now() // <-- Always update timestamp
+        coins: coinCount,
+        timestamp: Date.now()
     };
-
-    // Commit save IMMEDIATELY
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-    
-    // Update local state
+
+    // Update state
     merchantCinematicShown = true;
     const slot = saveSlots.find(s => s.id === currentSlotId);
-    if (slot) slot.data = updatedData;
+    if (slot)
+        slot.data = updatedData;
 
     const overlay = document.querySelector('.cinematic-overlay');
     const continueBtn = document.querySelector('.continue-btn');
     const bars = document.querySelectorAll('.top-bar, .bottom-bar');
-    
+
     // Reset cinematic elements
     continueBtn.style.display = 'none';
     overlay.style.display = 'block';
-    
+
     // Add skip button
     addSkipButton();
 
@@ -1295,19 +1510,31 @@ function startMerchantCinematic() {
     document.querySelector('.slideshow-container').style.opacity = '1';
 
     // Merchant-specific slides
-    const merchantSlides = [
-        { text: "💨💨💨..𝘛𝘩𝘦 𝘸𝘪𝘯𝘥 𝘴𝘶𝘥𝘥𝘦𝘯𝘭𝘺 𝘱𝘪𝘤𝘬𝘴 𝘶𝘱.." },
-        { text: "What.. What is that in the distance?.." },
-        { text: "Wait.. 𝘞𝘩𝘰 is that in the distance?.." },
-        { text: "\"Greetings, castaway!\" says a mysterious figure.." },
-        { text: "\"I see you've found my Cove!\"" },
-	{ text: "Startled, I ask, \"Who.. Who are you?..\"" },
-        { text: "\"Why, I am of course the Magnificent Merchant!\"" },
-        { text: "..." },
-        { text: "\"It seems your presence has revitalized the Coin Cove back to full power!\"" },
-        { text: "..." },
-        { text: "\"You're probably a bit confused right now, but all that matters is that you've saved my business.\"" },
-        { text: "\"Keep collecting those coins and I can help both of us achieve the things we want!\"" },
+    const merchantSlides = [{
+            text: "💨💨💨..𝘛𝘩𝘦 𝘸𝘪𝘯𝘥 𝘴𝘶𝘥𝘥𝘦𝘯𝘭𝘺 𝘱𝘪𝘤𝘬𝘴 𝘶𝘱.."
+        }, {
+            text: "What.. What is that in the distance?.."
+        }, {
+            text: "Wait.. 𝘞𝘩𝘰 is that in the distance?.."
+        }, {
+            text: "\"Greetings, castaway!\" says a mysterious figure.."
+        }, {
+            text: "\"I see you've found my Cove!\""
+        }, {
+            text: "Startled, I ask, \"Who.. Who are you?..\""
+        }, {
+            text: "\"Why, I am of course the Magnificent Merchant!\""
+        }, {
+            text: "..."
+        }, {
+            text: "\"It seems your presence has revitalized the Coin Cove back to full power!\""
+        }, {
+            text: "..."
+        }, {
+            text: "\"You're probably a bit confused right now, but all that matters is that you've saved my business.\""
+        }, {
+            text: "\"Keep collecting those coins and I can help both of us achieve the things we want!\""
+        },
     ];
 
     // Store original slides and restore after cinematic
@@ -1319,7 +1546,7 @@ function startMerchantCinematic() {
     currentSlide = 0;
     canAdvance = false;
     showNextSlide();
-    
+
     // Start initial delay
     cinematicTimeout = setTimeout(() => {
         showClickPrompt();
@@ -1328,26 +1555,43 @@ function startMerchantCinematic() {
 
     // Click handler
     const clickHandler = () => {
-        if (!canAdvance) return;
+        if (!canAdvance)
+            return;
         handleCinematicClick();
     };
 
     overlay.addEventListener('click', clickHandler);
-    
+
     // Final continue handler
     continueBtn.onclick = () => {
+        // Restore game state
+        gameActive = true;
+
+        // Clear existing intervals AND active spawns
+        clearInterval(window.spawnInterval);
+        activeSpawns.forEach(id => {
+            if (typeof id === 'number')
+                cancelAnimationFrame(id);
+            else
+                clearTimeout(id);
+        });
+        activeSpawns = [];
+
+        // Apply upgrades - handles first spawn and interval setup
+        applyUpgradeEffects(); // <--- This now handles everything
+
         // Restore original slides
         cinematicSlides.length = 0;
         cinematicSlides.push(...originalSlides);
-        
+
+        // Cleanup
         overlay.removeEventListener('click', clickHandler);
         overlay.style.display = 'none';
-        gameActive = true;
-        document.querySelector('.merchant-btn').style.display = 'block';
-        
-        // Reset spawning
-        if (window.spawnInterval) clearInterval(window.spawnInterval);
-        window.spawnInterval = setInterval(spawnCoin, 3000);
+
+        // Audio handling
+        const windSound = document.getElementById('wind-sound');
+        windSound.pause();
+        musicManager.audio.play();
     };
 
     // Audio handling
@@ -1372,12 +1616,12 @@ window.addEventListener('beforeunload', () => {
 function showMerchantUI() {
     const modal = document.querySelector('.merchant-modal');
     modal.style.display = 'flex';
-    
+
     // Force immediate update of all elements
     updateCoinDisplay();
     updateMerchantDisplay();
     applyUpgradeEffects();
-    
+
     document.addEventListener('keydown', handleMerchantEscape);
     document.querySelector('.merchant-modal').addEventListener('click', handleMerchantClickOutside);
 }
@@ -1385,7 +1629,8 @@ function showMerchantUI() {
 function updateMerchantDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const container = document.querySelector('.upgrades-container');
-    if (!container) return;
+    if (!container)
+        return;
 
     container.innerHTML = '';
 
@@ -1395,7 +1640,9 @@ function updateMerchantDisplay() {
 
     // Render existing upgrades
     Object.values(upgrades).forEach(upg => {
-        const upgradeData = saveData.upgrades?.[upg.id] || { level: 0 };
+        const upgradeData = saveData.upgrades?.[upg.id] || {
+            level: 0
+        };
         const currentLevel = upgradeData.level;
         const isLocked = upg.mysterious && currentLevel === 0 && coinCount < upg.baseCost;
         const isMaxed = currentLevel >= upg.maxLevel;
@@ -1414,7 +1661,7 @@ function updateMerchantDisplay() {
             statusText = upg.maxLevel > 1 ? `${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})` : upg.upgName;
         }
 
-       const upgradeHTML = `
+        const upgradeHTML = `
     <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''} ${isSpecialUpgrade ? 'special-coins-upgrade' : ''}">
         <div class="upgrade-header">
             <h3>${isLocked ? '???' : statusText}</h3>
@@ -1451,14 +1698,16 @@ function updateMerchantDisplay() {
                         <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
                     </div>
                     <div class="upgrades-grid">
-                        ${Array.from({ length: 6 }, (_, i) => {
-                            const upgrade = specialUpgrades[i + 1];
-                            const currentLevel = saveData.specialUpgrades?.[i + 1]?.level || 0;
-                            const meetsRequirement = (!upgrade.requirement || (saveData.level || 0) >= upgrade.requirement);
-                            const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
-                            const canAfford = specialCoins >= cost;
+                        ${Array.from({
+                    length: 6
+                }, (_, i) => {
+                    const upgrade = specialUpgrades[i + 1];
+                    const currentLevel = saveData.specialUpgrades?.[i + 1]?.level || 0;
+                    const meetsRequirement = (!upgrade.requirement || (saveData.level || 0) >= upgrade.requirement);
+                    const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
+                    const canAfford = specialCoins >= cost;
 
-                            return `
+                    return `
                                 <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
                                     ${meetsRequirement ? `
                                         <h4>${upgrade.name}</h4>
@@ -1475,7 +1724,7 @@ function updateMerchantDisplay() {
                                     `}
                                 </div>
                             `;
-                        }).join('')}
+                }).join('')}
                     </div>
                 </div>
             `;
@@ -1505,9 +1754,12 @@ function updateMerchantDisplay() {
 function purchaseUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const upg = upgrades[upgradeId];
-    if (!upg) return;
+    if (!upg)
+        return;
 
-    const upgradeData = saveData.upgrades[upgradeId] || { level: 0 };
+    const upgradeData = saveData.upgrades[upgradeId] || {
+        level: 0
+    };
     const currentLevel = upgradeData.level;
     const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
 
@@ -1516,26 +1768,38 @@ function purchaseUpgrade(upgradeId) {
         coinCount = Math.round(coinCount);
         upgradeData.level = currentLevel + 1;
         saveData.upgrades[upgradeId] = upgradeData;
-        
+
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify({
-            ...saveData,
-            coins: coinCount,
-            upgrades: saveData.upgrades
-        }));
+                ...saveData,
+                coins: coinCount,
+                upgrades: saveData.upgrades
+            }));
+
+        // Special handling for Special Coins upgrade (ID 2)
         if (upgradeId === 2) {
             if (!saveData.xp) {
                 saveData.xp = 0;
                 saveData.level = 0;
                 saveData.xpNeeded = 10;
+                updateGoalDisplay();
             }
+
+            // Refresh the dialogue UI to update the 4th option's visibility
+            const dialogueContainer = document.querySelector('.dialogue-container');
+            if (dialogueContainer) {
+                dialogueContainer.remove();
+                showDialogue(); // Re-render the dialogue options
+            }
+
+            // Show XP container
             document.querySelector('.xp-container').style.display = 'block';
             updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
         }
 
+        // Update UI
         updateCoinDisplay();
         updateMerchantDisplay();
         applyUpgradeEffects();
-	
     }
 }
 
@@ -1543,17 +1807,17 @@ function purchaseSpecialUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const upgrade = specialUpgrades[upgradeId];
     const currentLevel = saveData.specialUpgrades?.[upgradeId]?.level || 0;
-    
+
     // Calculate cost
     const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
-    
+
     if (saveData.specialCoins >= cost && currentLevel < upgrade.levelCap) {
         saveData.specialCoins -= cost;
         saveData.specialUpgrades = saveData.specialUpgrades || {};
         saveData.specialUpgrades[upgradeId] = {
             level: currentLevel + 1
         };
-        
+
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
         updateMerchantDisplay();
         updateEffectsDisplay();
@@ -1563,12 +1827,12 @@ function purchaseSpecialUpgrade(upgradeId) {
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const effectsContainer = document.querySelector('.current-effects');
-    
+
     const xpLevel = saveData.specialUpgrades?.[1]?.level || 0; // Wisdom Boost
     const coinLevel = saveData.specialUpgrades?.[2]?.level || 0; // Golden Touch
     const educatedCoinsLevel = saveData.upgrades?.[3]?.level || 0; // Educated Coins
     const playerLevel = saveData.level || 0;
-    
+
     effectsContainer.innerHTML = `
         <strong>Active Effects:</strong>
         <div>• Coin Spawn Rate: ${(1000 / (3000 * Math.pow(0.9, saveData.upgrades?.[1]?.level || 0))).toFixed(1)}/sec</div>
@@ -1576,28 +1840,37 @@ function updateEffectsDisplay() {
             <div>• XP Multiplier: ${getXPMultiplier().toFixed(2)}x</div>
         ` : ''}
         ${(coinLevel > 0 || playerLevel > 0) ? 
-            `<div>• Coin Multiplier: ${getCoinValueMultiplier().toFixed(2)}x</div>` : ''}
+        `<div>• Coin Multiplier: ${getCoinValueMultiplier().toFixed(2)}x</div>` : ''}
     `;
 }
 
 function applyUpgradeEffects() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const speedUpgrade = saveData.upgrades?.[1] || { level: 0 };
-    
-    // Only adjust spawn rate for the speed upgrade
-    const spawnRateMultiplier = Math.pow(0.9, speedUpgrade.level);
-    const newInterval = 3000 * spawnRateMultiplier;
-    
+    const speedUpgrade = saveData.upgrades?.[1] || {
+        level: 0
+    };
+
+    // Calculate spawn rate
+    const spawnRate = 3000 * Math.pow(0.9, speedUpgrade.level);
+
+    // Clear existing interval
     clearInterval(window.spawnInterval);
+
+    // Spawn first coin immediately
+    if (gameActive)
+        spawnCoin();
+
+    // Set up interval with calculated rate
     window.spawnInterval = setInterval(() => {
-        if (gameActive) spawnCoin();
-    }, newInterval);
+        if (gameActive)
+            spawnCoin();
+    }, spawnRate);
 }
 
 document.querySelector('.merchant-btn').addEventListener('click', () => {
     showMerchantUI();
     applyUpgradeEffects(); // Ensure effects are current
-  document.addEventListener('keydown', handleMerchantEscape);
+    document.addEventListener('keydown', handleMerchantEscape);
     document.querySelector('.merchant-modal').addEventListener('click', handleMerchantClickOutside);
 });
 
@@ -1608,16 +1881,16 @@ document.querySelector('.close-merchant-btn').addEventListener('click', () => {
 function updateCoinDisplay() {
     // Always update both displays
     const currentCoins = Math.round(coinCount);
-    
+
     // Update game UI
     document.querySelector('.coin-counter').textContent = `Coins: ${currentCoins}`;
-    
+
     // Update merchant UI
     const merchantCoinDisplay = document.getElementById('merchant-coin-count');
     if (merchantCoinDisplay) {
         merchantCoinDisplay.textContent = currentCoins;
     }
-    
+
     // Force merchant refresh if open
     if (document.querySelector('.merchant-modal').style.display === 'flex') {
         updateMerchantDisplay();
@@ -1648,7 +1921,7 @@ document.querySelector('.close-merchant-btn').addEventListener('click', closeMer
 document.querySelector('.talk-to-merchant-btn').addEventListener('click', () => {
     // Get the current save data
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    
+
     // Check if the player has a name
     if (!saveData.playerName) {
         showNameModal(); // Show name modal if no name exists
@@ -1681,5 +1954,6 @@ document.querySelector('.manage-saves-btn').addEventListener('click', () => {
     document.querySelectorAll('.save-slot').forEach(slot => {
         slot.classList.toggle('manage-mode', manageMode);
     });
-    if (!manageMode) initializeSaveSlots();
+    if (!manageMode)
+        initializeSaveSlots();
 });
