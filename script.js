@@ -317,6 +317,73 @@ const upgrades = {
     }
 };
 
+const specialUpgrades = {
+    1: {
+        id: 1,
+        name: "Wisdom Boost",
+        desc: "Increase XP gain by 1.25x per level",
+        baseCost: 1,
+        levelCap: 10,
+        effect: 1.25,
+        costIncrement: 1,
+        type: "xp"
+    },
+    2: {
+        id: 2,
+        name: "Golden Touch",
+        desc: "Increase coin value by 1.25x per level",
+        baseCost: 1,
+        levelCap: 10,
+        effect: 1.25,
+        costIncrement: 1,
+        type: "coinValue"
+    },
+    3: {
+        id: 3,
+        name: "Mysterious Power I",
+        desc: "Requires Level 100",
+        baseCost: 100,
+        levelCap: 1,
+        effect: 1,
+        costIncrement: 0,
+        type: "mystery",
+        requirement: 100
+    },
+    4: {
+        id: 4,
+        name: "Mysterious Power II",
+        desc: "Requires Level 100",
+        baseCost: 100,
+        levelCap: 1,
+        effect: 1,
+        costIncrement: 0,
+        type: "mystery",
+        requirement: 100
+    },
+    5: {
+        id: 5,
+        name: "Ancient Knowledge I",
+        desc: "Requires Level 1000",
+        baseCost: 1000,
+        levelCap: 1,
+        effect: 1,
+        costIncrement: 0,
+        type: "mystery",
+        requirement: 1000
+    },
+    6: {
+        id: 6,
+        name: "Ancient Knowledge II",
+        desc: "Requires Level 1000",
+        baseCost: 1000,
+        levelCap: 1,
+        effect: 1,
+        costIncrement: 0,
+        type: "mystery",
+        requirement: 1000
+    }
+};
+
 document.getElementById('change-name-btn').addEventListener('click', changePlayerName);
 
 function changePlayerName() {
@@ -410,11 +477,14 @@ function initializeSaveSlots() {
         const hasMerchant = slot.data?.merchantCinematicShown || false;
         const timestamp = slot.data?.timestamp ? new Date(slot.data.timestamp).toLocaleDateString() : 'No date';
         
+        // Round the displayed coin value
+        const displayCoins = slot.data ? Math.round(slot.data.coins || 0) : 0;
+        
         slotElement.innerHTML = `
             <div class="slot-number">Slot ${slot.id}</div>
             ${slot.data ? `
                 <div class="slot-data">
-                    <div>Coins: ${slot.data.coins || 0}</div>
+                    <div>Coins: ${displayCoins}</div>
                     ${hasMerchant ? '<div class="merchant-unlocked">Merchant Unlocked</div>' : ''}
                     <div>Created on: ${timestamp}</div>
                 </div>` : 
@@ -636,8 +706,10 @@ const coinCounter = document.querySelector('.coin-counter');
 
 function loadGame(saveData) {
     // Get the name from the save slot's data
-    const playerName = saveData.playerName || "Traveler"; // Corrected
+    const playerName = saveData.playerName || "Traveler";
     console.log(`Welcome back, ${playerName}!`);
+    
+    // Create normalized save data
     const fullSaveData = {
         coins: 0,
         upgrades: { 1: { level: 0 } }, // Default structure
@@ -649,6 +721,17 @@ function loadGame(saveData) {
     // Initialize upgrades data
     if (!fullSaveData.upgrades) fullSaveData.upgrades = {};
     if (!fullSaveData.upgrades[1]) fullSaveData.upgrades[1] = { level: 0 };
+
+    // Initialize special upgrades data
+    if (!fullSaveData.specialUpgrades) fullSaveData.specialUpgrades = {};
+
+    // Load state
+    coinCount = fullSaveData.coins || 0; // Load precise coin count
+    merchantCinematicShown = fullSaveData.merchantCinematicShown || false;
+
+    // Update UI with rounded values
+    updateCoinDisplay(); // Use the centralized display function
+    document.querySelector('.merchant-btn').style.display = merchantCinematicShown ? 'block' : 'none';
 
     // XP System initialization
     const xpContainer = document.querySelector('.xp-container');
@@ -666,24 +749,20 @@ function loadGame(saveData) {
     // Update storage with normalized data
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(fullSaveData));
 
-    // Load state
-    coinCount = fullSaveData.coins;
-    merchantCinematicShown = fullSaveData.merchantCinematicShown;
-
-  if (merchantCinematicShown) currentGoal = 10;
-
-    // Update UI
-    coinCounter.textContent = `Coins: ${coinCount}`;
-    document.querySelector('.merchant-btn').style.display = merchantCinematicShown ? 'block' : 'none';
-
     // Update slot data reference
     const slot = saveSlots.find(s => s.id === currentSlotId);
     if (slot) slot.data = fullSaveData;
 
- updateGoalDisplay();
- loadDialogueProgress();
- startGame();
- applyUpgradeEffects(); 
+    // Update goal display
+    if (merchantCinematicShown) currentGoal = 10;
+    updateGoalDisplay();
+
+    // Load dialogue progress
+    loadDialogueProgress();
+
+    // Start game and apply upgrades
+    startGame();
+    applyUpgradeEffects();
 }
 
 function startGame() {
@@ -776,44 +855,45 @@ function addHoverEffect(coin) {
         const coinSound = document.getElementById('coin-sound').cloneNode();
         coinSound.volume = 0.3;
         coinSound.play().catch(console.error);
-        
-        // Update coin count
-        coinCount = Math.round(coinCount + 1);
-        coinCounter.textContent = `Coins: ${coinCount}`;
 
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        
+
+        // Apply coin value multiplier
+        const coinValueMultiplier = getCoinValueMultiplier();
+        coinCount += 1 * coinValueMultiplier;
+        updateCoinDisplay(); // Update display with rounded value
+
         // Store previous level before updating
         previousLevel = saveData.level || 0;
 
         // Check if Special Coins upgrade is active
         const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
-        
+
         // Handle XP if upgrade is active
         if (hasSpecialCoins) {
             // Initialize XP data if not present
             if (typeof saveData.xp === 'undefined') {
-                saveData.xp = 1; // Start with 1 XP for first coin
+                saveData.xp = 1 * getXPMultiplier();
                 saveData.level = 0;
                 saveData.xpNeeded = 10;
             } else {
-                // Add XP and handle level progression
-                saveData.xp += 1;
-                
+                // Add XP with multiplier
+                saveData.xp += 1 * getXPMultiplier();
+
                 // Process level up
                 while (saveData.xp >= saveData.xpNeeded) {
                     saveData.xp -= saveData.xpNeeded;
                     saveData.level += 1;
-                    saveData.xpNeeded = 10 * Math.pow(1.2, saveData.level);
+                    saveData.xpNeeded = 10 * Math.pow(1.1, saveData.level);
                 }
             }
-            
+
             // Check for level up and spawn special coin
             if (saveData.level > previousLevel) {
                 spawnSpecialCoin();
             }
-            
+
             // Update XP display
             updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
         }
@@ -821,21 +901,21 @@ function addHoverEffect(coin) {
         // Create updated save data
         const updatedData = {
             ...saveData,
-            coins: coinCount,
+            coins: coinCount, // Store precise value
             merchantCinematicShown: merchantCinematicShown,
             timestamp: saveData.timestamp || Date.now()
         };
-        
+
         // Save updated data
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-        
+
         // Animate coin collection
         coin.style.transform = 'scale(2) translateY(-20px)';
         coin.style.opacity = '0';
-        
+
         // Remove coin after animation
         setTimeout(() => coin.remove(), 500);
-        
+
         // Update slot display
         const slot = saveSlots.find(s => s.id === currentSlotId);
         if (slot) {
@@ -851,7 +931,7 @@ function addHoverEffect(coin) {
 
     // Desktop hover
     coin.addEventListener('mouseenter', collectCoin);
-    
+
     // Mobile touch
     coin.addEventListener('touchstart', (e) => {
         e.preventDefault();
@@ -903,7 +983,7 @@ function spawnSpecialCoin() {
 
 function addSpecialCoinHoverEffect(coin) {
     let collected = false;
-    
+
     function collectSpecialCoin() {
         if (collected) return;
         collected = true;
@@ -912,7 +992,7 @@ function addSpecialCoinHoverEffect(coin) {
         // Play sound
         const specialCoinSound = document.getElementById('special-coin-sound').cloneNode(true);
         specialCoinSound.volume = 0.6;
-        
+
         // Ensure sound plays
         specialCoinSound.play()
             .then(() => {
@@ -934,7 +1014,7 @@ function addSpecialCoinHoverEffect(coin) {
         // Update display
         const specialCoinDisplay = document.querySelector('.special-coin-balance');
         if (specialCoinDisplay) {
-            specialCoinDisplay.textContent = `Special Coins: ${saveData.specialCoins}`;
+            specialCoinDisplay.textContent = `Special Coins: ${Math.round(saveData.specialCoins)}`;
         }
 
         // Remove after animation
@@ -954,7 +1034,7 @@ function addSpecialCoinHoverEffect(coin) {
             coin.style.transform = 'scale(1.1) rotate(15deg)';
         }
     });
-    
+
     coin.addEventListener('mouseleave', () => {
         if (!collected) {
             coin.style.transform = 'scale(1) rotate(0deg)';
@@ -973,6 +1053,32 @@ function updateXPDisplay(currentXP, currentLevel, xpNeeded) {
     xpLevel.textContent = currentLevel;
     xpCurrent.textContent = currentXP.toFixed(1);
     xpNeededSpan.textContent = `${xpNeeded.toFixed(1)} XP`;
+}
+
+function getXPMultiplier() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgrade = saveData.specialUpgrades?.[1] || { level: 0 };
+    return Math.pow(1.25, upgrade.level);
+}
+
+function getCoinValueMultiplier() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgrade = saveData.specialUpgrades?.[2] || { level: 0 };
+    const playerLevel = saveData.level || 0;
+    
+    // Combine both multipliers: 1.25^upgradeLevel * 1.05^playerLevel
+    return Math.pow(1.25, upgrade.level) * Math.pow(1.05, playerLevel);
+}
+
+function updateCoinDisplay() {
+    // Always show rounded value but keep precise internal count
+    coinCounter.textContent = `Coins: ${Math.round(coinCount)}`;
+    
+    // Update merchant display if open
+    const merchantCoinCount = document.getElementById('merchant-coin-count');
+    if (merchantCoinCount) {
+        merchantCoinCount.textContent = Math.round(coinCount);
+    }
 }
 
 // Music System
@@ -1270,7 +1376,7 @@ function updateMerchantDisplay() {
 
     // Check if Special Coins upgrade is purchased
     const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
-    const specialCoins = saveData.specialCoins || 0;
+    const specialCoins = Math.round(saveData.specialCoins || 0); // Round special coins
 
     // Render existing upgrades
     Object.values(upgrades).forEach(upg => {
@@ -1281,7 +1387,7 @@ function updateMerchantDisplay() {
         const isSpecialUpgrade = upg.id === 2;
 
         // Calculate cost
-        const cost = upg.mysterious ? upg.baseCost : 
+        const cost = upg.mysterious ? upg.baseCost :
             Math.round(upg.scaling(upg.baseCost, currentLevel));
         const canAfford = Math.round(coinCount) >= cost;
 
@@ -1316,30 +1422,59 @@ function updateMerchantDisplay() {
         container.innerHTML += upgradeHTML;
     });
 
-    // Add Special Coins section if upgrade is purchased
     if (hasSpecialCoins) {
         const specialSection = document.createElement('div');
         specialSection.className = 'special-coins-section';
-        specialSection.innerHTML = `
-            <div class="special-coins-header">
-                Collect normal coins to gain XP.<br>Gain enough XP and level up to spawn a special coin!
-                <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
-            </div>
+       specialSection.innerHTML = `
+    <div class="special-coins-header">
+        Collect normal coins to gain XP!<br>
+        - Get enough XP to level up<br>
+        - Level up to spawn special coins<br>
+        - Each level gives 1.05x more coin value<br>
+        <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
+    </div>
             <div class="upgrades-grid">
-                ${Array.from({length: 6}, (_, i) => `
-                    <div class="upgrade-placeholder">
-                        Special Upgrade ${i + 1}<br>
-                        <em>(Coming Soon)</em>
-                    </div>
-                `).join('')}
+                ${Array.from({ length: 6 }, (_, i) => {
+                    const upgrade = specialUpgrades[i + 1];
+                    const currentLevel = saveData.specialUpgrades?.[i + 1]?.level || 0;
+                    const meetsRequirement = (!upgrade.requirement || (saveData.level || 0) >= upgrade.requirement);
+                    const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
+                    const canAfford = specialCoins >= cost;
+
+                    return `
+                        <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
+                            ${meetsRequirement ? `
+                                <h4>${upgrade.name}</h4>
+                                <p>${upgrade.desc}</p>
+                                <p>(Level ${currentLevel}/${upgrade.levelCap})</p>
+                                <button class="buy-special-btn" 
+                                    data-upgrade-id="${upgrade.id}"
+                                    ${!canAfford || currentLevel >= upgrade.levelCap ? 'disabled' : ''}>
+                                    Cost: ${cost} Special Coins
+                                </button>
+                            ` : `
+                                <h4>${upgrade.name}</h4>
+                                <p>Requires Level ${upgrade.requirement}</p>
+                            `}
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
         container.appendChild(specialSection);
     }
 
+    // Add event listeners for special upgrades
+    container.querySelectorAll('.buy-special-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const upgradeId = parseInt(this.dataset.upgradeId);
+            purchaseSpecialUpgrade(upgradeId);
+        });
+    });
+
     // Rebind event listeners
     container.querySelectorAll('.buy-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const upgradeId = parseInt(this.dataset.upgradeId);
             purchaseUpgrade(upgradeId);
         });
@@ -1385,16 +1520,41 @@ function purchaseUpgrade(upgradeId) {
     }
 }
 
+function purchaseSpecialUpgrade(upgradeId) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgrade = specialUpgrades[upgradeId];
+    const currentLevel = saveData.specialUpgrades?.[upgradeId]?.level || 0;
+    
+    // Calculate cost
+    const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
+    
+    if (saveData.specialCoins >= cost && currentLevel < upgrade.levelCap) {
+        saveData.specialCoins -= cost;
+        saveData.specialUpgrades = saveData.specialUpgrades || {};
+        saveData.specialUpgrades[upgradeId] = {
+            level: currentLevel + 1
+        };
+        
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+        updateMerchantDisplay();
+        updateEffectsDisplay();
+    }
+}
+
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgradeLevel = saveData.upgrades?.[1]?.level || 0;
+    const effectsContainer = document.querySelector('.current-effects');
     
-    // Round to 1 decimal place
-    const coinsPerSecond = (1000 / (3000 * Math.pow(0.9, upgradeLevel))).toFixed(1);
+    const xpLevel = saveData.specialUpgrades?.[1]?.level || 0;
+    const coinLevel = saveData.specialUpgrades?.[2]?.level || 0;
+    const playerLevel = saveData.level || 0;
     
-    document.querySelector('.current-effects').innerHTML = `
+    effectsContainer.innerHTML = `
         <strong>Active Effects:</strong>
-        <div>• Coin Spawn Rate: ${coinsPerSecond}/sec</div>
+        <div>• Coin Spawn Rate: ${(1000/(3000*Math.pow(0.9, saveData.upgrades?.[1]?.level || 0))).toFixed(1)}/sec</div>
+        ${xpLevel > 0 ? `<div>• XP Multiplier: ${Math.pow(1.25, xpLevel).toFixed(2)}x</div>` : ''}
+        ${(coinLevel > 0 || playerLevel > 0) ? 
+            `<div>• Coin Multiplier: ${getCoinValueMultiplier().toFixed(2)}x</div>` : ''}
     `;
 }
 
