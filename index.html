@@ -90,12 +90,21 @@
                 <button class="music-control next-btn">⏭</button>
             </div>
         </div>
-        <!-- Name Change Section (Initially Hidden) -->
+        <!-- Name Change Section (initially hidden) -->
         <div class="name-change-section">
-    <label for="player-name-input">Change Name:</label>
-    <input type="text" id="player-name-input" placeholder="Enter new name">
-    <button id="change-name-btn">Save</button>
-</div>
+            <label for="player-name-input">Change Name:</label>
+            <input type="text" id="player-name-input" placeholder="Enter new name">
+            <button id="change-name-btn">Save</button>
+        </div>
+        <!-- Coin Capacity Slider -->
+        <div class="setting-item">
+            <label>Maximum Coin Capacity (lower number = less potential lag): <span id="coinCapacityValue">2500</span></label>
+            <input type="range" id="coinCapacitySlider" min="1000" max="10000" step="100" value="2500">
+            <div class="slider-labels">
+                <span>1000</span>
+                <span>10000</span>
+            </div>
+        </div>
         <div class="settings-buttons">
             <button id="music-toggle" class="toggle-btn">Music: ON</button>
             <button class="close-settings-btn">Close</button>
