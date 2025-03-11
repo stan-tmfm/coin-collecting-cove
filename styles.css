@@ -489,6 +489,31 @@ body.game-active .game-background {
     margin-top: 20px;
 }
 
+/* Slider Styles */
+.setting-item {
+    margin: 20px 0;
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #333;
+}
+
+#coinCapacitySlider {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.9em;
+}
+
 .close-settings-btn {
     padding: 10px 20px; /* Match toggle button padding */
     background: #ddd;
