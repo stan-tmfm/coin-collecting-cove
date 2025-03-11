@@ -874,14 +874,12 @@ let coinCount = 0;
 let gameActive = false;
 let activeSpawns = [];
 let audioCooldown = false;
+let MAX_COIN_CAPACITY = parseInt(localStorage.getItem('coinCapacity')) || 2500;
+const activeCoins = [];
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
 
 function loadGame(saveData) {
-    // Get the name from the save slot's data
-    const playerName = saveData.playerName || "Traveler";
-    console.log(`Welcome back, ${playerName}!`);
-
     // Create normalized save data
     const fullSaveData = {
         coins: 0,
@@ -910,6 +908,15 @@ function loadGame(saveData) {
     // Load state
     coinCount = fullSaveData.coins || 0; // Load precise coin count
     merchantCinematicShown = fullSaveData.merchantCinematicShown || false;
+
+    // Load the user's preferred coin capacity in settings
+    MAX_COIN_CAPACITY = parseInt(localStorage.getItem('coinCapacity')) || 2500;
+    document.getElementById('coinCapacitySlider').value = MAX_COIN_CAPACITY;
+    document.getElementById('coinCapacityValue').textContent = MAX_COIN_CAPACITY;
+
+    // Get the name from the save slot's data
+    const playerName = saveData.playerName || "Traveler";
+    console.log(`Welcome back, ${playerName}!`);
 
     // Update UI with rounded values
     updateCoinDisplay(); // Use the centralized display function
@@ -944,8 +951,8 @@ function loadGame(saveData) {
     loadDialogueProgress();
 
     // Start game and apply upgrades
-    applyUpgradeEffects();
     startGame();
+    applyUpgradeEffects();
 }
 
 function startGame() {
@@ -1019,6 +1026,15 @@ function spawnCoin() {
     const upgradeLevel = saveData.upgrades?.[1]?.level || 0;
     const spawnRateMultiplier = Math.pow(0.9, upgradeLevel);
 
+    // Check if max capacity is reached
+    if (activeCoins.length >= MAX_COIN_CAPACITY) {
+        // Remove the oldest coin
+        const oldestCoin = activeCoins.shift(); // Remove the first coin from the array
+        if (oldestCoin) {
+            oldestCoin.remove(); // Remove the coin from the DOM
+        }
+    }
+
     // Track spawn attempt
     const spawnID = setTimeout(() => {
         const coin = document.createElement('div');
@@ -1032,6 +1048,12 @@ function spawnCoin() {
             coin.style.left = `${startX}px`;
             coin.style.top = `-50px`;
             beachContainer.appendChild(coin);
+
+            // Add coin to the activeCoins array
+            activeCoins.push(coin);
+
+            // Log the number of coins in the container
+            console.log(`Coins in container: ${activeCoins.length}`);
 
             void coin.offsetHeight; // Force layout recalculation
 
@@ -1063,6 +1085,14 @@ function addHoverEffect(coin) {
         if (collected)
             return;
         collected = true;
+
+        // Remove the coin from the activeCoins array
+        const coinIndex = activeCoins.indexOf(coin);
+        if (coinIndex !== -1) {
+            activeCoins.splice(coinIndex, 1); // Remove the coin from the array
+        }
+        // Log the number of coins in the container
+        console.log(`Coins in container: ${activeCoins.length}`);
 
         const coinSound = document.createElement('audio');
         coinSound.src = document.getElementById('coin-sound').src;
@@ -1413,6 +1443,14 @@ document.addEventListener('DOMContentLoaded', () => musicManager.init());
 const settingsBtn = document.querySelector('.settings-btn');
 const settingsModal = document.querySelector('.settings-modal');
 const closeSettingsBtn = document.querySelector('.close-settings-btn');
+document.getElementById('coinCapacitySlider').value = MAX_COIN_CAPACITY;
+document.getElementById('coinCapacityValue').textContent = MAX_COIN_CAPACITY;
+document.getElementById('coinCapacitySlider').addEventListener('input', function (e) {
+    const value = Math.round(e.target.value / 100) * 100; // Round to nearest 100
+    document.getElementById('coinCapacityValue').textContent = value;
+    MAX_COIN_CAPACITY = value;
+    localStorage.setItem('coinCapacity', value);
+});
 document.querySelector('.shuffle-btn').addEventListener('click', () => {
     musicManager.shuffleTracks();
     musicManager.currentTrackIndex = -1;
