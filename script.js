@@ -105,7 +105,7 @@ const merchantDialogues = {
                 completed: false
             }, {
                 id: 3,
-                question: "Why do the coins keep appearing?",
+                question: "Why so many coins?",
                 response: {
                     speaker: "merchant",
                     lines: [{
@@ -872,6 +872,8 @@ document.addEventListener('DOMContentLoaded', initializeSaveSlots);
 
 let coinCount = 0;
 let gameActive = false;
+let activeSpawns = [];
+let audioCooldown = false;
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
 
@@ -959,6 +961,31 @@ function startGame() {
     windSound.pause();
     windSound.currentTime = 0;
 
+    // Reset game state
+    gameActive = false;
+
+    // Clear ALL existing intervals and timeouts
+    clearInterval(window.spawnInterval);
+    window.spawnInterval = null;
+
+    // Reset spawn tracking
+    if (typeof activeSpawns === 'undefined') {
+        window.activeSpawns = [];
+    } else {
+        activeSpawns.forEach(id => {
+            if (typeof id === 'number') {
+                cancelAnimationFrame(id);
+            } else {
+                clearTimeout(id);
+            }
+        });
+        activeSpawns = [];
+    }
+
+    // Clear existing elements
+    beachContainer.innerHTML = '';
+    document.querySelector('.menu-container').style.display = 'none';
+
     gameActive = true;
 
     if (musicManager.isMusicOn) {
@@ -968,22 +995,14 @@ function startGame() {
     document.body.classList.add('game-active');
     document.querySelector('.game-screen').style.display = 'block';
 
-    // Clear existing elements
-    beachContainer.innerHTML = '';
-    document.querySelector('.menu-container').style.display = 'none';
-
-    // Clear any existing intervals
-    if (window.spawnInterval) {
-        clearInterval(window.spawnInterval);
-    }
-
     // Start coin spawning
     spawnCoin();
     window.spawnInterval = setInterval(() => {
-        if (!gameActive)
+        if (!gameActive) {
             clearInterval(window.spawnInterval);
-        else
+        } else {
             spawnCoin();
+        }
     }, 3000);
 
     // Show goal message and merchant button
@@ -1000,31 +1019,40 @@ function spawnCoin() {
     const upgradeLevel = saveData.upgrades?.[1]?.level || 0;
     const spawnRateMultiplier = Math.pow(0.9, upgradeLevel);
 
-    const coin = document.createElement('div');
-    coin.className = 'coin';
+    // Track spawn attempt
+    const spawnID = setTimeout(() => {
+        const coin = document.createElement('div');
+        coin.className = 'coin';
 
-    requestAnimationFrame(() => {
-        if (!gameActive)
-            return; // Additional safety check
-
-        const startX = Math.random() * (beachContainer.offsetWidth - 40);
-        coin.style.left = `${startX}px`;
-        coin.style.top = `-50px`;
-        beachContainer.appendChild(coin);
-
-        void coin.offsetHeight; // Force layout recalculation
-
-        coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
-        coin.style.left = `${startX + (Math.random() * 100 - 50)}px`;
-        coin.style.top = `${Math.random() * (beachContainer.offsetHeight - 40) + 20}px`;
-
-        setTimeout(() => {
+        requestAnimationFrame(() => {
             if (!gameActive)
-                return; // Final safety check
-            coin.classList.add('collectable');
-            addHoverEffect(coin);
-        }, 100);
-    });
+                return; // Additional safety check
+
+            const startX = Math.random() * (beachContainer.offsetWidth - 40);
+            coin.style.left = `${startX}px`;
+            coin.style.top = `-50px`;
+            beachContainer.appendChild(coin);
+
+            void coin.offsetHeight; // Force layout recalculation
+
+            coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
+            coin.style.left = `${startX + (Math.random() * 100 - 50)}px`;
+            coin.style.top = `${Math.random() * (beachContainer.offsetHeight - 40) + 20}px`;
+
+            setTimeout(() => {
+                if (!gameActive)
+                    return; // Final safety check
+                coin.classList.add('collectable');
+                addHoverEffect(coin);
+            }, 100);
+        });
+
+        // Remove spawn ID from tracking after completion
+        activeSpawns = activeSpawns.filter(id => id !== spawnID);
+    }, Math.random() * 100); // Small random delay for spawn staggering
+
+    // Track this spawn attempt
+    activeSpawns.push(spawnID);
 }
 
 function addHoverEffect(coin) {
@@ -1036,10 +1064,19 @@ function addHoverEffect(coin) {
             return;
         collected = true;
 
-        // Play coin sound
-        const coinSound = document.getElementById('coin-sound').cloneNode();
+        const coinSound = document.createElement('audio');
+        coinSound.src = document.getElementById('coin-sound').src;
         coinSound.volume = 0.3;
-        coinSound.play().catch(console.error);
+
+        // Handle audio state
+        const playPromise = coinSound.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(error => {
+                if (error.name !== 'AbortError') {
+                    console.log('Audio play interrupted');
+                }
+            });
+        }
 
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
@@ -1521,7 +1558,7 @@ function startMerchantCinematic() {
         }, {
             text: "\"I see you've found my Cove!\""
         }, {
-            text: "Startled, I ask, \"Who.. Who are you?..\""
+            text: "Who.. Who are you?.."
         }, {
             text: "\"Why, I am of course the Magnificent Merchant!\""
         }, {
@@ -1562,23 +1599,21 @@ function startMerchantCinematic() {
 
     overlay.addEventListener('click', clickHandler);
 
-    // Final continue handler
     continueBtn.onclick = () => {
         // Restore game state
         gameActive = true;
 
-        // Clear existing intervals AND active spawns
+        // Clear ALL existing spawns and intervals
         clearInterval(window.spawnInterval);
+
+        // Clear active timeouts CORRECTED VERSION
         activeSpawns.forEach(id => {
-            if (typeof id === 'number')
-                cancelAnimationFrame(id);
-            else
-                clearTimeout(id);
+            clearTimeout(id); // Changed from cancelAnimationFrame
         });
         activeSpawns = [];
 
-        // Apply upgrades - handles first spawn and interval setup
-        applyUpgradeEffects(); // <--- This now handles everything
+        // Apply upgrades - handles interval setup
+        applyUpgradeEffects();
 
         // Restore original slides
         cinematicSlides.length = 0;
@@ -1590,8 +1625,12 @@ function startMerchantCinematic() {
 
         // Audio handling
         const windSound = document.getElementById('wind-sound');
-        windSound.pause();
-        musicManager.audio.play();
+        windSound.play().catch(err => {
+            if (err.name !== 'AbortError') {
+                console.error('Error playing wind sound:', err);
+            }
+        });
+        musicManager.audio.pause();
     };
 
     // Audio handling
@@ -1855,10 +1894,6 @@ function applyUpgradeEffects() {
 
     // Clear existing interval
     clearInterval(window.spawnInterval);
-
-    // Spawn first coin immediately
-    if (gameActive)
-        spawnCoin();
 
     // Set up interval with calculated rate
     window.spawnInterval = setInterval(() => {
