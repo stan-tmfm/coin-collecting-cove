@@ -1052,9 +1052,6 @@ function spawnCoin() {
             // Add coin to the activeCoins array
             activeCoins.push(coin);
 
-            // Log the number of coins in the container
-            console.log(`Coins in container: ${activeCoins.length}`);
-
             void coin.offsetHeight; // Force layout recalculation
 
             coin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
@@ -1091,8 +1088,6 @@ function addHoverEffect(coin) {
         if (coinIndex !== -1) {
             activeCoins.splice(coinIndex, 1); // Remove the coin from the array
         }
-        // Log the number of coins in the container
-        console.log(`Coins in container: ${activeCoins.length}`);
 
         const coinSound = document.createElement('audio');
         coinSound.src = document.getElementById('coin-sound').src;
