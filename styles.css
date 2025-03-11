@@ -20,20 +20,20 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     height: 100vh;
-    padding: 40px;
+    padding: 2rem;
     box-sizing: border-box;
 }
 
 .title-overlay {
     color: white;
-    font-size: 5.5em;
+    font-size: 4vw;
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.6);
     font-family: 'Cinzel', serif;
     font-weight: 700;
     text-align: center;
-    margin-top: 15%;
-    margin-bottom: 5%;
+	margin: 2rem 0;
 }
 
 .coin-image {
@@ -43,17 +43,21 @@ body {
 }
 
 .save-menu {
-    display: flex;
-    justify-content: center;
-    gap: 40px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
     width: 100%;
-    max-width: 1200px;
-    flex-wrap: wrap;
+    max-width: 1600px;
+    padding: 1rem;
+    box-sizing: border-box;
 }
 
 .save-slot {
-    width: 30%;
-    height: 300px;
+    aspect-ratio: 16/9; /* Maintain aspect ratio */
+    width: 100%; /* Fill grid column width */
+    max-width: 400px; /* Prevent excessive widening */
+    min-height: 200px; /* Fallback for older browsers */
+    height: auto;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 15px;
     cursor: pointer;
@@ -64,6 +68,7 @@ body {
     align-items: center;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
     position: relative;
+    margin: 0 auto; /* Center slots in grid cells */
 }
 
 /* Glow Effect */
@@ -308,6 +313,7 @@ body {
     overflow: hidden;
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0,0,0,0.3);
+	pointer-events: auto;
 }
 
 .coin-counter {
@@ -558,6 +564,7 @@ body.game-active .game-background {
     font-size: 1.2em;
     display: block !important;
     opacity: 1 !important;
+	z-index: 1002;
 }
 
 /* Merchant Button */
