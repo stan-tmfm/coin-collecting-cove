@@ -1151,7 +1151,7 @@ function spawnCoin() {
 
         if (activeBoosts['xp'] > now) {
             coin.classList.add('boosted-xp'); // Add visual effect
-            coin.dataset.xpMultiplier = "2"; // Store XP boost value for later use
+            coin.dataset.xpMultiplier = "3"; // Store XP boost value for later use
             isBoostedXP = true;
         } else {
             coin.dataset.xpMultiplier = "1"; // No boost, normal value
@@ -1299,7 +1299,7 @@ function collectBoostCoin(coin) {
     // Create text popup
     const popup = document.createElement('div');
     popup.className = 'boost-popup';
-    popup.textContent = `${boostType === 'coins' ? '3x Coins' : '2x XP'} 30s`;
+    popup.textContent = `${boostType === 'coins' ? '3x Coins' : '3x XP'} 30s`;
     popup.style.left = `${coin.offsetLeft}px`;
     popup.style.top = `${coin.offsetTop}px`;
     beachContainer.appendChild(popup);
@@ -2214,7 +2214,7 @@ function updateEffectsDisplay() {
         const remaining = Math.max(0, Math.ceil((expiry - now) / 1000));
         if (remaining > 0) {
             // Map boost type to its effect
-            const boostEffect = type === 'coins' ? '3x Coins' : '2x XP';
+            const boostEffect = type === 'coins' ? '3x Coins' : '3x XP';
             effectsHTML += `<div class="active-boost">${type.toUpperCase()} Boost — ${boostEffect}: ${remaining}s remaining</div>`;
         }
     });
