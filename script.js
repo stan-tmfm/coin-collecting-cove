@@ -2210,7 +2210,6 @@ function updateEffectsDisplay() {
     </div>
 `;
 
-
     Object.entries(activeBoosts).forEach(([type, expiry]) => {
         const remaining = Math.max(0, Math.ceil((expiry - now) / 1000));
         if (remaining > 0) {
