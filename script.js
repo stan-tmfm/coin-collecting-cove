@@ -519,7 +519,7 @@ const upgrades = {
         baseCost: 1000,
         maxLevel: 10,
         currentLevel: 0,
-        scaling: (baseCost, level) => (baseCost + 2 * level) * Math.pow(1.1, level),
+        scaling: (baseCost, level) => (baseCost + 200 * level) * Math.pow(1.1, level),
         mysterious: true
     }
 };
@@ -1593,7 +1593,7 @@ function getCoinValueMultiplier() {
     const playerLevel = saveData.level || 0;
 
     // Base multipliers from permanent upgrades and level
-    return Math.pow(1.25, upgrade.level) * Math.pow(1.05, playerLevel);
+    return Math.pow(1.25, upgrade.level) * Math.pow(1.10, playerLevel);
 }
 
 function updateCoinDisplay() {
@@ -2009,13 +2009,13 @@ function updateMerchantDisplay() {
             level: 0
         };
         const currentLevel = upgradeData.level;
+        // Determine if the upgrade is locked (mysterious and not yet affordable when level is 0)
         const isLocked = upg.mysterious && currentLevel === 0 && coinCount < upg.baseCost;
         const isMaxed = currentLevel >= upg.maxLevel;
         const isSpecialUpgrade = upg.id === 2;
 
-        // Calculate cost
-        const cost = upg.mysterious ? upg.baseCost :
-            Math.round(upg.scaling(upg.baseCost, currentLevel));
+        // Calculate cost: if it's locked, show the baseCost; otherwise, use the scaling function.
+        const cost = isLocked ? upg.baseCost : Math.round(upg.scaling(upg.baseCost, currentLevel));
         const canAfford = Math.round(coinCount) >= cost;
 
         // Determine the status text
@@ -2059,7 +2059,7 @@ function updateMerchantDisplay() {
                         Collect normal coins to gain XP!<br>
                         - Get enough XP to level up<br>
                         - Level up to spawn special coins<br>
-                        - Each level gives 1.05x more coin value<br>
+                        - Each level gives 1.1x more coin value<br>
                         <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
                     </div>
                     <div class="upgrades-grid">
