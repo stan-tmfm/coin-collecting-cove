@@ -722,12 +722,14 @@ body.game-active .game-background {
     margin: 15px 0;
     border-radius: 8px;
     border-left: 4px solid transparent;
+	font-size: 1em;
 }
 
 .current-effects div {
     margin: 5px 0;
     font-size: 0.9em;
     color: #ddd;
+	font-size: 0.95em;
 }
 
 .talk-to-merchant-btn {
@@ -1253,7 +1255,6 @@ body.game-active .game-background {
     height: 50px;
     background: url('Images/special_coin.png') center/contain no-repeat;
     cursor: pointer;
-
     pointer-events: none;
     transform: translateZ(0);
     z-index: 2; /* Higher than regular coins */
@@ -1334,4 +1335,98 @@ body.game-active .game-background {
     background: rgba(30, 30, 30, 0.9) !important;
     border: 1px solid rgba(255, 255, 255, 0.1);
 	cursor: not-allowed;
+}
+
+/* Boost Coin Styles */
+.boost-coin {
+    position: absolute;
+    width: 80px; /* Larger size */
+    height: 80px;
+    background: url('Images/boost_coin.png') center/contain no-repeat;
+    cursor: pointer;
+    filter: drop-shadow(0 0 12px rgba(255, 165, 0, 1)); /* More prominent glow */
+    animation: pulseBoost 1.5s ease-in-out infinite;
+    z-index: 10; /* Higher than regular coins */
+}
+
+@keyframes pulseBoost {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+/* Active Boost Effects */
+.active-boost {
+    color: #00ff00;
+    font-weight: bold;
+}
+
+@keyframes explode {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+    25% { transform: scale(1.5) rotate(90deg); filter: brightness(2) drop-shadow(0 0 10px gold); }
+    50% { transform: scale(2.5) rotate(180deg); opacity: 0.7; filter: brightness(3) drop-shadow(0 0 20px gold); }
+    75% { transform: scale(3.5) rotate(270deg); opacity: 0.3; filter: brightness(5) drop-shadow(0 0 40px yellow); }
+    100% { transform: scale(5) rotate(360deg); opacity: 0; filter: brightness(6) drop-shadow(0 0 60px white); }
+}
+
+.boost-coin.death {
+    animation: explode 0.7s ease-out forwards;
+}
+
+
+@keyframes collect {
+    0% { transform: scale(1) rotate(0deg); opacity: 1; filter: brightness(1); }
+    25% { transform: scale(1.5) rotate(180deg); filter: brightness(2) drop-shadow(0 0 10px gold); }
+    50% { transform: scale(2) rotate(360deg) translateY(-20px); filter: brightness(3) drop-shadow(0 0 20px gold); }
+    75% { transform: scale(1.5) rotate(540deg) translateY(-40px); opacity: 0.8; }
+    100% { transform: scale(0) rotate(720deg) translateY(-60px); opacity: 0; }
+}
+
+.boost-coin.collected {
+    animation: collect 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+
+.boost-popup {
+    position: absolute;
+    font-size: 16px;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+    transition: all 0.5s ease-out;
+    z-index: 20;
+}
+
+.boosted-coin {
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8)) 
+            drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
+    animation: glow-pulse-coins 1.5s infinite alternate;
+}
+
+.boosted-xp {
+    filter: drop-shadow(0 0 10px rgba(100, 200, 255, 0.8)) 
+            drop-shadow(0 0 20px rgba(100, 200, 255, 0.4));
+    animation: glow-pulse-xp 1.5s infinite alternate;
+}
+
+@keyframes glow-pulse-coins {
+    0% {
+        filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6)) 
+                drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
+    }
+    100% {
+        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1)) 
+                drop-shadow(0 0 25px rgba(255, 215, 0, 0.7));
+    }
+}
+
+@keyframes glow-pulse-xp {
+    0% {
+        filter: drop-shadow(0 0 5px rgba(100, 200, 255, 0.6)) 
+                drop-shadow(0 0 10px rgba(100, 200, 255, 0.3));
+    }
+    100% {
+        filter: drop-shadow(0 0 15px rgba(100, 200, 255, 1)) 
+                drop-shadow(0 0 25px rgba(100, 200, 255, 0.7));
+    }
 }
