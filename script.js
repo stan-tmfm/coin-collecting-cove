@@ -148,20 +148,75 @@ const merchantDialogues = {
                 completed: false
             }, {
                 id: 4,
+                question: "Any really cool coins?",
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "player",
+                            text: "I've only seen golden yellow coins so far, will I find some cooler or more interesting coins soon?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Hmm.. well, I suppose I can tell you about the 𝗯𝗼𝗼𝘀𝘁 𝗰𝗼𝗶𝗻."
+                        }, {
+                            speaker: "player",
+                            text: "What?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Ah yes, the magnificent boost coin, quite the rare sight."
+                        }, {
+                            speaker: "merchant",
+                            text: "These elusive coins may only wash up about every 60 seconds or so, but they hold a corrupt energy within them."
+                        }, {
+                            speaker: "player",
+                            text: "Corrupt..?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Within a few seconds, these boost coins could fizzle into thin air from this terrible corruption."
+                        }, {
+                            speaker: "merchant",
+                            text: "However, if you manage to get hold of one of these boost coins before it withers away, it can bring you great blessing."
+                        }, {
+                            speaker: "merchant",
+                            text: "Aye, capturing one of these rare treasures can yield you 30 seconds of an remarkable boost, thus the name."
+                        }, {
+                            speaker: "player",
+                            text: "Boost..?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Yes, I recall finding one of these boost coins one day and then for the next 30 seconds, all the coins that flowed in were coated in a golden aura."
+                        }, {
+                            speaker: "merchant",
+                            text: "Each coin that came to me during that time was worth triple its normal value—a truly remarkable occurrence."
+                        }, {
+                            speaker: "player",
+                            text: "Woah, that does sound pretty cool.."
+                        }, {
+                            speaker: "merchant",
+                            text: "Legend has it that these boost coins can bless other aspects of the Cove, but that is yet to be discovered."
+                        }, {
+                            speaker: "player",
+                            text: "So, in summary, every minute or so a boost coin with corrupted energy should wash ashore and I may only have a few seconds to get its blessings otherwise it will fizzle into thin air."
+                        }, {
+                            speaker: "player",
+                            text: "Interesting.."
+                        },
+                    ]
+                },
+                reward: 25,
+                completed: false
+            }, {
+                id: 5,
                 hidden: true,
                 question: "What are special coins?",
                 requirement: (saveData) => (saveData.upgrades?.[2]?.level || 0) >= 1,
                 response: {
                     speaker: "merchant",
                     lines: [{
-                            speaker: "merchant",
-                            text: "Ah, you've discovered the special coins..."
-                        }, {
                             speaker: "player",
-                            text: "Yes, where are they coming from? Why are they blue?"
+                            text: "What are special coins?"
                         }, {
                             speaker: "merchant",
-                            text: "Well, these coins are very special."
+                            text: "These are very special special."
                         }, {
                             speaker: "merchant",
                             text: "These coins are imbued with magical energy, and only those who are wise enough (i.e., have enough XP) can understand the true power they hold."
@@ -876,6 +931,22 @@ let activeSpawns = [];
 let audioCooldown = false;
 let MAX_COIN_CAPACITY = parseInt(localStorage.getItem('coinCapacity')) || 2500;
 const activeCoins = [];
+const activeBoostCoins = [];
+let boostCoinsUnlocked = false;
+let activeBoosts = {};
+let boostSpawnInterval = null;
+let boostCycleIndex = 0;
+const BOOST_CYCLE = ['coins', 'xp'];
+const BOOST_TYPES = {
+    coins: {
+        class: 'boosted-coin',
+        color: 'rgba(255, 215, 0, 0.8)' // Gold
+    },
+    xp: {
+        class: 'boosted-xp',
+        color: 'rgba(100, 200, 255, 0.8)' // Blue
+    }
+};
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
 
@@ -953,7 +1024,27 @@ function loadGame(saveData) {
     // Start game and apply upgrades
     startGame();
     applyUpgradeEffects();
+
+    // Determine if boost coins are unlocked and start the interval
+    boostCoinsUnlocked = saveData.boostsUnlocked || false;
+    if (boostCoinsUnlocked && !boostSpawnInterval) {
+        boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+    }
 }
+
+window.addEventListener('beforeunload', () => {
+    if (currentSlotId) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        const updatedData = {
+            ...saveData,
+            boostsUnlocked: boostCoinsUnlocked,
+            coins: coinCount,
+            merchantCinematicShown: merchantCinematicShown,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+    }
+});
 
 function startGame() {
     const windSound = document.getElementById('wind-sound');
@@ -1015,6 +1106,10 @@ function startGame() {
     // Show goal message and merchant button
     updateGoalDisplay();
     document.querySelector('.merchant-btn').style.display = merchantCinematicShown ? 'block' : 'none';
+
+    if (boostCoinsUnlocked && !boostSpawnInterval) {
+        boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+    }
 }
 
 function spawnCoin() {
@@ -1027,11 +1122,11 @@ function spawnCoin() {
     const spawnRateMultiplier = Math.pow(0.9, upgradeLevel);
 
     // Check if max capacity is reached
-    if (activeCoins.length >= MAX_COIN_CAPACITY) {
+    if (activeCoins.length + document.querySelectorAll('.boost-coin').length >= MAX_COIN_CAPACITY) {
         // Remove the oldest coin
-        const oldestCoin = activeCoins.shift(); // Remove the first coin from the array
+        const oldestCoin = activeCoins.shift();
         if (oldestCoin) {
-            oldestCoin.remove(); // Remove the coin from the DOM
+            oldestCoin.remove();
         }
     }
 
@@ -1039,6 +1134,28 @@ function spawnCoin() {
     const spawnID = setTimeout(() => {
         const coin = document.createElement('div');
         coin.className = 'coin';
+
+        // Track active boosts at spawn time
+        const now = Date.now();
+        let isBoostedCoin = false;
+        let isBoostedXP = false;
+
+        // Check if the boost was active at spawn time
+        if (activeBoosts['coins'] > now) {
+            coin.classList.add('boosted-coin'); // Add visual effect
+            coin.dataset.boostMultiplier = "3"; // Store boost value for later use
+            isBoostedCoin = true;
+        } else {
+            coin.dataset.boostMultiplier = "1"; // No boost, normal value
+        }
+
+        if (activeBoosts['xp'] > now) {
+            coin.classList.add('boosted-xp'); // Add visual effect
+            coin.dataset.xpMultiplier = "2"; // Store XP boost value for later use
+            isBoostedXP = true;
+        } else {
+            coin.dataset.xpMultiplier = "1"; // No boost, normal value
+        }
 
         requestAnimationFrame(() => {
             if (!gameActive)
@@ -1060,7 +1177,7 @@ function spawnCoin() {
 
             setTimeout(() => {
                 if (!gameActive)
-                    return; // Final safety check
+                    return;
                 coin.classList.add('collectable');
                 addHoverEffect(coin);
             }, 100);
@@ -1074,9 +1191,169 @@ function spawnCoin() {
     activeSpawns.push(spawnID);
 }
 
+function spawnBoostCoin() {
+    if (!gameActive || activeCoins.length >= MAX_COIN_CAPACITY)
+        return;
+
+    // Get the current save data
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+    // Check if the special coins upgrade is unlocked
+    const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
+
+    // If the special coins upgrade is not unlocked, only spawn coin boost coins
+    const availableBoostTypes = hasSpecialCoinsUpgrade ? BOOST_CYCLE : ['coins'];
+
+    // Determine boost type from cycle
+    const boostType = availableBoostTypes[boostCycleIndex % availableBoostTypes.length];
+    boostCycleIndex++; // Move to next position in cycle
+
+    const boostCoin = document.createElement('div');
+    boostCoin.className = 'boost-coin';
+
+    // Apply boost-specific class and styles
+    const boostConfig = BOOST_TYPES[boostType];
+    if (boostConfig) {
+        boostCoin.classList.add(boostConfig.class);
+        boostCoin.style.setProperty('--boost-color', boostConfig.color);
+    }
+    boostCoin.dataset.boostType = boostType;
+
+    // Check total coins (regular + active boosts)
+    const totalCoins = activeCoins.length + activeBoostCoins.length;
+    if (totalCoins >= MAX_COIN_CAPACITY)
+        return;
+
+    // Rest of your existing spawn logic remains the same...
+    const startX = Math.random() * (beachContainer.offsetWidth - 50);
+    boostCoin.style.left = `${startX}px`;
+    boostCoin.style.top = '-60px';
+    beachContainer.appendChild(boostCoin);
+
+    // Add to tracking array
+    activeBoostCoins.push(boostCoin);
+
+    // Force layout recalculation
+    void boostCoin.offsetHeight;
+
+    // Animate with transition
+    boostCoin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
+
+    // Random end position within container bounds
+    const endX = Math.max(10, Math.min(
+                startX + (Math.random() * 100 - 50),
+                beachContainer.offsetWidth - 50));
+    const endY = Math.random() * (beachContainer.offsetHeight - 50) + 20;
+
+    boostCoin.style.left = `${endX}px`;
+    boostCoin.style.top = `${endY}px`;
+
+    // Enable collection after 300ms
+    setTimeout(() => {
+        boostCoin.classList.add('collectable');
+    }, 300);
+
+    // Auto-remove after 5 seconds
+    const removeTimer = setTimeout(() => {
+        boostCoin.classList.add('death');
+        setTimeout(() => {
+            boostCoin.remove();
+            const index = activeBoostCoins.indexOf(boostCoin);
+            if (index !== -1) {
+                activeBoostCoins.splice(index, 1);
+            }
+        }, 500); // Match animation duration
+    }, 5000);
+
+    // Add collection handler
+    boostCoin.addEventListener('click', (e) => {
+        e.preventDefault();
+        collectBoostCoin(boostCoin);
+    });
+    boostCoin.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        collectBoostCoin(boostCoin);
+    });
+    boostCoin.addEventListener('mouseenter', () => collectBoostCoin(boostCoin));
+}
+
+function collectBoostCoin(coin) {
+    if (coin.classList.contains('collected'))
+        return; // Early exit if already collected
+    coin.classList.add('collected'); // Mark as collected immediately
+
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const now = Date.now();
+
+    // Determine boost type from dataset instead of class
+    const boostType = coin.dataset.boostType || 'coins'; // Default to coins if not set
+    const duration = 30000; // 30 seconds
+
+    // Add boost to active boosts
+    activeBoosts[boostType] = now + duration;
+
+    // Play custom sound
+    const boostSound = new Audio('Sounds/boost_coin_pickup.mp3');
+    boostSound.play();
+
+    // Create text popup
+    const popup = document.createElement('div');
+    popup.className = 'boost-popup';
+    popup.textContent = `${boostType === 'coins' ? '3x Coins' : '2x XP'} 30s`;
+    popup.style.left = `${coin.offsetLeft}px`;
+    popup.style.top = `${coin.offsetTop}px`;
+    beachContainer.appendChild(popup);
+
+    // Animate popup
+    setTimeout(() => {
+        popup.style.transform = 'translateY(-50px)';
+        popup.style.opacity = '0';
+    }, 1500);
+
+    // Remove popup after animation
+    setTimeout(() => popup.remove(), 3000);
+
+    // Remove coin after animation
+    setTimeout(() => {
+        coin.remove();
+        const index = activeBoostCoins.indexOf(coin);
+        if (index !== -1) {
+            activeBoostCoins.splice(index, 1);
+        }
+    }, 300);
+
+    // Update effects display immediately
+    updateEffectsDisplay();
+
+    // Save updated boost state
+    const updatedData = {
+        ...saveData,
+        activeBoosts: activeBoosts, // Save active boosts
+        boostCycleIndex: boostCycleIndex, // Save cycle position
+        timestamp: Date.now()
+    };
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+}
+
+window.addEventListener('beforeunload', () => {
+    if (currentSlotId) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        const updatedData = {
+            ...saveData, // Includes boostsUnlocked
+            coins: coinCount,
+            merchantCinematicShown: merchantCinematicShown,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+    }
+});
+
 function addHoverEffect(coin) {
     let collected = false;
     let previousLevel = 0;
+
+    // Get boosts active when coin was spawned
+    const boostTypes = JSON.parse(coin.dataset.boosts || '[]');
 
     function collectCoin() {
         if (collected)
@@ -1086,14 +1363,13 @@ function addHoverEffect(coin) {
         // Remove the coin from the activeCoins array
         const coinIndex = activeCoins.indexOf(coin);
         if (coinIndex !== -1) {
-            activeCoins.splice(coinIndex, 1); // Remove the coin from the array
+            activeCoins.splice(coinIndex, 1);
         }
 
         const coinSound = document.createElement('audio');
         coinSound.src = document.getElementById('coin-sound').src;
         coinSound.volume = 0.3;
 
-        // Handle audio state
         const playPromise = coinSound.play();
         if (playPromise !== undefined) {
             playPromise.catch(error => {
@@ -1106,72 +1382,64 @@ function addHoverEffect(coin) {
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
 
-        // Apply coin value multiplier
-        const coinValueMultiplier = getCoinValueMultiplier();
-        coinCount += 1 * coinValueMultiplier;
-        updateCoinDisplay(); // Update display with rounded value
+        // Read multipliers from dataset (only applied if coin had a boost at spawn)
+        let coinMultiplier = parseFloat(coin.dataset.boostMultiplier) || 1;
+        let xpMultiplier = parseFloat(coin.dataset.xpMultiplier) || 1;
 
-        // Store previous level before updating
+        // Apply permanent upgrades
+        coinMultiplier *= getCoinValueMultiplier();
+        xpMultiplier *= getXPMultiplier();
+
+        // Update coin count and XP
+        coinCount += 1 * coinMultiplier;
+        updateCoinDisplay();
+
         previousLevel = saveData.level || 0;
 
-        // Check if Special Coins upgrade is active
         const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
 
-        // Handle XP if upgrade is active
         if (hasSpecialCoins) {
-            // Initialize XP data if not present
             if (typeof saveData.xp === 'undefined') {
-                saveData.xp = 0; // Start with 0 XP
+                saveData.xp = 0;
                 saveData.level = 0;
                 saveData.xpNeeded = 10;
             }
 
-            // Calculate XP gain with multiplier
-            const xpGain = 1 * getXPMultiplier(); // Apply multiplier here
-            saveData.xp += xpGain;
+            saveData.xp += 1 * xpMultiplier;
 
-            // Process level up
             while (saveData.xp >= saveData.xpNeeded) {
                 saveData.xp -= saveData.xpNeeded;
                 saveData.level += 1;
                 saveData.xpNeeded = 10 * Math.pow(1.1, saveData.level);
             }
 
-            // Check for level up and spawn special coin
+            updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
+
             if (saveData.level > previousLevel) {
                 spawnSpecialCoin();
             }
-
-            // Update XP display
-            updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
         }
 
-        // Create updated save data
         const updatedData = {
             ...saveData,
-            coins: coinCount, // Store precise value
+            coins: coinCount,
             merchantCinematicShown: merchantCinematicShown,
             timestamp: saveData.timestamp || Date.now()
         };
 
-        // Save updated data
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
 
-        // Animate coin collection
         coin.style.transform = 'scale(2) translateY(-20px)';
         coin.style.opacity = '0';
 
-        // Remove coin after animation
         setTimeout(() => coin.remove(), 500);
 
-        // Update slot display
         const slot = saveSlots.find(s => s.id === currentSlotId);
         if (slot) {
             slot.data = updatedData;
-            initializeSaveSlots(); // Refresh UI
+            initializeSaveSlots();
         }
 
-        // Update goal display if needed
         if (coinCount < currentGoal || !merchantCinematicShown) {
             updateGoalDisplay();
         }
@@ -1308,12 +1576,12 @@ function getXPMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const specialUpgrade1 = saveData.specialUpgrades?.[1] || {
         level: 0
-    }; // Wisdom Boost
+    };
     const upgrade3 = saveData.upgrades?.[3] || {
         level: 0
-    }; // Educated Coins
+    };
 
-    // Combine multipliers: 1.25^WisdomBoostLevel * 1.1^EducatedCoinsLevel
+    // Base multipliers from permanent upgrades
     return Math.pow(1.25, specialUpgrade1.level) * Math.pow(1.1, upgrade3.level);
 }
 
@@ -1324,7 +1592,7 @@ function getCoinValueMultiplier() {
     };
     const playerLevel = saveData.level || 0;
 
-    // Combine both multipliers: 1.25^upgradeLevel * 1.05^playerLevel
+    // Base multipliers from permanent upgrades and level
     return Math.pow(1.25, upgrade.level) * Math.pow(1.05, playerLevel);
 }
 
@@ -1484,11 +1752,11 @@ function updateGoalDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const goalMessage = document.querySelector('.goal-message');
     const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
-    const specialDialogue = merchantDialogues.introduction.options[3];
+    const specialDialogue = merchantDialogues.introduction.options[4];
 
     // Check if first 3 dialogues are completed (excluding mysterious one)
     const initialDialoguesCompleted = merchantDialogues.introduction.options
-        .slice(0, 3) // Only check first 3 dialogues
+        .slice(0, 4) // Only check first 4 dialogues
         .every(opt => opt.completed);
 
     // 1. Check for merchant cinematic trigger
@@ -1552,6 +1820,7 @@ function startMerchantCinematic() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const updatedData = {
         ...saveData,
+        boostsUnlocked: boostCoinsUnlocked,
         merchantCinematicShown: true,
         coins: coinCount,
         timestamp: Date.now()
@@ -1638,15 +1907,34 @@ function startMerchantCinematic() {
 
         // Clear ALL existing spawns and intervals
         clearInterval(window.spawnInterval);
+        clearInterval(boostSpawnInterval);
 
-        // Clear active timeouts CORRECTED VERSION
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+        // Update the save data with ALL necessary fields
+        const updatedData = {
+            ...saveData, // Preserve existing data
+            boostsUnlocked: true, // Set the boost flag
+            merchantCinematicShown: true,
+            coins: coinCount,
+            timestamp: Date.now()
+        };
+
+        // Save the updated data
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+        boostCoinsUnlocked = true;
+
+        // Clear active timeouts
         activeSpawns.forEach(id => {
             clearTimeout(id); // Changed from cancelAnimationFrame
         });
         activeSpawns = [];
 
-        // Apply upgrades - handles interval setup
+        // Start spawning systems
         applyUpgradeEffects();
+        if (!boostSpawnInterval) {
+            boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+        }
 
         // Restore original slides
         cinematicSlides.length = 0;
@@ -1664,6 +1952,11 @@ function startMerchantCinematic() {
             }
         });
         musicManager.audio.pause();
+
+        // Start boost spawning
+        if (!boostSpawnInterval) {
+            boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+        }
     };
 
     // Audio handling
@@ -1899,21 +2192,42 @@ function purchaseSpecialUpgrade(upgradeId) {
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const effectsContainer = document.querySelector('.current-effects');
+    const now = Date.now();
 
-    const xpLevel = saveData.specialUpgrades?.[1]?.level || 0; // Wisdom Boost
-    const coinLevel = saveData.specialUpgrades?.[2]?.level || 0; // Golden Touch
-    const educatedCoinsLevel = saveData.upgrades?.[3]?.level || 0; // Educated Coins
-    const playerLevel = saveData.level || 0;
+    // Calculate coin spawn rate in coins per second
+    const baseSpawnInterval = 3000; // Base spawn interval in milliseconds
+    const spawnRateMultiplier = Math.pow(0.9, saveData.upgrades?.[1]?.level || 0);
+    const spawnInterval = baseSpawnInterval * spawnRateMultiplier;
+    const coinsPerSecond = (1000 / spawnInterval).toFixed(1); // Convert to coins per second
 
-    effectsContainer.innerHTML = `
-        <strong>Active Effects:</strong>
-        <div>• Coin Spawn Rate: ${(1000 / (3000 * Math.pow(0.9, saveData.upgrades?.[1]?.level || 0))).toFixed(1)}/sec</div>
-        ${(xpLevel > 0 || educatedCoinsLevel > 0) ? `
-            <div>• XP Multiplier: ${getXPMultiplier().toFixed(2)}x</div>
-        ` : ''}
-        ${(coinLevel > 0 || playerLevel > 0) ? 
-        `<div>• Coin Multiplier: ${getCoinValueMultiplier().toFixed(2)}x</div>` : ''}
-    `;
+    let effectsHTML = `<strong>Active Effects:</strong>`;
+    // Add permanent upgrades
+    effectsHTML += `
+    <div class="permanent-upgrades">
+        <div>• Coin Spawn Rate: ${coinsPerSecond}/sec</div>
+		${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? `<div>• Coin Value Multi: ${getCoinValueMultiplier().toFixed(1)}x</div>` : ''}
+        ${(saveData.specialUpgrades?.[1]?.level || saveData.upgrades?.[3]) ? `<div>• XP Multi: ${getXPMultiplier().toFixed(1)}x</div>` : ''}
+    </div>
+`;
+
+
+    Object.entries(activeBoosts).forEach(([type, expiry]) => {
+        const remaining = Math.max(0, Math.ceil((expiry - now) / 1000));
+        if (remaining > 0) {
+            // Map boost type to its effect
+            const boostEffect = type === 'coins' ? '3x Coins' : '2x XP';
+            effectsHTML += `<div class="active-boost">${type.toUpperCase()} Boost — ${boostEffect}: ${remaining}s remaining</div>`;
+        }
+    });
+
+    if (effectsContainer) {
+        effectsContainer.innerHTML = effectsHTML;
+    }
+
+    // Refresh every second if boosts are active
+    if (Object.keys(activeBoosts).length > 0) {
+        setTimeout(updateEffectsDisplay, 1000);
+    }
 }
 
 function applyUpgradeEffects() {
