@@ -292,7 +292,7 @@ function showDialogue() {
         optionElement.innerHTML = `
             ${questionText}
             ${!option.completed && requirementMet ? 
-`<span class="reward-indicator">(+${option.reward} <img src="Images/coin.png" class="coin-icon">)</span>`
+`<span class="reward-indicator">+${option.reward} <img src="Images/coin.png" class="coin-icon"></span>`
              : ''}
         `;
 
@@ -342,6 +342,7 @@ function closeDialogue() {
         document.removeEventListener('keydown', handleDialogueEscape);
         container.remove();
     }
+    refreshAllDisplays();
 }
 
 function handleDialogueChoice(option, element) {
@@ -700,7 +701,7 @@ function initializeSaveSlots() {
         const timestamp = slot.data?.timestamp ? new Date(slot.data.timestamp).toLocaleDateString() : 'No date';
 
         // Round the displayed coin value
-        const displayCoins = slot.data ? Math.round(slot.data.coins || 0) : 0;
+        displayCoins = slot.data ? formatNumber(Math.round(slot.data.coins || 0)) : 0;
 
         slotElement.innerHTML = `
             <div class="slot-number">Slot ${slot.id}</div>
@@ -949,6 +950,7 @@ const BOOST_TYPES = {
 };
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
+let useScientificNotation = localStorage.getItem('useScientificNotation') === 'true';
 
 function loadGame(saveData) {
     // Create normalized save data
@@ -1031,20 +1033,6 @@ function loadGame(saveData) {
         boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
     }
 }
-
-window.addEventListener('beforeunload', () => {
-    if (currentSlotId) {
-        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        const updatedData = {
-            ...saveData,
-            boostsUnlocked: boostCoinsUnlocked,
-            coins: coinCount,
-            merchantCinematicShown: merchantCinematicShown,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-    }
-});
 
 function startGame() {
     const windSound = document.getElementById('wind-sound');
@@ -1191,6 +1179,382 @@ function spawnCoin() {
     activeSpawns.push(spawnID);
 }
 
+function formatNumber(number, isXP = false) {
+    const num = Number(number);
+
+    // Always show 1 decimal for XP regardless of notation
+    if (isXP) {
+        return num.toFixed(1);
+    }
+
+    if (useScientificNotation) {
+        return num >= 1e6
+         ? num.toExponential(2).replace(/e\+?/, 'e')
+         : num.toString();
+    }
+
+    const suffixes = [{
+            value: 1e303,
+            suffix: 'Ce'
+        }, {
+            value: 1e300,
+            suffix: 'NoNg'
+        }, {
+            value: 1e297,
+            suffix: 'OcNg'
+        }, {
+            value: 1e294,
+            suffix: 'SpNg'
+        }, {
+            value: 1e291,
+            suffix: 'SxNg'
+        }, {
+            value: 1e288,
+            suffix: 'QnNg'
+        }, {
+            value: 1e285,
+            suffix: 'QdNg'
+        }, {
+            value: 1e282,
+            suffix: 'TNg'
+        }, {
+            value: 1e279,
+            suffix: 'DNg'
+        }, {
+            value: 1e276,
+            suffix: 'UNg'
+        }, {
+            value: 1e273,
+            suffix: 'Ng'
+        }, {
+            value: 1e270,
+            suffix: 'NoOg'
+        }, {
+            value: 1e267,
+            suffix: 'OcOg'
+        }, {
+            value: 1e264,
+            suffix: 'SpOg'
+        }, {
+            value: 1e261,
+            suffix: 'SxOg'
+        }, {
+            value: 1e258,
+            suffix: 'QnOg'
+        }, {
+            value: 1e255,
+            suffix: 'QdOg'
+        }, {
+            value: 1e252,
+            suffix: 'TOg'
+        }, {
+            value: 1e249,
+            suffix: 'DOg'
+        }, {
+            value: 1e246,
+            suffix: 'UOg'
+        }, {
+            value: 1e243,
+            suffix: 'Og'
+        }, {
+            value: 1e240,
+            suffix: 'NoSg'
+        }, {
+            value: 1e237,
+            suffix: 'OcSg'
+        }, {
+            value: 1e234,
+            suffix: 'SpSg'
+        }, {
+            value: 1e231,
+            suffix: 'SxSg'
+        }, {
+            value: 1e228,
+            suffix: 'QnSg'
+        }, {
+            value: 1e225,
+            suffix: 'QdSg'
+        }, {
+            value: 1e222,
+            suffix: 'TSg'
+        }, {
+            value: 1e219,
+            suffix: 'DSg'
+        }, {
+            value: 1e216,
+            suffix: 'USg'
+        }, {
+            value: 1e213,
+            suffix: 'Sg'
+        }, {
+            value: 1e210,
+            suffix: 'Nosg'
+        }, {
+            value: 1e207,
+            suffix: 'Ocsg'
+        }, {
+            value: 1e204,
+            suffix: 'Spsg'
+        }, {
+            value: 1e201,
+            suffix: 'Sxsg'
+        }, {
+            value: 1e198,
+            suffix: 'Qnsg'
+        }, {
+            value: 1e195,
+            suffix: 'Qdsg'
+        }, {
+            value: 1e192,
+            suffix: 'Tsg'
+        }, {
+            value: 1e189,
+            suffix: 'Dsg'
+        }, {
+            value: 1e186,
+            suffix: 'Usg'
+        }, {
+            value: 1e183,
+            suffix: 'sg'
+        }, {
+            value: 1e180,
+            suffix: 'NoQg'
+        }, {
+            value: 1e177,
+            suffix: 'OcQg'
+        }, {
+            value: 1e174,
+            suffix: 'SpQg'
+        }, {
+            value: 1e171,
+            suffix: 'SxQg'
+        }, {
+            value: 1e168,
+            suffix: 'QnQg'
+        }, {
+            value: 1e165,
+            suffix: 'QdQg'
+        }, {
+            value: 1e162,
+            suffix: 'TQg'
+        }, {
+            value: 1e159,
+            suffix: 'DQg'
+        }, {
+            value: 1e156,
+            suffix: 'UQg'
+        }, {
+            value: 1e153,
+            suffix: 'Qg'
+        }, {
+            value: 1e150,
+            suffix: 'Noqg'
+        }, {
+            value: 1e147,
+            suffix: 'Ocqg'
+        }, {
+            value: 1e144,
+            suffix: 'Spqg'
+        }, {
+            value: 1e141,
+            suffix: 'Sxqg'
+        }, {
+            value: 1e138,
+            suffix: 'Qnqg'
+        }, {
+            value: 1e135,
+            suffix: 'Qdqg'
+        }, {
+            value: 1e132,
+            suffix: 'Tqg'
+        }, {
+            value: 1e129,
+            suffix: 'Dqg'
+        }, {
+            value: 1e126,
+            suffix: 'Uqg'
+        }, {
+            value: 1e123,
+            suffix: 'qg'
+        }, {
+            value: 1e120,
+            suffix: 'NoTg'
+        }, {
+            value: 1e117,
+            suffix: 'OcTg'
+        }, {
+            value: 1e114,
+            suffix: 'SpTg'
+        }, {
+            value: 1e111,
+            suffix: 'SxTg'
+        }, {
+            value: 1e108,
+            suffix: 'QnTg'
+        }, {
+            value: 1e105,
+            suffix: 'QdTg'
+        }, {
+            value: 1e102,
+            suffix: 'TTg'
+        }, {
+            value: 1e99,
+            suffix: 'DTg'
+        }, {
+            value: 1e96,
+            suffix: 'UTg'
+        }, {
+            value: 1e93,
+            suffix: 'Tg'
+        }, {
+            value: 1e90,
+            suffix: 'NoVt'
+        }, {
+            value: 1e87,
+            suffix: 'OcVt'
+        }, {
+            value: 1e84,
+            suffix: 'SpVt'
+        }, {
+            value: 1e81,
+            suffix: 'SxVt'
+        }, {
+            value: 1e78,
+            suffix: 'QnVt'
+        }, {
+            value: 1e75,
+            suffix: 'QdVt'
+        }, {
+            value: 1e72,
+            suffix: 'TVt'
+        }, {
+            value: 1e69,
+            suffix: 'DVt'
+        }, {
+            value: 1e66,
+            suffix: 'UVt'
+        }, {
+            value: 1e63,
+            suffix: 'Vt'
+        }, {
+            value: 1e60,
+            suffix: 'NoDe'
+        }, {
+            value: 1e57,
+            suffix: 'OcDe'
+        }, {
+            value: 1e54,
+            suffix: 'SpDe'
+        }, {
+            value: 1e51,
+            suffix: 'SxDe'
+        }, {
+            value: 1e48,
+            suffix: 'QnDe'
+        }, {
+            value: 1e45,
+            suffix: 'QdDe'
+        }, {
+            value: 1e42,
+            suffix: 'TDe'
+        }, {
+            value: 1e39,
+            suffix: 'DDe'
+        }, {
+            value: 1e36,
+            suffix: 'UDe'
+        }, {
+            value: 1e33,
+            suffix: 'De'
+        }, {
+            value: 1e30,
+            suffix: 'No'
+        }, {
+            value: 1e27,
+            suffix: 'Oc'
+        }, {
+            value: 1e24,
+            suffix: 'Sp'
+        }, {
+            value: 1e21,
+            suffix: 'Sx'
+        }, {
+            value: 1e18,
+            suffix: 'Qn'
+        }, {
+            value: 1e15,
+            suffix: 'Qd'
+        }, {
+            value: 1e12,
+            suffix: 'T'
+        }, {
+            value: 1e9,
+            suffix: 'B'
+        }, {
+            value: 1e6,
+            suffix: 'M'
+        }
+    ];
+
+    for (const {
+        value,
+        suffix
+    }
+        of suffixes) {
+        if (num >= value) {
+            const divided = num / value;
+            return divided % 1 === 0 ? divided + suffix : divided.toFixed(2).replace(/\.00$/, '') + suffix;
+        }
+    }
+
+    return num.toString();
+}
+
+// Add to settings initialization
+document.getElementById('notation-toggle').addEventListener('click', toggleNotation);
+updateNotationButton();
+
+function toggleNotation() {
+    useScientificNotation = !useScientificNotation;
+    localStorage.setItem('useScientificNotation', useScientificNotation);
+    updateNotationButton();
+    refreshAllDisplays();
+}
+
+function updateNotationButton() {
+    const btn = document.getElementById('notation-toggle');
+    btn.textContent = `Notation: ${useScientificNotation ? 'Scientific' : 'Standard'}`;
+
+    // Initialize with correct state
+    if (localStorage.getItem('useScientificNotation') === null) {
+        localStorage.setItem('useScientificNotation', 'false');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('useScientificNotation') === null) {
+        localStorage.setItem('useScientificNotation', 'false');
+    }
+    useScientificNotation = localStorage.getItem('useScientificNotation') === 'true';
+    updateNotationButton();
+});
+
+function refreshAllDisplays() {
+    // Force reload fresh data
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+    // Update all displays with validated numbers
+    updateCoinDisplay();
+    updateXPDisplay();
+    updateMerchantDisplay();
+    updateEffectsDisplay();
+
+    // Force redraw any active coins
+    document.querySelectorAll('.coin').forEach(coin => {
+        coin.style.transform = coin.style.transform; // Trigger reflow
+    });
+}
+
 function spawnBoostCoin() {
     if (!gameActive || activeCoins.length >= MAX_COIN_CAPACITY)
         return;
@@ -1335,19 +1699,6 @@ function collectBoostCoin(coin) {
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
 }
 
-window.addEventListener('beforeunload', () => {
-    if (currentSlotId) {
-        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        const updatedData = {
-            ...saveData, // Includes boostsUnlocked
-            coins: coinCount,
-            merchantCinematicShown: merchantCinematicShown,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-    }
-});
-
 function addHoverEffect(coin) {
     let collected = false;
     let previousLevel = 0;
@@ -1382,6 +1733,10 @@ function addHoverEffect(coin) {
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
 
+        let currentXP = Number(saveData.xp) || 0;
+        let currentLevel = Number(saveData.level) || 0;
+        let xpNeeded = Number(saveData.xpNeeded) || 10;
+
         // Read multipliers from dataset (only applied if coin had a boost at spawn)
         let coinMultiplier = parseFloat(coin.dataset.boostMultiplier) || 1;
         let xpMultiplier = parseFloat(coin.dataset.xpMultiplier) || 1;
@@ -1415,7 +1770,8 @@ function addHoverEffect(coin) {
 
             updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
 
-            if (saveData.level > previousLevel) {
+            const levelsGained = saveData.level - previousLevel;
+            for (let i = 0; i < levelsGained; i++) {
                 spawnSpecialCoin();
             }
         }
@@ -1443,6 +1799,7 @@ function addHoverEffect(coin) {
         if (coinCount < currentGoal || !merchantCinematicShown) {
             updateGoalDisplay();
         }
+        refreshAllDisplays();
     }
 
     // Desktop hover
@@ -1458,6 +1815,16 @@ function addHoverEffect(coin) {
 function spawnSpecialCoin() {
     if (!gameActive)
         return;
+
+    // Check current active coins (regular, boost, uncollected special)
+    const currentRegular = activeCoins.length;
+    const currentBoost = activeBoostCoins.length;
+    const currentSpecial = document.querySelectorAll('.special-coin:not(.collected)').length;
+    const totalCoins = currentRegular + currentBoost + currentSpecial;
+
+    if (totalCoins >= MAX_COIN_CAPACITY) {
+        return; // Do not spawn if capacity is reached
+    }
 
     const coin = document.createElement('div');
     coin.className = 'special-coin';
@@ -1531,7 +1898,7 @@ function addSpecialCoinHoverEffect(coin) {
         // Update display
         const specialCoinDisplay = document.querySelector('.special-coin-balance');
         if (specialCoinDisplay) {
-            specialCoinDisplay.textContent = `Special Coins: ${Math.round(saveData.specialCoins)}`;
+            specialCoinDisplay.textContent = `Special Coins: ${formatNumber(specialCoinDisplay)}`;
         }
 
         // Remove after animation
@@ -1559,17 +1926,26 @@ function addSpecialCoinHoverEffect(coin) {
     });
 }
 
-function updateXPDisplay(currentXP, currentLevel, xpNeeded) {
-    const xpProgress = document.querySelector('.xp-progress');
-    const xpLevel = document.querySelector('.xp-level');
-    const xpCurrent = document.querySelector('.xp-current');
-    const xpNeededSpan = document.querySelector('.xp-needed');
+function updateXPDisplay(currentXP = null, currentLevel = null, xpNeeded = null) {
+    if (currentXP === null || currentLevel === null || xpNeeded === null) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        currentXP = Number(saveData.xp) || 0;
+        currentLevel = Number(saveData.level) || 0;
+        xpNeeded = Number(saveData.xpNeeded) || 10;
+    }
 
-    const progressPercent = (currentXP / xpNeeded) * 100;
-    xpProgress.style.width = `${progressPercent}%`;
-    xpLevel.textContent = currentLevel;
-    xpCurrent.textContent = currentXP.toFixed(1);
-    xpNeededSpan.textContent = `${xpNeeded.toFixed(1)} XP`;
+    // Round XP values to one decimal place but ensure the format keeps the .0 if necessary
+    const roundedXP = currentXP.toFixed(1);
+    const roundedXPNeeded = xpNeeded.toFixed(1);
+
+    // Format the numbers
+    document.querySelector('.xp-current').textContent = formatNumber(roundedXP);
+    document.querySelector('.xp-needed').textContent = `${formatNumber(roundedXPNeeded)} XP`;
+
+    // Update the progress bar based on the rounded values
+    const progressPercent = (parseFloat(roundedXP) / parseFloat(roundedXPNeeded)) * 100;
+    document.querySelector('.xp-progress').style.width = `${progressPercent}%`;
+    document.querySelector('.xp-level').textContent = currentLevel;
 }
 
 function getXPMultiplier() {
@@ -1587,23 +1963,27 @@ function getXPMultiplier() {
 
 function getCoinValueMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgrade = saveData.specialUpgrades?.[2] || {
+    const specialUpgrade2 = saveData.specialUpgrades?.[2] || {
         level: 0
     };
     const playerLevel = saveData.level || 0;
 
     // Base multipliers from permanent upgrades and level
-    return Math.pow(1.25, upgrade.level) * Math.pow(1.10, playerLevel);
+    return Math.pow(1.25, specialUpgrade2.level) * Math.pow(1.10, playerLevel);
 }
 
 function updateCoinDisplay() {
-    // Always show rounded value but keep precise internal count
-    coinCounter.textContent = `Coins: ${Math.round(coinCount)}`;
+    // Round coin count before formatting
+    const roundedCoins = Math.round(coinCount);
+    const formatted = formatNumber(roundedCoins);
 
-    // Update merchant display if open
-    const merchantCoinCount = document.getElementById('merchant-coin-count');
-    if (merchantCoinCount) {
-        merchantCoinCount.textContent = Math.round(coinCount);
+    // Update game screen display
+    document.querySelector('.coin-counter').textContent = `Coins: ${formatted}`;
+
+    // Update merchant modal display
+    const merchantDisplay = document.getElementById('merchant-coin-count');
+    if (merchantDisplay) {
+        merchantDisplay.textContent = formatted;
     }
 }
 
@@ -1754,10 +2134,12 @@ function updateGoalDisplay() {
     const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
     const specialDialogue = merchantDialogues.introduction.options[4];
 
-    // Check if first 3 dialogues are completed (excluding mysterious one)
+    // Check if first 4 dialogues are completed (excluding mysterious ones)
     const initialDialoguesCompleted = merchantDialogues.introduction.options
         .slice(0, 4) // Only check first 4 dialogues
         .every(opt => opt.completed);
+
+    let shouldBounce = true; // Default to bouncing, but override for first and last messages
 
     // 1. Check for merchant cinematic trigger
     if (!merchantCinematicShown && coinCount >= currentGoal) {
@@ -1770,13 +2152,16 @@ function updateGoalDisplay() {
     if (hasSpecialCoinsUpgrade && !specialDialogue.completed) {
         goalMessage.innerHTML = '"Maybe the merchant can explain what these special coins are..."';
         goalMessage.style.display = 'block';
+        goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
-    // 3. Check if initial 3 dialogues are completed
+    // 3. Check if initial 4 dialogues are completed
     if (initialDialoguesCompleted && !specialDialogue.completed) {
         goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
         goalMessage.style.display = 'block';
+        shouldBounce = false; // Last message should not bounce
+        goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
@@ -1784,6 +2169,8 @@ function updateGoalDisplay() {
     if (merchantDialogues.introduction.options.every(opt => opt.completed)) {
         goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
         goalMessage.style.display = 'block';
+        shouldBounce = false; // Last message should not bounce
+        goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
@@ -1791,12 +2178,15 @@ function updateGoalDisplay() {
     if (merchantCinematicShown) {
         goalMessage.innerHTML = '"Maybe I should go talk to the merchant..<br>he can answer some of my questions.."';
         goalMessage.style.display = 'block';
+        goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
     // 6. Fallback for new players
     goalMessage.innerHTML = '"Hmm.. I wonder what would happen<br>if I collected some of these coins..."';
     goalMessage.style.display = 'block';
+    shouldBounce = false; // First message should not bounce
+    goalMessage.classList.toggle('bounce', shouldBounce);
 }
 
 function allDialoguesCompleted() {
@@ -1965,19 +2355,6 @@ function startMerchantCinematic() {
     musicManager.audio.pause();
 }
 
-window.addEventListener('beforeunload', () => {
-    if (currentSlotId) {
-        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        const updatedData = {
-            ...saveData,
-            coins: coinCount,
-            merchantCinematicShown: merchantCinematicShown,
-            timestamp: Date.now()
-        };
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
-    }
-});
-
 function showMerchantUI() {
     const modal = document.querySelector('.merchant-modal');
     modal.style.display = 'flex';
@@ -2034,7 +2411,7 @@ function updateMerchantDisplay() {
                 <button class="buy-btn" 
                     data-upgrade-id="${upg.id}"
                     ${!canAfford ? 'disabled' : ''}>
-                    ${isLocked ? `Req: ${upg.baseCost}` : `Cost: ${cost}`} Coins
+                    ${isLocked ? `Req: ${formatNumber(upg.baseCost)}` : `Cost: ${formatNumber(cost)}`} Coins
                 </button>
             ` : ''}
         </div>
@@ -2060,7 +2437,7 @@ function updateMerchantDisplay() {
                         - Get enough XP to level up<br>
                         - Level up to spawn special coins<br>
                         - Each level gives 1.1x more coin value<br>
-                        <div class="special-coin-balance">Special Coins: ${specialCoins}</div>
+                        <div class="special-coin-balance">Special Coins: ${formatNumber(specialCoins)}</div>
                     </div>
                     <div class="upgrades-grid">
                         ${Array.from({
@@ -2071,6 +2448,7 @@ function updateMerchantDisplay() {
                     const meetsRequirement = (!upgrade.requirement || (saveData.level || 0) >= upgrade.requirement);
                     const cost = upgrade.baseCost + (currentLevel * upgrade.costIncrement);
                     const canAfford = specialCoins >= cost;
+                    const isMaxed = currentLevel >= upgrade.levelCap;
 
                     return `
                                 <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
@@ -2078,11 +2456,15 @@ function updateMerchantDisplay() {
                                         <h4>${upgrade.name}</h4>
                                         <p>${upgrade.desc}</p>
                                         <p>(Level ${currentLevel}/${upgrade.levelCap})</p>
-                                        <button class="buy-special-btn" 
-                                            data-upgrade-id="${upgrade.id}"
-                                            ${!canAfford || currentLevel >= upgrade.levelCap ? 'disabled' : ''}>
-                                            Cost: ${cost} Special Coins
-                                        </button>
+                                        ${isMaxed ? `
+                                            <button class="buy-special-btn" disabled>MAXED</button>
+                                        ` : `
+                                            <button class="buy-special-btn" 
+                                                data-upgrade-id="${upgrade.id}"
+                                                ${!canAfford ? 'disabled' : ''}>
+                                                Cost: ${formatNumber(cost)} Special Coins
+                                            </button>
+                                        `}
                                     ` : `
                                         <h4>${upgrade.name}</h4>
                                         <p>Requires Level ${upgrade.requirement}</p>
@@ -2126,7 +2508,7 @@ function purchaseUpgrade(upgradeId) {
         level: 0
     };
     const currentLevel = upgradeData.level;
-    const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
+    const cost = formatNumber(Math.round(upg.scaling(upg.baseCost, currentLevel)));
 
     if (currentLevel < upg.maxLevel && Math.round(coinCount) >= cost) {
         coinCount -= cost;
@@ -2205,8 +2587,8 @@ function updateEffectsDisplay() {
     effectsHTML += `
     <div class="permanent-upgrades">
         <div>• Coin Spawn Rate: ${coinsPerSecond}/sec</div>
-		${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? `<div>• Coin Value Multi: ${getCoinValueMultiplier().toFixed(1)}x</div>` : ''}
-        ${(saveData.specialUpgrades?.[1]?.level || saveData.upgrades?.[3]) ? `<div>• XP Multi: ${getXPMultiplier().toFixed(1)}x</div>` : ''}
+		${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? `<div>• Coin Value Multi: ${formatNumber(getCoinValueMultiplier().toFixed(1))}x</div>` : ''}
+        ${(saveData.specialUpgrades?.[1]?.level || saveData.upgrades?.[3]) ? `<div>• XP Multi: ${formatNumber(getXPMultiplier().toFixed(1))}x</div>` : ''}
     </div>
 `;
 
@@ -2259,24 +2641,6 @@ document.querySelector('.close-merchant-btn').addEventListener('click', () => {
     document.querySelector('.merchant-modal').style.display = 'none';
 });
 
-function updateCoinDisplay() {
-    // Always update both displays
-    const currentCoins = Math.round(coinCount);
-
-    // Update game UI
-    document.querySelector('.coin-counter').textContent = `Coins: ${currentCoins}`;
-
-    // Update merchant UI
-    const merchantCoinDisplay = document.getElementById('merchant-coin-count');
-    if (merchantCoinDisplay) {
-        merchantCoinDisplay.textContent = currentCoins;
-    }
-
-    // Force merchant refresh if open
-    if (document.querySelector('.merchant-modal').style.display === 'flex') {
-        updateMerchantDisplay();
-    }
-}
 function handleMerchantEscape(e) {
     if (e.key === 'Escape') {
         closeMerchantUI();
@@ -2337,4 +2701,17 @@ document.querySelector('.manage-saves-btn').addEventListener('click', () => {
     });
     if (!manageMode)
         initializeSaveSlots();
+});
+
+window.addEventListener('beforeunload', () => {
+    if (currentSlotId) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        const updatedData = {
+            ...saveData,
+            coins: coinCount,
+            merchantCinematicShown: merchantCinematicShown,
+            timestamp: Date.now()
+        };
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
+    }
 });
