@@ -712,10 +712,10 @@ body.game-active .game-background {
 }
 
 .coin-icon {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     vertical-align: middle;
-    margin-right: 8px;
+    margin-right: 5px;
 }
 
 .close-merchant-btn {
@@ -843,12 +843,6 @@ body.game-active .game-background {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 20px;
-}
-
-.coin-icon {
-    width: 16px;
-    height: 16px;
-    vertical-align: text-bottom;
 }
 
 .reward-notice {
@@ -1245,6 +1239,13 @@ body.game-active .game-background {
     text-align: center;
 }
 
+.special-coin-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
 .upgrades-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1415,40 +1416,151 @@ body.game-active .game-background {
 }
 
 .boosted-coin {
-    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.8)) 
-            drop-shadow(0 0 20px rgba(255, 215, 0, 0.4));
-    animation: glow-pulse-coins 1.5s infinite alternate;
+    outline: 2px solid rgba(255, 215, 0, 0.8);
 }
 
 .boosted-xp {
-    filter: drop-shadow(0 0 10px rgba(100, 200, 255, 0.8)) 
-            drop-shadow(0 0 20px rgba(100, 200, 255, 0.4));
-    animation: glow-pulse-xp 1.5s infinite alternate;
-}
-
-@keyframes glow-pulse-coins {
-    0% {
-        filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6)) 
-                drop-shadow(0 0 10px rgba(255, 215, 0, 0.3));
-    }
-    100% {
-        filter: drop-shadow(0 0 15px rgba(255, 215, 0, 1)) 
-                drop-shadow(0 0 25px rgba(255, 215, 0, 0.7));
-    }
-}
-
-@keyframes glow-pulse-xp {
-    0% {
-        filter: drop-shadow(0 0 5px rgba(100, 200, 255, 0.6)) 
-                drop-shadow(0 0 10px rgba(100, 200, 255, 0.3));
-    }
-    100% {
-        filter: drop-shadow(0 0 15px rgba(100, 200, 255, 1)) 
-                drop-shadow(0 0 25px rgba(100, 200, 255, 0.7));
-    }
+    outline: 2px solid rgba(100, 200, 255, 0.8);
 }
 
 .formatted-number {
     font-feature-settings: "tnum";
     font-variant-numeric: tabular-nums;
+}
+
+.forge-section {
+    margin-top: -8px;
+    padding: 20px 15px 15px;
+    background: rgba(255, 69, 0, 0.1);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    position: relative;
+}
+
+.forge-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 69, 0, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.forge-header {
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.molten-coin-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.molten-coin-balance {
+	color: orange;
+    font-size: 1em;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.forge-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.forge-upgrade-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 69, 0, 0.2);
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    color: #ffa07a;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.forge-btn {
+    width: 100%;
+    padding: 12px;
+	font-size: 3em;
+    background: linear-gradient(to bottom, #ff4500, #cc3300);
+    border: 2px solid #ff6a00;
+    border-radius: 6px;
+    color: #ffd700;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+	vertical-align: middle;
+	padding-top: 20px;
+	padding-left: 20px;
+}
+
+.forge-btn:hover {
+    background: linear-gradient(to bottom, #ff5500, #dd4400);
+    transform: scale(1.02);
+}
+
+.forge-btn:active {
+    transform: scale(0.98);
+}
+
+.forge-amount {
+    color: #ffd700;
+	margin-left: -12px;
+}
+
+.molten-coin-icon-2 {
+    width: 75px;
+    height: 75px;
+    filter: drop-shadow(0 0 2px rgba(255, 69, 0, 0.5));
+    vertical-align: middle;
+    margin-bottom: 12px;
+	margin-left: -12px
+}
+
+
+.forge-btn:hover .molten-coin-icon-2 {
+    animation: molten-glow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes molten-glow {
+    0% {
+        filter: drop-shadow(0 0 2px rgba(255, 69, 0, 0.5));
+    }
+    100% {
+        filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.8));
+    }
+}
+
+.forge-cinematic {
+    background: linear-gradient(45deg, #8B0000, #FF4500);
+}
+
+.forge-cinematic .cinematic-text {
+    text-shadow: 0 0 10px rgba(255, 69, 0, 0.5);
+    color: #FFD700;
+}
+
+.molten-glow {
+    animation: molten-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes molten-pulse {
+    0% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
+    50% { text-shadow: 0 0 20px rgba(255, 69, 0, 0.8); }
+    100% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
 }
