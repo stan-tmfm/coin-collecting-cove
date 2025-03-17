@@ -183,7 +183,7 @@ const merchantDialogues = {
                             text: "Boost..?"
                         }, {
                             speaker: "merchant",
-                            text: "Yes, I recall finding one of these boost coins one day and then for the next 30 seconds, all the coins that flowed in were coated in a golden aura."
+                            text: "Yes, I recall finding one of these boost coins one day and then for the next 30 seconds, all the coins that flowed in were surrounded by a golden halo."
                         }, {
                             speaker: "merchant",
                             text: "Each coin that came to me during that time was worth triple its normal value—a truly remarkable occurrence."
@@ -505,7 +505,7 @@ const upgrades = {
         id: 2,
         upgName: "Special Coins",
         upgDesc: "Unlock the magical power of Special Coins, a new special type of coin that can be used to buy cool things!",
-        upgBenefits: "Unlocks Special Coins",
+        upgBenefits: "Unlocks Special Coins and new upgrades",
         baseCost: 100,
         maxLevel: 1,
         currentLevel: 0,
@@ -522,6 +522,22 @@ const upgrades = {
         currentLevel: 0,
         scaling: (baseCost, level) => (baseCost + 200 * level) * Math.pow(1.1, level),
         mysterious: true
+    },
+    4: {
+        id: 4,
+        upgName: "The Forge",
+        upgDesc: "Unlock the magmatic power of Molten Coins alongside The Forge!",
+        upgBenefits: "Unlocks Molten Coins and new upgrades",
+        baseCost: 0,
+        maxLevel: 1,
+        currentLevel: 0,
+        scaling: () => 0,
+        mysterious: true,
+        requirements: {
+            coins: 10000,
+            level: 31
+        },
+        reqText: "Req: 10000 Coins & Lvl 31"
     }
 };
 
@@ -1028,10 +1044,21 @@ function loadGame(saveData) {
     applyUpgradeEffects();
 
     // Determine if boost coins are unlocked and start the interval
-    boostCoinsUnlocked = saveData.boostsUnlocked || false;
-    if (boostCoinsUnlocked && !boostSpawnInterval) {
-        boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+     boostCoinsUnlocked = saveData.boostsUnlocked || saveData.merchantCinematicShown;
+    
+    // Clear existing boost interval if any
+    if (boostSpawnInterval) {
+        clearInterval(boostSpawnInterval);
+        boostSpawnInterval = null;
     }
+	// Restart boost spawning if unlocked
+    if (boostCoinsUnlocked) {
+        boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+        boostCycleIndex = saveData.boostCycleIndex || 0; // Restore cycle position
+    }
+
+    // Load active boosts
+    activeBoosts = saveData.activeBoosts || {};
 }
 
 function startGame() {
@@ -1556,8 +1583,9 @@ function refreshAllDisplays() {
 }
 
 function spawnBoostCoin() {
-    if (!gameActive || activeCoins.length >= MAX_COIN_CAPACITY)
+    if (!gameActive || activeCoins.length + activeBoostCoins.length >= MAX_COIN_CAPACITY) {
         return;
+    }
 
     // Get the current save data
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
@@ -1694,6 +1722,7 @@ function collectBoostCoin(coin) {
         ...saveData,
         activeBoosts: activeBoosts, // Save active boosts
         boostCycleIndex: boostCycleIndex, // Save cycle position
+		boostsUnlocked: true,
         timestamp: Date.now()
     };
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
@@ -1732,6 +1761,10 @@ function addHoverEffect(coin) {
 
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+        if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
+            updateGoalDisplay(); // force update the goal text for the Forge goal text
+        }
 
         let currentXP = Number(saveData.xp) || 0;
         let currentLevel = Number(saveData.level) || 0;
@@ -1895,12 +1928,6 @@ function addSpecialCoinHoverEffect(coin) {
         saveData.specialCoins = (saveData.specialCoins || 0) + 1;
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 
-        // Update display
-        const specialCoinDisplay = document.querySelector('.special-coin-balance');
-        if (specialCoinDisplay) {
-            specialCoinDisplay.textContent = `Special Coins: ${formatNumber(specialCoinDisplay)}`;
-        }
-
         // Remove after animation
         setTimeout(() => coin.remove(), 600);
     }
@@ -1924,28 +1951,6 @@ function addSpecialCoinHoverEffect(coin) {
             coin.style.transform = 'scale(1) rotate(0deg)';
         }
     });
-}
-
-function updateXPDisplay(currentXP = null, currentLevel = null, xpNeeded = null) {
-    if (currentXP === null || currentLevel === null || xpNeeded === null) {
-        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        currentXP = Number(saveData.xp) || 0;
-        currentLevel = Number(saveData.level) || 0;
-        xpNeeded = Number(saveData.xpNeeded) || 10;
-    }
-
-    // Round XP values to one decimal place but ensure the format keeps the .0 if necessary
-    const roundedXP = currentXP.toFixed(1);
-    const roundedXPNeeded = xpNeeded.toFixed(1);
-
-    // Format the numbers
-    document.querySelector('.xp-current').textContent = formatNumber(roundedXP);
-    document.querySelector('.xp-needed').textContent = `${formatNumber(roundedXPNeeded)} XP`;
-
-    // Update the progress bar based on the rounded values
-    const progressPercent = (parseFloat(roundedXP) / parseFloat(roundedXPNeeded)) * 100;
-    document.querySelector('.xp-progress').style.width = `${progressPercent}%`;
-    document.querySelector('.xp-level').textContent = currentLevel;
 }
 
 function getXPMultiplier() {
@@ -1984,6 +1989,45 @@ function updateCoinDisplay() {
     const merchantDisplay = document.getElementById('merchant-coin-count');
     if (merchantDisplay) {
         merchantDisplay.textContent = formatted;
+    }
+}
+
+function updateXPDisplay(currentXP = null, currentLevel = null, xpNeeded = null) {
+    if (currentXP === null || currentLevel === null || xpNeeded === null) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        currentXP = Number(saveData.xp) || 0;
+        currentLevel = Number(saveData.level) || 0;
+        xpNeeded = Number(saveData.xpNeeded) || 10;
+		if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
+		    updateGoalDisplay();
+		}
+    }
+
+    // Round XP values to one decimal place but ensure the format keeps the .0 if necessary
+    const roundedXP = currentXP.toFixed(1);
+    const roundedXPNeeded = xpNeeded.toFixed(1);
+
+    // Format the numbers
+    document.querySelector('.xp-current').textContent = formatNumber(roundedXP);
+    document.querySelector('.xp-needed').textContent = `${formatNumber(roundedXPNeeded)} XP`;
+
+    // Update the progress bar based on the rounded values
+    const progressPercent = (parseFloat(roundedXP) / parseFloat(roundedXPNeeded)) * 100;
+    document.querySelector('.xp-progress').style.width = `${progressPercent}%`;
+    document.querySelector('.xp-level').textContent = currentLevel;
+}
+
+function updateMoltenCoins() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    if (saveData.upgrades?.[4]?.level >= 1) {
+        const level = saveData.level || 0;
+        const coins = saveData.coins || 0;
+
+        const baseMolten = Math.floor(coins / 10000);
+        const levelBonus = level > 31 ? Math.pow(2, Math.floor((level - 31) / 10)) : 1;
+
+        saveData.moltenCoins = (saveData.moltenCoins || 0) + baseMolten * levelBonus;
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
     }
 }
 
@@ -2133,13 +2177,15 @@ function updateGoalDisplay() {
     const goalMessage = document.querySelector('.goal-message');
     const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
     const specialDialogue = merchantDialogues.introduction.options[4];
+	const hasForgeUpgrade = (saveData.upgrades?.[4]?.level || 0) >= 1;
+	const meetsForgeRequirements = coinCount >= 10000 && (saveData.level || 0) >= 31;
 
     // Check if first 4 dialogues are completed (excluding mysterious ones)
     const initialDialoguesCompleted = merchantDialogues.introduction.options
         .slice(0, 4) // Only check first 4 dialogues
         .every(opt => opt.completed);
 
-    let shouldBounce = true; // Default to bouncing, but override for first and last messages
+    let shouldBounce = true;
 
     // 1. Check for merchant cinematic trigger
     if (!merchantCinematicShown && coinCount >= currentGoal) {
@@ -2147,34 +2193,44 @@ function updateGoalDisplay() {
         goalMessage.style.display = 'none';
         return;
     }
+	
+	// 2, Check for forge requirements
+     if (!hasForgeUpgrade && meetsForgeRequirements) {
+        // Show forge goal text immediately
+        document.querySelector('.goal-message').innerHTML = 
+            '"I wonder if the merchant has anything new I can check out<br>since I have so many coins and levels now.."';
+        document.querySelector('.goal-message').style.display = 'block';
+		goalMessage.classList.toggle('bounce', shouldBounce);
+        return;
+    }
 
-    // 2. Check for special coins state
+    // 3. Check for special coins state (original condition 2)
     if (hasSpecialCoinsUpgrade && !specialDialogue.completed) {
-        goalMessage.innerHTML = '"Maybe the merchant can explain what these special coins are..."';
+        goalMessage.innerHTML = '"Maybe the merchant can explain what these special coins are.."';
         goalMessage.style.display = 'block';
         goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
-    // 3. Check if initial 4 dialogues are completed
+    // 4. Check if initial 4 dialogues are completed (original condition 3)
     if (initialDialoguesCompleted && !specialDialogue.completed) {
         goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
         goalMessage.style.display = 'block';
-        shouldBounce = false; // Last message should not bounce
+        shouldBounce = false;
         goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
-    // 4. Check if ALL dialogues are completed
+    // 5. Check if ALL dialogues are completed (original condition 4)
     if (merchantDialogues.introduction.options.every(opt => opt.completed)) {
         goalMessage.innerHTML = '"Guess I\'ll keep collecting coins for now.."';
         goalMessage.style.display = 'block';
-        shouldBounce = false; // Last message should not bounce
+        shouldBounce = false;
         goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
-    // 5. Default merchant unlocked state
+    // 6. Default merchant unlocked state (original condition 5)
     if (merchantCinematicShown) {
         goalMessage.innerHTML = '"Maybe I should go talk to the merchant..<br>he can answer some of my questions.."';
         goalMessage.style.display = 'block';
@@ -2182,15 +2238,11 @@ function updateGoalDisplay() {
         return;
     }
 
-    // 6. Fallback for new players
+    // 7. Fallback for new players (original condition 6)
     goalMessage.innerHTML = '"Hmm.. I wonder what would happen<br>if I collected some of these coins..."';
     goalMessage.style.display = 'block';
-    shouldBounce = false; // First message should not bounce
+    shouldBounce = false;
     goalMessage.classList.toggle('bounce', shouldBounce);
-}
-
-function allDialoguesCompleted() {
-    return merchantDialogues.introduction.options.every(option => option.completed);
 }
 
 function startMerchantCinematic() {
@@ -2376,26 +2428,31 @@ function updateMerchantDisplay() {
 
     container.innerHTML = '';
 
-    // Check if Special Coins upgrade is purchased
-    const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
-    const specialCoins = Math.round(saveData.specialCoins || 0); // Round special coins
-
     // Render existing upgrades
     Object.values(upgrades).forEach(upg => {
         const upgradeData = saveData.upgrades?.[upg.id] || {
             level: 0
         };
         const currentLevel = upgradeData.level;
-        // Determine if the upgrade is locked (mysterious and not yet affordable when level is 0)
-        const isLocked = upg.mysterious && currentLevel === 0 && coinCount < upg.baseCost;
+
+        // Special handling for Forge upgrade (ID 4)
+        const isForgeUpgrade = upg.id === 4;
+        const forgeRequirementsMet = isForgeUpgrade ?
+            coinCount >= 10000 && (saveData.level || 0) >= 31 :
+            true;
+
+        // Original lock logic with Forge exception
+        const isLocked = upg.mysterious && currentLevel === 0 &&
+            (isForgeUpgrade ? !forgeRequirementsMet : coinCount < upg.baseCost);
+
         const isMaxed = currentLevel >= upg.maxLevel;
         const isSpecialUpgrade = upg.id === 2;
 
-        // Calculate cost: if it's locked, show the baseCost; otherwise, use the scaling function.
+        // Cost calculation remains the same
         const cost = isLocked ? upg.baseCost : Math.round(upg.scaling(upg.baseCost, currentLevel));
         const canAfford = Math.round(coinCount) >= cost;
 
-        // Determine the status text
+        // Determine status text
         let statusText;
         if (isMaxed) {
             statusText = upg.maxLevel === 1 ? `${upg.upgName} - PURCHASED` : `${upg.upgName} - MAXED`;
@@ -2403,41 +2460,114 @@ function updateMerchantDisplay() {
             statusText = upg.maxLevel > 1 ? `${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})` : upg.upgName;
         }
 
-        const upgradeHTML = `
-    <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''} ${isSpecialUpgrade ? 'special-coins-upgrade' : ''}">
-        <div class="upgrade-header">
-            <h3>${isLocked ? '???' : statusText}</h3>
-            ${!isMaxed ? `
-                <button class="buy-btn" 
-                    data-upgrade-id="${upg.id}"
-                    ${!canAfford ? 'disabled' : ''}>
-                    ${isLocked ? `Req: ${formatNumber(upg.baseCost)}` : `Cost: ${formatNumber(cost)}`} Coins
-                </button>
-            ` : ''}
-        </div>
-        ${isLocked ? `
-            <p>???</p>
-            <p><em>???</em></p>
-        ` : `
-            <p>${upg.upgDesc}</p>
-            ${!isMaxed ? `<p><em>${upg.upgBenefits}</em></p>` : ''}
-        `}
-    </div>
-`;
+        const buttonText = isLocked ?
+            (isForgeUpgrade ? `Req: 10000 Coins & Lvl 31` : `Req: ${formatNumber(upg.baseCost)} Coins`) :
+            (isForgeUpgrade && cost === 0) ? 'Unlock' : `Cost: ${formatNumber(cost)} Coins`;
 
-        // Append the upgrade HTML
+        const upgradeHTML = `
+            <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''} ${isSpecialUpgrade ? 'special-coins-upgrade' : ''}">
+                <div class="upgrade-header">
+                    <h3>${isLocked ? '???' : statusText}</h3>
+                    ${!isMaxed ? `
+                        <button class="buy-btn" 
+                            data-upgrade-id="${upg.id}"
+                            ${!canAfford || (isForgeUpgrade && !forgeRequirementsMet) ? 'disabled' : ''}>
+                            ${buttonText}
+                        </button>
+                    ` : ''}
+                </div>
+                ${isLocked ? `
+                    <p>???</p>
+                    <p><em>???</em></p>
+                ` : `
+                    <p>${upg.upgDesc}</p>
+                    ${!isMaxed ? `<p><em>${upg.upgBenefits}</em></p>` : ''}
+                `}
+            </div>
+        `;
+
         container.innerHTML += upgradeHTML;
 
-        // Append the special upgrades section immediately after the Special Coins upgrade
+        // Add Forge section if purchased
+        if (isForgeUpgrade && currentLevel >= 1) {
+            container.innerHTML += `
+			<div class="forge-section">
+				<div class="forge-header">
+					- Reset all progress up to this point for molten coins<br>
+					- Forge 10000 normal coins into one molten coin<br>
+					- 2x molten coins every 10 levels after level 31<br>
+					- Unlock a special rare new currency<br>
+					- Unlock powerful new upgrades<br>
+					<div class="molten-coin-balance">
+						<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon">
+						Molten Coins: ${formatNumber(saveData.moltenCoins || 0)}
+					</div>
+				</div>
+				<button class="forge-btn">
+					Forge +<span class="forge-amount">0</span>
+				</button>
+				<div class="forge-upgrades-grid">
+					${Array.from({
+                length: 6
+            }, (_, i) => `
+						<div class="forge-upgrade-placeholder">
+							<h4>Forge Upgrade ${i + 1}</h4>
+							<p>Placeholder description</p>
+							<button class="buy-forge-btn" disabled>Requires Reset</button>
+						</div>
+					`).join('')}
+				</div>
+			</div>
+		  `;
+        }
+
+        const forgeButton = container.querySelector('.forge-btn');
+        if (forgeButton) {
+            // Calculate molten coins
+            const baseMolten = Math.floor(coinCount / 10000);
+            const level = saveData.level || 0;
+            const levelBonus = level > 31 ? Math.pow(2, Math.floor((level - 31) / 10)) : 1;
+            const totalMolten = baseMolten * levelBonus;
+
+            // Update button text
+            forgeButton.querySelector('.forge-amount').innerHTML = `
+				${formatNumber(totalMolten)}
+				<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon-2">
+			`;
+
+            // Add click handler
+            forgeButton.addEventListener('click', () => {
+    if (totalMolten > 0) {
+        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+        saveData.moltenCoins = (saveData.moltenCoins || 0) + totalMolten;
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+        
+        updateMerchantDisplay();
+        updateGoalDisplay();
+    }
+});
+
+            // Disable button if no molten coins available
+            forgeButton.disabled = totalMolten === 0;
+        }
+
+        // Check if Special Coins upgrade is purchased
+        const hasSpecialCoins = (saveData.upgrades?.[2]?.level || 0) >= 1;
+        const specialCoins = Math.round(Number(saveData.specialCoins)) || 0; // Fix: Ensure valid number
+
+        // Render special coins section
         if (isSpecialUpgrade && hasSpecialCoins) {
             const specialSectionHTML = `
                 <div class="special-coins-section">
                     <div class="special-coins-header">
-                        Collect normal coins to gain XP!<br>
+                        Collect coins for XP!<br>
                         - Get enough XP to level up<br>
                         - Level up to spawn special coins<br>
                         - Each level gives 1.1x more coin value<br>
-                        <div class="special-coin-balance">Special Coins: ${formatNumber(specialCoins)}</div>
+                        <div class="special-coin-balance">
+                            <img src="Images/special_coin.png" alt="Special Coin" class="special-coin-icon">
+                            Special Coins: ${formatNumber(specialCoins)} <!-- Use the fixed specialCoins variable -->
+                        </div>
                     </div>
                     <div class="upgrades-grid">
                         ${Array.from({
@@ -2501,12 +2631,9 @@ function updateMerchantDisplay() {
 function purchaseUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const upg = upgrades[upgradeId];
-    if (!upg)
-        return;
+    if (!upg) return;
 
-    const upgradeData = saveData.upgrades[upgradeId] || {
-        level: 0
-    };
+    const upgradeData = saveData.upgrades[upgradeId] || { level: 0 };
     const currentLevel = upgradeData.level;
     const cost = formatNumber(Math.round(upg.scaling(upg.baseCost, currentLevel)));
 
@@ -2515,14 +2642,18 @@ function purchaseUpgrade(upgradeId) {
         coinCount = Math.round(coinCount);
         upgradeData.level = currentLevel + 1;
         saveData.upgrades[upgradeId] = upgradeData;
+		
+		if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
+            updateGoalDisplay();
+        }
 
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify({
-                ...saveData,
-                coins: coinCount,
-                upgrades: saveData.upgrades
-            }));
+            ...saveData,
+            coins: coinCount,
+            upgrades: saveData.upgrades
+        }));
 
-        // Special handling for Special Coins upgrade (ID 2)
+        // Handle Special Coins upgrade (ID 2)
         if (upgradeId === 2) {
             if (!saveData.xp) {
                 saveData.xp = 0;
@@ -2531,19 +2662,21 @@ function purchaseUpgrade(upgradeId) {
                 updateGoalDisplay();
             }
 
-            // Refresh the dialogue UI to update the 4th option's visibility
             const dialogueContainer = document.querySelector('.dialogue-container');
             if (dialogueContainer) {
                 dialogueContainer.remove();
-                showDialogue(); // Re-render the dialogue options
+                showDialogue();
             }
-
-            // Show XP container
             document.querySelector('.xp-container').style.display = 'block';
             updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
         }
 
-        // Update UI
+        if (upgradeId === 4) {
+            updateGoalDisplay(); // Force immediate update
+            updateMerchantDisplay(); // Refresh merchant UI to show forge section
+        }
+
+        // General UI updates
         updateCoinDisplay();
         updateMerchantDisplay();
         applyUpgradeEffects();
@@ -2618,7 +2751,7 @@ function applyUpgradeEffects() {
     };
 
     // Calculate spawn rate
-    const spawnRate = 3000 * Math.pow(0.9, speedUpgrade.level);
+    const spawnRate = 3000 * Math.pow(0.7, speedUpgrade.level);
 
     // Clear existing interval
     clearInterval(window.spawnInterval);
