@@ -359,6 +359,11 @@ body {
 .coin.collectable {
     pointer-events: auto;
     cursor: pointer;
+	--magnet-radius: 0vh;
+}
+
+.coin.collectable:hover {
+    transform: scale(1.1) translateY(calc(var(--magnet-radius) * -1));
 }
 
 body.game-active {
@@ -1462,6 +1467,7 @@ body.game-active .game-background {
     height: 20px;
     vertical-align: middle;
     margin-right: 5px;
+	margin-bottom: 4px;
 }
 
 .molten-coin-balance {
@@ -1469,6 +1475,30 @@ body.game-active .game-background {
     font-size: 1em;
     margin-top: 5px;
     font-weight: bold;
+}
+
+.forge-upgrade {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.forge-upgrade p {
+    margin: 8px 0;
+    font-size: 0.95em;
+    color: #ffb38a;
+    text-align: left;
+    flex-grow: 1;
+}
+
+.forge-upgrade h4 {
+    margin: 0;
+    font-size: 1.1em;
+    color: #ff944d;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .forge-upgrades-grid {
@@ -1481,15 +1511,17 @@ body.game-active .game-background {
 .forge-upgrade-placeholder {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 69, 0, 0.2);
-    padding: 15px;
+    padding: 12px;
+	min-height: 120px;
+	padding-bottom: 40px;
     border-radius: 6px;
     text-align: center;
     color: #ffa07a;
-    min-height: 80px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    justify-content: space-between;
     flex-direction: column;
+	position: relative;
 }
 
 .forge-btn {
@@ -1506,7 +1538,7 @@ body.game-active .game-background {
     text-align: center;
 	vertical-align: middle;
 	padding-top: 20px;
-	padding-left: 20px;
+	padding-left: 25px;
 }
 
 .forge-btn:hover {
@@ -1563,4 +1595,120 @@ body.game-active .game-background {
     0% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
     50% { text-shadow: 0 0 20px rgba(255, 69, 0, 0.8); }
     100% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
+}
+
+.forge-upgrade-item {
+    background: rgba(255, 69, 0, 0.1);
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+.forge-upgrade-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.buy-forge-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: linear-gradient(to bottom, #ff5500, #cc4400);
+    border: 1px solid #ff6a00;
+    color: #ffd700;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    white-space: nowrap;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.buy-forge-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.platinum-coin {
+  width: 50px;
+  height: 50px;
+  background: url('Images/platinum_coin.png');
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+}
+
+.forge-unlocked {
+  color: #FFA500;
+  font-weight: bold;
+}
+
+.forge-upgrade-maxed {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    color: #ffd700;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.platinum-section {
+    margin-top: -8px;
+    padding: 20px 15px 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    position: relative;
+}
+
+.platinum-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.platinum-coin-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.platinum-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.platinum-coin {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: url('Images/platinum_coin.png') center/contain no-repeat;
+    cursor: pointer;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+    transition: all 0.3s ease-out;
+    pointer-events: none;
+}
+
+.platinum-coin.collectable {
+    pointer-events: auto;
+}
+
+.platinum-coin.collected {
+    animation: collectAnimation 0.6s forwards;
 }
