@@ -538,6 +538,19 @@ const upgrades = {
             level: 31
         },
         reqText: "Req: 10000 Coins & Lvl 31"
+    },
+    5: {
+        id: 5,
+        upgName: "Platinum Coin Upgrades",
+        upgDesc: "Unlock the very powerful platinum coin upgrades",
+        upgBenefits: "Unlocks platinum coin upgrades",
+        baseCost: 0,
+        maxLevel: 1,
+        currentLevel: 0,
+        scaling: () => 0,
+        mysterious: true,
+        requirements: (saveData) => saveData.hasPlatinumUnlocked,
+        reqText: "Req: Perform Forge Reset"
     }
 };
 
@@ -565,48 +578,199 @@ const specialUpgrades = {
     3: {
         id: 3,
         name: "Mysterious Power I",
-        desc: "Requires Level 100",
+        desc: "Requires Level 200",
         baseCost: 100,
         levelCap: 1,
         effect: 1,
         costIncrement: 0,
         type: "mystery",
-        requirement: 100
+        requirement: 200
     },
     4: {
         id: 4,
         name: "Mysterious Power II",
-        desc: "Requires Level 100",
+        desc: "Requires Level 200",
         baseCost: 100,
         levelCap: 1,
         effect: 1,
         costIncrement: 0,
         type: "mystery",
-        requirement: 100
+        requirement: 200
     },
     5: {
         id: 5,
         name: "Ancient Knowledge I",
-        desc: "Requires Level 1000",
+        desc: "Requires Level 2000",
         baseCost: 1000,
         levelCap: 1,
         effect: 1,
         costIncrement: 0,
         type: "mystery",
-        requirement: 1000
+        requirement: 2000
     },
     6: {
         id: 6,
         name: "Ancient Knowledge II",
-        desc: "Requires Level 1000",
+        desc: "Requires Level 2000",
         baseCost: 1000,
         levelCap: 1,
         effect: 1,
         costIncrement: 0,
         type: "mystery",
-        requirement: 1000
+        requirement: 2000
     }
 };
+
+const forgeUpgrades = {
+    1: {
+        id: 1,
+        name: "Rapid Riches",
+        desc: "Triples coin spawn rate",
+        baseCost: 1,
+        levelCap: 1,
+        scaling: (baseCost, level) => baseCost * Math.pow(2, level)
+    },
+    2: {
+        id: 2,
+        name: "Magnetic Might",
+        desc: "Unlocks the Coin Magnet for easier coin collection.<br>Each level boosts collection radius by +5 units.",
+        baseCost: 5,
+        levelCap: 10,
+        scaling: (baseCost, level) => baseCost * Math.pow(2, level)
+    },
+    3: {
+        id: 3,
+        name: "Forged Fortune",
+        desc: "Increases coin value by 1.1x per level",
+        baseCost: 10,
+        levelCap: 25,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    4: {
+        id: 4,
+        name: "Infernal Insight",
+        desc: "Increases XP gain by 1.1x per level",
+        baseCost: 10,
+        levelCap: 25,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    5: {
+        id: 5,
+        name: "Platinum Plunder",
+        desc: "Increases platinum spawn chance by +9%.<br>At max level, the platinum boost coin will no longer exist, freeing up space for other boost coins.",
+        baseCost: 100,
+        levelCap: 10,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    6: {
+        id: 6,
+        name: "Molten Mastery",
+        desc: "Each unspent molten coin boosts coin value by 2^log(MC/100000) where MC is your current amount of molten coins.<br>(PERMANENT UPGRADE)",
+        baseCost: 100000000,
+        levelCap: 1,
+        scaling: (baseCost) => baseCost
+    }
+};
+
+const none = 0; // temporary variable, remove this later
+const platinumUpgrades = { // For this section, the "requirement" field is measured in terms of levels, so "requirement: 500" means requires level 500
+    1: {
+        id: 1,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 1000,
+        scaling: (baseCost, level) => baseCost * Math.pow(10, level)
+    },
+    2: {
+        id: 2,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    3: {
+        id: 3,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    4: {
+        id: 4,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    5: {
+        id: 5,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    6: {
+        id: 6,
+        name: "placeholder",
+        desc: "???",
+        requirement: none,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    7: {
+        id: 7,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    8: {
+        id: 8,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    9: {
+        id: 9,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    10: {
+        id: 10,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    11: {
+        id: 11,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+    12: {
+        id: 12,
+        name: "placeholder",
+        desc: "???",
+        requirement: 500,
+        baseCost: 999,
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+    },
+}
 
 document.getElementById('change-name-btn').addEventListener('click', changePlayerName);
 
@@ -1044,14 +1208,14 @@ function loadGame(saveData) {
     applyUpgradeEffects();
 
     // Determine if boost coins are unlocked and start the interval
-     boostCoinsUnlocked = saveData.boostsUnlocked || saveData.merchantCinematicShown;
-    
+    boostCoinsUnlocked = saveData.boostsUnlocked || saveData.merchantCinematicShown;
+
     // Clear existing boost interval if any
     if (boostSpawnInterval) {
         clearInterval(boostSpawnInterval);
         boostSpawnInterval = null;
     }
-	// Restart boost spawning if unlocked
+    // Restart boost spawning if unlocked
     if (boostCoinsUnlocked) {
         boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
         boostCycleIndex = saveData.boostCycleIndex || 0; // Restore cycle position
@@ -1204,6 +1368,54 @@ function spawnCoin() {
 
     // Track this spawn attempt
     activeSpawns.push(spawnID);
+    if (saveData.upgrades?.[5]?.level >= 1 && Math.random() < 0.1) {
+        spawnPlatinumCoin();
+    }
+}
+
+function spawnPlatinumCoin() {
+    if (!gameActive)
+        return;
+    if (activeCoins.length + activeBoostCoins.length + document.querySelectorAll('.platinum-coin').length >= MAX_COIN_CAPACITY)
+        return;
+
+    const platinumCoin = document.createElement('div');
+    platinumCoin.className = 'platinum-coin collectable';
+    platinumCoin.style.position = 'absolute';
+    platinumCoin.style.cursor = 'pointer';
+
+    const startX = Math.random() * (beachContainer.offsetWidth - 50);
+    platinumCoin.style.left = `${startX}px`;
+    platinumCoin.style.top = '-60px';
+    beachContainer.appendChild(platinumCoin);
+
+    requestAnimationFrame(() => {
+        platinumCoin.style.transition = 'top 1s ease-out, left 1.5s ease-out';
+        const endX = startX + (Math.random() * 100 - 50);
+        const endY = Math.random() * (beachContainer.offsetHeight - 50) + 20;
+        platinumCoin.style.left = `${endX}px`;
+        platinumCoin.style.top = `${endY}px`;
+    });
+
+    platinumCoin.addEventListener('click', collectPlatinumCoin);
+    platinumCoin.addEventListener('mouseenter', collectPlatinumCoin);
+}
+
+// Add new function to collect Platinum Coins
+function collectPlatinumCoin(event) {
+    const coin = event.target;
+    if (coin.classList.contains('collected'))
+        return;
+    coin.classList.add('collected');
+
+    const sound = new Audio('Sounds/platinum_coin_pickup.mp3');
+    sound.play();
+
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    saveData.platinumCoins = (saveData.platinumCoins || 0) + 1;
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    setTimeout(() => coin.remove(), 500);
 }
 
 function formatNumber(number, isXP = false) {
@@ -1722,7 +1934,7 @@ function collectBoostCoin(coin) {
         ...saveData,
         activeBoosts: activeBoosts, // Save active boosts
         boostCycleIndex: boostCycleIndex, // Save cycle position
-		boostsUnlocked: true,
+        boostsUnlocked: true,
         timestamp: Date.now()
     };
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(updatedData));
@@ -1998,9 +2210,9 @@ function updateXPDisplay(currentXP = null, currentLevel = null, xpNeeded = null)
         currentXP = Number(saveData.xp) || 0;
         currentLevel = Number(saveData.level) || 0;
         xpNeeded = Number(saveData.xpNeeded) || 10;
-		if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
-		    updateGoalDisplay();
-		}
+        if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
+            updateGoalDisplay();
+        }
     }
 
     // Round XP values to one decimal place but ensure the format keeps the .0 if necessary
@@ -2177,8 +2389,8 @@ function updateGoalDisplay() {
     const goalMessage = document.querySelector('.goal-message');
     const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
     const specialDialogue = merchantDialogues.introduction.options[4];
-	const hasForgeUpgrade = (saveData.upgrades?.[4]?.level || 0) >= 1;
-	const meetsForgeRequirements = coinCount >= 10000 && (saveData.level || 0) >= 31;
+    const hasForgeUpgrade = (saveData.upgrades?.[4]?.level || 0) >= 1;
+    const meetsForgeRequirements = coinCount >= 10000 && (saveData.level || 0) >= 31;
 
     // Check if first 4 dialogues are completed (excluding mysterious ones)
     const initialDialoguesCompleted = merchantDialogues.introduction.options
@@ -2193,14 +2405,14 @@ function updateGoalDisplay() {
         goalMessage.style.display = 'none';
         return;
     }
-	
-	// 2, Check for forge requirements
-     if (!hasForgeUpgrade && meetsForgeRequirements) {
+
+    // 2, Check for forge requirements
+    if (!hasForgeUpgrade && meetsForgeRequirements) {
         // Show forge goal text immediately
-        document.querySelector('.goal-message').innerHTML = 
+        document.querySelector('.goal-message').innerHTML =
             '"I wonder if the merchant has anything new I can check out<br>since I have so many coins and levels now.."';
         document.querySelector('.goal-message').style.display = 'block';
-		goalMessage.classList.toggle('bounce', shouldBounce);
+        goalMessage.classList.toggle('bounce', shouldBounce);
         return;
     }
 
@@ -2441,9 +2653,17 @@ function updateMerchantDisplay() {
             coinCount >= 10000 && (saveData.level || 0) >= 31 :
             true;
 
-        // Original lock logic with Forge exception
+        // NEW: Special handling for Platinum upgrade (ID 5)
+        const isPlatinumUpgrade = upg.id === 5;
+        const platinumRequirementsMet = isPlatinumUpgrade ?
+            saveData.hasPlatinumUnlocked :
+            true;
+
+        // NEW: Update lock logic to include Platinum upgrade
         const isLocked = upg.mysterious && currentLevel === 0 &&
-            (isForgeUpgrade ? !forgeRequirementsMet : coinCount < upg.baseCost);
+            (isForgeUpgrade ? !forgeRequirementsMet :
+                isPlatinumUpgrade ? !platinumRequirementsMet : // NEW: Platinum requirement check
+                coinCount < upg.baseCost);
 
         const isMaxed = currentLevel >= upg.maxLevel;
         const isSpecialUpgrade = upg.id === 2;
@@ -2460,9 +2680,12 @@ function updateMerchantDisplay() {
             statusText = upg.maxLevel > 1 ? `${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})` : upg.upgName;
         }
 
+        // NEW: Update button text logic for Platinum upgrade
         const buttonText = isLocked ?
-            (isForgeUpgrade ? `Req: 10000 Coins & Lvl 31` : `Req: ${formatNumber(upg.baseCost)} Coins`) :
-            (isForgeUpgrade && cost === 0) ? 'Unlock' : `Cost: ${formatNumber(cost)} Coins`;
+            (isForgeUpgrade ? `Req: 10000 Coins & Lvl 31` :
+                isPlatinumUpgrade ? `Req: ???` : // NEW: Show ??? for Platinum
+`Req: ${formatNumber(upg.baseCost)} Coins`) :
+            (isForgeUpgrade || isPlatinumUpgrade) && cost === 0 ? 'Unlock' : `Cost: ${formatNumber(cost)} Coins`;
 
         const upgradeHTML = `
             <div class="upgrade-item ${isLocked ? 'mysterious-upgrade' : ''} ${isSpecialUpgrade ? 'special-coins-upgrade' : ''}">
@@ -2471,7 +2694,7 @@ function updateMerchantDisplay() {
                     ${!isMaxed ? `
                         <button class="buy-btn" 
                             data-upgrade-id="${upg.id}"
-                            ${!canAfford || (isForgeUpgrade && !forgeRequirementsMet) ? 'disabled' : ''}>
+                            ${!canAfford || (isForgeUpgrade && !forgeRequirementsMet) || isLocked ? 'disabled' : ''}>
                             ${buttonText}
                         </button>
                     ` : ''}
@@ -2500,23 +2723,42 @@ function updateMerchantDisplay() {
 					- Unlock powerful new upgrades<br>
 					<div class="molten-coin-balance">
 						<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon">
-						Molten Coins: ${formatNumber(saveData.moltenCoins || 0)}
+						Molten Coins: ${Math.floor(formatNumber(saveData.moltenCoins || 0))}
 					</div>
 				</div>
 				<button class="forge-btn">
 					Forge +<span class="forge-amount">0</span>
 				</button>
 				<div class="forge-upgrades-grid">
-					${Array.from({
-                length: 6
-            }, (_, i) => `
-						<div class="forge-upgrade-placeholder">
-							<h4>Forge Upgrade ${i + 1}</h4>
-							<p>Placeholder description</p>
-							<button class="buy-forge-btn" disabled>Requires Reset</button>
-						</div>
-					`).join('')}
-				</div>
+    ${Object.values(forgeUpgrades).map(forgeUpg => {
+                const currentLevel = saveData.forgeUpgrades?.[forgeUpg.id]?.level || 0;
+                const cost = Math.round(forgeUpg.scaling(forgeUpg.baseCost, currentLevel));
+                const canAfford = (saveData.moltenCoins || 0) >= cost;
+
+                return `
+    <div class="forge-upgrade-placeholder">
+        <div class="forge-upgrade">
+            <div class="forge-upgrade-header">
+                <h4>${forgeUpg.name} (${currentLevel}/${forgeUpg.levelCap})</h4>
+                ${currentLevel < forgeUpg.levelCap ? `
+                    <button class="buy-forge-btn" 
+                        ${canAfford ? '' : 'disabled'}
+                        data-upgrade-id="${forgeUpg.id}">
+                        ${formatNumber(cost)} MC
+                    </button>
+                ` : '<span class="forge-upgrade-maxed">MAXED</span>'}
+            </div>
+            <p>${forgeUpg.desc}</p>
+            ${forgeUpg.id === 6 && currentLevel > 0 ? `
+                <div class="molten-mastery-display">
+                    Current Bonus: ${formatNumber(calculateMoltenBonus(saveData.moltenCoins || 0))}x
+                </div>
+            ` : ''}
+        </div>
+    </div>
+`;
+            }).join('')}
+</div>
 			</div>
 		  `;
         }
@@ -2531,21 +2773,24 @@ function updateMerchantDisplay() {
 
             // Update button text
             forgeButton.querySelector('.forge-amount').innerHTML = `
-				${formatNumber(totalMolten)}
+				${Math.floor(formatNumber(totalMolten))}
 				<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon-2">
 			`;
 
             // Add click handler
             forgeButton.addEventListener('click', () => {
-    if (totalMolten > 0) {
-        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-        saveData.moltenCoins = (saveData.moltenCoins || 0) + totalMolten;
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-        
-        updateMerchantDisplay();
-        updateGoalDisplay();
-    }
-});
+                // Get FRESH data before calculations
+                let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+                // Perform reset and get NEW data
+                forgeReset();
+                saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {}; // Refresh data
+                if (totalMolten > 0) {
+                    saveData.moltenCoins = (saveData.moltenCoins || 0) + totalMolten;
+                    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+                    updateMerchantDisplay(); // Refresh the UI
+                }
+            });
 
             // Disable button if no molten coins available
             forgeButton.disabled = totalMolten === 0;
@@ -2607,6 +2852,52 @@ function updateMerchantDisplay() {
             `;
             container.innerHTML += specialSectionHTML;
         }
+
+        // NEW: Add Platinum section if purchased and unlocked
+        if (isPlatinumUpgrade && currentLevel >= 1 && saveData.hasPlatinumUnlocked) {
+            container.innerHTML += `
+                <div class="platinum-section">
+                    <div class="platinum-header">
+                        <img src="Images/platinum_coin.png" class="platinum-coin-icon">
+                        Platinum Coins: ${formatNumber(saveData.platinumCoins || 0)}
+                    </div>
+                    <div class="platinum-upgrades-grid">
+                        ${Object.values(platinumUpgrades).map(upgrade => {
+                const meetsRequirement = (saveData.level || 0) >= upgrade.requirement;
+                const currentLevel = saveData.platinumUpgrades?.[upgrade.id]?.level || 0;
+                const cost = Math.round(upgrade.scaling(upgrade.baseCost, currentLevel));
+                const canAfford = (saveData.platinumCoins || 0) >= cost;
+                const isMaxed = currentLevel >= upgrade.levelCap;
+
+                return `
+                                <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
+                                    <h4>${meetsRequirement ? upgrade.name : '???'}</h4>
+                                    <p>${meetsRequirement ? upgrade.desc : `Requires Level ${upgrade.requirement}`}</p>
+                                    ${meetsRequirement ? `
+                                        <p>Cost: ${formatNumber(cost)} PC</p>
+                                        ${!isMaxed ? `
+                                            <button class="buy-platinum-btn" 
+                                                data-upgrade-id="${upgrade.id}"
+                                                ${canAfford ? '' : 'disabled'}>
+                                                ${isMaxed ? 'MAXED' : 'Buy'}
+                                            </button>
+                                        ` : ''}
+                                    ` : ''}
+                                </div>
+                            `;
+            }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    });
+
+    // Add event listeners for Platinum upgrades
+    container.querySelectorAll('.buy-platinum-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const upgradeId = parseInt(this.dataset.upgradeId);
+            purchasePlatinumUpgrade(upgradeId);
+        });
     });
 
     // Add event listeners for special upgrades
@@ -2630,10 +2921,29 @@ function updateMerchantDisplay() {
 
 function purchaseUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upg = upgrades[upgradeId];
-    if (!upg) return;
 
-    const upgradeData = saveData.upgrades[upgradeId] || { level: 0 };
+    // Special case for Platinum upgrade
+    if (upgradeId === 5) {
+        // Prevent purchase if not unlocked or already purchased
+        if (!saveData.hasPlatinumUnlocked || saveData.upgrades?.[5]?.level >= 1)
+            return;
+
+        // Grant the upgrade
+        saveData.upgrades[5] = {
+            level: 1
+        };
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+        updateMerchantDisplay();
+        return;
+    }
+
+    const upg = upgrades[upgradeId];
+    if (!upg)
+        return;
+
+    const upgradeData = saveData.upgrades[upgradeId] || {
+        level: 0
+    };
     const currentLevel = upgradeData.level;
     const cost = formatNumber(Math.round(upg.scaling(upg.baseCost, currentLevel)));
 
@@ -2642,16 +2952,16 @@ function purchaseUpgrade(upgradeId) {
         coinCount = Math.round(coinCount);
         upgradeData.level = currentLevel + 1;
         saveData.upgrades[upgradeId] = upgradeData;
-		
-		if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
+
+        if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
             updateGoalDisplay();
         }
 
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify({
-            ...saveData,
-            coins: coinCount,
-            upgrades: saveData.upgrades
-        }));
+                ...saveData,
+                coins: coinCount,
+                upgrades: saveData.upgrades
+            }));
 
         // Handle Special Coins upgrade (ID 2)
         if (upgradeId === 2) {
@@ -2704,6 +3014,30 @@ function purchaseSpecialUpgrade(upgradeId) {
     }
 }
 
+function purchasePlatinumUpgrade(upgradeId) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgrade = platinumUpgrades[upgradeId];
+    if (!upgrade)
+        return;
+
+    const currentLevel = saveData.platinumUpgrades?.[upgradeId]?.level || 0;
+    if (currentLevel >= upgrade.levelCap)
+        return;
+
+    const cost = Math.round(upgrade.scaling(upgrade.baseCost, currentLevel));
+    if ((saveData.platinumCoins || 0) < cost)
+        return;
+
+    saveData.platinumCoins -= cost;
+    saveData.platinumUpgrades = saveData.platinumUpgrades || {};
+    saveData.platinumUpgrades[upgradeId] = {
+        level: currentLevel + 1
+    };
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    updateMerchantDisplay();
+}
+
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const effectsContainer = document.querySelector('.current-effects');
@@ -2751,7 +3085,7 @@ function applyUpgradeEffects() {
     };
 
     // Calculate spawn rate
-    const spawnRate = 3000 * Math.pow(0.7, speedUpgrade.level);
+    const spawnRate = 3000 * Math.pow(0.9, speedUpgrade.level);
 
     // Clear existing interval
     clearInterval(window.spawnInterval);
@@ -2809,6 +3143,13 @@ document.querySelector('.talk-to-merchant-btn').addEventListener('click', () => 
         showDialogue();
     }
 });
+
+function forgeReset() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    saveData.hasDoneForgeReset = true;
+    saveData.hasPlatinumUnlocked = true;
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+}
 
 function resetGame() {
     const windSound = document.getElementById('wind-sound');
