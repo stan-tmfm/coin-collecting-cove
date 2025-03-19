@@ -1458,7 +1458,7 @@ function spawnCoin() {
     // Track this spawn attempt
     activeSpawns.push(spawnID);
 
-    if (saveData.upgrades?.[5]?.level >= 1 && !isPlatinumSpawning) {
+    if (hasPlatinumUnlocked && !isPlatinumSpawning) {
         let spawnPlatinum = false;
         const now = Date.now();
         const forgeUpg5Level = saveData.forgeUpgrades?.[5]?.level || 0;
@@ -1513,7 +1513,7 @@ function spawnPlatinumCoin() {
     platinumCoin.addEventListener('mouseenter', collectPlatinumCoin);
     setTimeout(() => {
         isPlatinumSpawning = false;
-    }, 100);
+    }, 50); // small delay to ensure things work correctly
 }
 
 // Add new function to collect Platinum Coins
