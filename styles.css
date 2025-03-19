@@ -1362,13 +1362,24 @@ body.game-active .game-background {
 /* Boost Coin Styles */
 .boost-coin {
     position: absolute;
-    width: 80px; /* Larger size */
+    width: 80px;
     height: 80px;
     background: url('Images/boost_coin.png') center/contain no-repeat;
     cursor: pointer;
-    filter: drop-shadow(0 0 12px rgba(255, 165, 0, 1)); /* More prominent glow */
     animation: pulseBoost 1.5s ease-in-out infinite;
-    z-index: 10; /* Higher than regular coins */
+    z-index: 10;
+}
+
+.boost-coin[data-boost-type="coins"] {
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.8));
+}
+
+.boost-coin[data-boost-type="xp"] {
+    filter: drop-shadow(0 0 12px rgba(100, 200, 255, 0.8));
+}
+
+.boost-coin[data-boost-type="platinum"] {
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.8));
 }
 
 @keyframes pulseBoost {
@@ -1413,7 +1424,7 @@ body.game-active .game-background {
     position: absolute;
     font-size: 16px;
     font-weight: bold;
-    color: #ffd700;
+    color: black;
     text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
     transition: all 0.5s ease-out;
     z-index: 20;
@@ -1423,8 +1434,19 @@ body.game-active .game-background {
     outline: 2px solid rgba(255, 215, 0, 0.8);
 }
 
+/* XP Boost Styles */
 .boosted-xp {
     outline: 2px solid rgba(100, 200, 255, 0.8);
+}
+
+/* Platinum Boost Styles */
+.boosted-platinum {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+/* Platinum Coin Boosted State */
+.platinum-coin.boosted-platinum {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
 }
 
 .formatted-number {
@@ -1760,4 +1782,12 @@ body.game-active .game-background {
     border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
+}
+
+.coin-icon.platinum { /* in the merchant chat options */
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    filter: brightness(1.2) saturate(1.1);
+    image-rendering: crisp-edges;
 }
