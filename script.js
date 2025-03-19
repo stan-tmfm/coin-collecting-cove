@@ -268,7 +268,7 @@ const merchantDialogues = {
                             text: "Igniting the Forge for the first time in ages has rebirthed this special shiny platinum coin, and it is quite a rare one."
                         }, {
                             speaker: "merchant",
-                            text: "This rare coin appears about 10% of the time a normal coin appears (sometimes two appear at once!), but I can use my magic to increase that chance with some upgrades in my shop."
+                            text: "This rare coin appears about 10% of the time a normal coin appears, but I can use my magic to increase that chance with some upgrades in my shop."
                         }, {
                             speaker: "merchant",
                             text: "These platinum coins can be spent on powerful upgrades, and you will want to collect many of them because of their high value."
@@ -1457,9 +1457,7 @@ function spawnCoin() {
 
     // Track this spawn attempt
     activeSpawns.push(spawnID);
-    if (saveData.upgrades?.[5]?.level >= 1 && Math.random() < 0.1) {
-        spawnPlatinumCoin();
-    }
+
     if (saveData.upgrades?.[5]?.level >= 1 && !isPlatinumSpawning) {
         let spawnPlatinum = false;
         const now = Date.now();
