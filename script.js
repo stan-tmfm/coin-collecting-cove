@@ -243,12 +243,70 @@ const merchantDialogues = {
                             text: "???"
                         }
                     ]
+
                 },
                 reward: 250,
                 completed: false
+            }, {
+                id: 6,
+                hidden: true,
+                question: "What are platinum coins?",
+                requirement: (saveData) => saveData.hasPlatinumUnlocked,
+                response: {
+                    speaker: "merchant",
+                    lines: [{
+                            speaker: "player",
+                            text: "I noticed there's a new \"Platinum Coin Upgrades\" section in your shop and I was curious what those are."
+                        }, {
+                            speaker: "merchant",
+                            text: "Ah yes, platinum coins are the special new currency I detailed in the Forge section, I'm sure you read it."
+                        }, {
+                            speaker: "player",
+                            text: "So.. what are they?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Igniting the Forge for the first time in ages has rebirthed this special shiny platinum coin, and it is quite a rare one."
+                        }, {
+                            speaker: "merchant",
+                            text: "This rare coin appears about 10% of the time a normal coin appears (sometimes two appear at once!), but I can use my magic to increase that chance with some upgrades in my shop."
+                        }, {
+                            speaker: "merchant",
+                            text: "These platinum coins can be spent on powerful upgrades, and you will want to collect many of them because of their high value."
+                        }, {
+                            speaker: "merchant",
+                            text: "I know that there's even a boost coin that boosts platinum coin potential significantly, you just need to find it."
+                        }, {
+                            speaker: "player",
+                            text: "Wait, so these platinum coins are even more valuable than molten coins?"
+                        }, {
+                            speaker: "merchant",
+                            text: "Not quite. Molten coins are forged directly from you making progress, while platinum coins naturally accumulate over time. One is crafted, the other is discovered."
+                        }, {
+                            speaker: "merchant",
+                            text: "It will be important for you to collect many molten coins and platinum coins equally, since they can both be spent on powerful upgrades in my shop."
+                        }, {
+                            speaker: "player",
+                            text: "By the way, how do you actually manage to take these coins and turn them into beneficial upgrades to my coin collection?"
+                        }, {
+                            speaker: "merchant",
+                            text: "I'm afraid a question like that I cannot answer at the moment."
+                        }, {
+                            speaker: "player",
+                            text: "..."
+                        }, {
+                            speaker: "player",
+                            text: "Ok whatever. Platinum coins sound like they're cool I guess."
+                        }
+                    ]
+                },
+                reward: {
+                    type: "platinum",
+                    amount: 50
+                },
+                completed: false
             }
         ]
-    }
+    },
 };
 
 function showDialogue() {
@@ -289,12 +347,19 @@ function showDialogue() {
         // Use the actual question text if the requirement is met, otherwise show "???"
         const questionText = isMysterious ? "???" : option.question;
 
+        const rewardType = option.reward?.type || 'coins';
+        const rewardAmount = option.reward?.amount || option.reward;
+
         optionElement.innerHTML = `
-            ${questionText}
-            ${!option.completed && requirementMet ? 
-`<span class="reward-indicator">+${option.reward} <img src="Images/coin.png" class="coin-icon"></span>`
+    ${questionText}
+    ${!option.completed && requirementMet ? 
+            `<span class="reward-indicator">
+            +${rewardAmount} 
+            <img src="Images/${rewardType === 'platinum' ? 'platinum_coin' : 'coin'}.png" 
+                 class="coin-icon ${rewardType === 'platinum' ? 'platinum' : ''}">
+			</span>`
              : ''}
-        `;
+		`;
 
         // Add ask-again button if completed
         if (option.completed) {
@@ -396,9 +461,15 @@ function handleDialogueChoice(option, element) {
                 showDialoguePart();
             } else {
                 if (!option.completed) {
-                    // ADD THE MISSING REWARD LOGIC HERE
-                    coinCount += option.reward;
-                    updateCoinDisplay();
+                    // Handle different reward types
+                    if (option.reward.type === "platinum") {
+                        const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+                        saveData.platinumCoins = (saveData.platinumCoins || 0) + option.reward.amount;
+                        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+                    } else {
+                        // Handle regular coin rewards
+                        coinCount += option.reward.amount || option.reward;
+                    }
 
                     option.completed = true;
                     saveDialogueProgress();
@@ -1134,13 +1205,18 @@ const BOOST_CYCLE = ['coins', 'xp'];
 const BOOST_TYPES = {
     coins: {
         class: 'boosted-coin',
-        color: 'rgba(255, 215, 0, 0.8)' // Gold
+        color: 'rgba(255, 215, 0, 0.8)'
     },
     xp: {
         class: 'boosted-xp',
-        color: 'rgba(100, 200, 255, 0.8)' // Blue
+        color: 'rgba(100, 200, 255, 0.8)'
+    },
+    platinum: {
+        class: 'boosted-platinum',
+        color: 'rgba(255, 255, 255, 0.8)'
     }
 };
+let isPlatinumSpawning = false;
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
 let useScientificNotation = localStorage.getItem('useScientificNotation') === 'true';
@@ -1384,6 +1460,26 @@ function spawnCoin() {
     if (saveData.upgrades?.[5]?.level >= 1 && Math.random() < 0.1) {
         spawnPlatinumCoin();
     }
+    if (saveData.upgrades?.[5]?.level >= 1 && !isPlatinumSpawning) {
+        let spawnPlatinum = false;
+        const now = Date.now();
+        const forgeUpg5Level = saveData.forgeUpgrades?.[5]?.level || 0;
+
+        if (activeBoosts['platinum'] && now < activeBoosts['platinum']) {
+            spawnPlatinum = true; // 100% chance during boost
+        } else if (forgeUpg5Level >= 10) {
+            spawnPlatinum = true; // 100% chance if forgeUpg5 is maxed
+        } else {
+            const baseChance = 0.1; // 10%
+            const chance = baseChance + (forgeUpg5Level * 0.09);
+            spawnPlatinum = Math.random() < chance;
+        }
+
+        if (spawnPlatinum) {
+            isPlatinumSpawning = true; // Set the flag
+            spawnPlatinumCoin();
+        }
+    }
 }
 
 function spawnPlatinumCoin() {
@@ -1396,6 +1492,11 @@ function spawnPlatinumCoin() {
     platinumCoin.className = 'platinum-coin collectable';
     platinumCoin.style.position = 'absolute';
     platinumCoin.style.cursor = 'pointer';
+
+    const now = Date.now();
+    if (activeBoosts['platinum'] && now < activeBoosts['platinum']) {
+        platinumCoin.classList.add('boosted-platinum');
+    }
 
     const startX = Math.random() * (beachContainer.offsetWidth - 50);
     platinumCoin.style.left = `${startX}px`;
@@ -1412,6 +1513,9 @@ function spawnPlatinumCoin() {
 
     platinumCoin.addEventListener('click', collectPlatinumCoin);
     platinumCoin.addEventListener('mouseenter', collectPlatinumCoin);
+    setTimeout(() => {
+        isPlatinumSpawning = false;
+    }, 100); // Small delay to try and fix race condition with double plat spawns
 }
 
 // Add new function to collect Platinum Coins
@@ -1812,14 +1916,16 @@ function spawnBoostCoin() {
         return;
     }
 
-    // Get the current save data
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-
-    // Check if the special coins upgrade is unlocked
     const hasSpecialCoinsUpgrade = (saveData.upgrades?.[2]?.level || 0) >= 1;
+    const hasPlatinumUnlocked = saveData.hasPlatinumUnlocked || false;
+    const forgeUpg5Level = saveData.forgeUpgrades?.[5]?.level || 0;
+    const canSpawnPlatinumBoost = hasPlatinumUnlocked && forgeUpg5Level < 10;
 
-    // If the special coins upgrade is not unlocked, only spawn coin boost coins
-    const availableBoostTypes = hasSpecialCoinsUpgrade ? BOOST_CYCLE : ['coins'];
+    let availableBoostTypes = hasSpecialCoinsUpgrade ? [...BOOST_CYCLE] : ['coins'];
+    if (canSpawnPlatinumBoost) {
+        availableBoostTypes.push('platinum');
+    }
 
     // Determine boost type from cycle
     const boostType = availableBoostTypes[boostCycleIndex % availableBoostTypes.length];
@@ -1916,7 +2022,10 @@ function collectBoostCoin(coin) {
     // Create text popup
     const popup = document.createElement('div');
     popup.className = 'boost-popup';
-    popup.textContent = `${boostType === 'coins' ? '3x Coins' : '3x XP'} 30s`;
+    popup.textContent =
+        boostType === 'coins' ? '3x Coins 30s' :
+        boostType === 'xp' ? '3x XP 30s' :
+        '100% Plat Chance 30s';
     popup.style.left = `${coin.offsetLeft}px`;
     popup.style.top = `${coin.offsetTop}px`;
     beachContainer.appendChild(popup);
@@ -1925,7 +2034,7 @@ function collectBoostCoin(coin) {
     setTimeout(() => {
         popup.style.transform = 'translateY(-50px)';
         popup.style.opacity = '0';
-    }, 1500);
+    }, 500);
 
     // Remove popup after animation
     setTimeout(() => popup.remove(), 3000);
@@ -2078,7 +2187,7 @@ function spawnSpecialCoin() {
     const currentRegular = activeCoins.length;
     const currentBoost = activeBoostCoins.length;
     const currentSpecial = document.querySelectorAll('.special-coin:not(.collected)').length;
-	const currentPlatinum = document.querySelectorAll('.platinum-coin:not(.collected)').length;
+    const currentPlatinum = document.querySelectorAll('.platinum-coin:not(.collected)').length;
     const totalCoins = currentRegular + currentBoost + currentSpecial + currentPlatinum;
 
     if (totalCoins >= MAX_COIN_CAPACITY) {
