@@ -1458,7 +1458,7 @@ function spawnCoin() {
     // Track this spawn attempt
     activeSpawns.push(spawnID);
 
-    if (hasPlatinumUnlocked && !isPlatinumSpawning) {
+    if (saveData.hasPlatinumUnlocked && !isPlatinumSpawning) {
         let spawnPlatinum = false;
         const now = Date.now();
         const forgeUpg5Level = saveData.forgeUpgrades?.[5]?.level || 0;
