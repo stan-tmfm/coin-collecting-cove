@@ -1513,7 +1513,7 @@ function spawnPlatinumCoin() {
     platinumCoin.addEventListener('mouseenter', collectPlatinumCoin);
     setTimeout(() => {
         isPlatinumSpawning = false;
-    }, 100); // Small delay to try and fix race condition with double plat spawns
+    }, 100);
 }
 
 // Add new function to collect Platinum Coins
