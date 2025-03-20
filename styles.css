@@ -1800,7 +1800,7 @@ body.game-active .game-background {
     transition: all 0.2s ease-out;
     box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
     z-index: 9999;
-	will-change: transform;
-	transition: transform 0.05s linear;
-	display: none;
+    will-change: transform;
+    transition: transform 0.05s linear;
+    display: none;
 }
