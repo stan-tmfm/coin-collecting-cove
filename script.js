@@ -769,20 +769,20 @@ const uncapped = 1e308 // temporary variable, remove this later
     3: {
         id: 3,
         name: "Cove's Treasure",
-        desc: "Increases coin value by 1.1x per level",
+        desc: "Increases coin value by 1.5x per level",
         requirement: none,
         baseCost: 10,
-        levelCap: 10,
-        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+        levelCap: 5,
+        scaling: (baseCost, level) => baseCost * Math.pow(5, level)
     },
     4: {
         id: 4,
         name: "Tidal Knowledge",
-        desc: "Increases XP gain by 1.1x per level",
+        desc: "Increases XP gain by 1.5x per level",
         requirement: none,
         baseCost: 10,
-        levelCap: 10,
-        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+        levelCap: 5,
+        scaling: (baseCost, level) => baseCost * Math.pow(5, level)
     },
     5: {
         id: 5,
