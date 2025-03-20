@@ -1280,7 +1280,6 @@ body.game-active .game-background {
     pointer-events: none;
     transform: translateZ(0);
     z-index: 2; /* Higher than regular coins */
-    filter: drop-shadow(0 0 5px rgba(0, 188, 212, 0.5));
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     transform-style: preserve-3d;
 }
@@ -1790,4 +1789,18 @@ body.game-active .game-background {
     object-fit: contain;
     filter: brightness(1.2) saturate(1.1);
     image-rendering: crisp-edges;
+}
+
+.magnet-indicator {
+    position: absolute;
+    border: 2px solid rgba(0, 150, 255, 0.3);
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease-out;
+    box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
+    z-index: 9999;
+	will-change: transform;
+	transition: transform 0.05s linear;
+	display: none;
 }
