@@ -1660,6 +1660,22 @@ body.game-active .game-background {
     white-space: nowrap;
 }
 
+.molten-mastery-display {
+    position: absolute;
+    bottom: 8px;
+    left: 4px;
+	padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Spreads items to opposite sides */
+}
+
+.bonus-value {
+    color: #ff8c00; /* Adjust color for visibility */
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
 .platinum-coin {
     position: absolute;
     width: 50px;
@@ -1800,7 +1816,7 @@ body.game-active .game-background {
     transition: all 0.2s ease-out;
     box-shadow: 0 0 10px rgba(0, 150, 255, 0.5);
     z-index: 9999;
-    will-change: transform;
-    transition: transform 0.05s linear;
-    display: none;
+	will-change: transform;
+	transition: transform 0.05s linear;
+	display: none;
 }
