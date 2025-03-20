@@ -699,7 +699,7 @@ const forgeUpgrades = {
         desc: "Triples coin spawn rate",
         baseCost: 1,
         levelCap: 1,
-        scaling: (baseCost, level) => baseCost * Math.pow(2, level)
+        scaling: (baseCost) => baseCost
     },
     2: {
         id: 2,
@@ -731,13 +731,13 @@ const forgeUpgrades = {
         desc: "Increases platinum spawn chance by +9%.<br>At max level, the platinum boost coin will no longer exist, freeing up space for other boost coins.",
         baseCost: 100,
         levelCap: 10,
-        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+        scaling: (baseCost, level) => baseCost * Math.pow(2, level)
     },
     6: {
         id: 6,
         name: "Molten Mastery",
-        desc: "Each unspent molten coin boosts coin value by 2^log(MC/100000) where MC is your current amount of molten coins.<br>(PERMANENT UPGRADE)",
-        baseCost: 100000000,
+        desc: "Each unspent molten coin boosts coin value by 2^log(MC/10000) where MC is your current amount of molten coins.<br>(PERMANENT UPGRADE)",
+        baseCost: 10000000,
         levelCap: 1,
         scaling: (baseCost) => baseCost
     }
@@ -1220,6 +1220,38 @@ let isPlatinumSpawning = false;
 const beachContainer = document.querySelector('.beach-container');
 const coinCounter = document.querySelector('.coin-counter');
 let useScientificNotation = localStorage.getItem('useScientificNotation') === 'true';
+let cursorPosition = { x: 0, y: 0 };
+let isCursorInContainer = false;
+const UNIT_TO_PX = 3;
+
+// Track cursor position
+beachContainer.addEventListener('mousemove', (e) => {
+    const rect = beachContainer.getBoundingClientRect();
+    cursorPosition = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+    };
+    isCursorInContainer = true;
+});
+
+beachContainer.addEventListener('mouseleave', () => {
+    isCursorInContainer = false;
+});
+
+// Mobile touch support
+beachContainer.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const rect = beachContainer.getBoundingClientRect();
+    cursorPosition = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+    };
+    isCursorInContainer = true;
+}, { passive: false });
+
+const SOUND_THRESHOLD = 250; // Disable sound if more than 250 coins are collected at once
+let coinsCollectedThisFrame = 0; // Track coins collected in the current frame
 
 function loadGame(saveData) {
     // Create normalized save data
@@ -1353,6 +1385,16 @@ function startGame() {
     document.querySelector('.menu-container').style.display = 'none';
 
     gameActive = true;
+	
+	// Create magnet indicator if it doesn't exist
+    if (beachContainer && !document.getElementById('magnet-indicator')) {
+        const magnetIndicator = document.createElement('div');
+        magnetIndicator.id = 'magnet-indicator';
+        magnetIndicator.className = 'magnet-indicator';
+        beachContainer.appendChild(magnetIndicator);
+    }
+	
+	requestAnimationFrame(updateMagnetIndicator);
 
     if (musicManager.isMusicOn) {
         musicManager.playRandom();
@@ -1945,7 +1987,6 @@ function spawnBoostCoin() {
     if (totalCoins >= MAX_COIN_CAPACITY)
         return;
 
-    // Rest of your existing spawn logic remains the same...
     const startX = Math.random() * (beachContainer.offsetWidth - 50);
     boostCoin.style.left = `${startX}px`;
     boostCoin.style.top = '-60px';
@@ -2307,7 +2348,7 @@ function getCoinValueMultiplier() {
     const playerLevel = saveData.level || 0;
 
     // Base multipliers from permanent upgrades and level
-    return Math.pow(1.25, specialUpgrade2.level) * Math.pow(1.10, playerLevel);
+    return Math.pow(1.25, specialUpgrade2.level) * Math.pow(1.1, playerLevel);
 }
 
 function updateCoinDisplay() {
@@ -2357,7 +2398,8 @@ function updateMoltenCoins() {
         const coins = saveData.coins || 0;
 
         const baseMolten = Math.floor(coins / 10000);
-        const levelBonus = level > 31 ? Math.pow(2, Math.floor((level - 31) / 10)) : 1;
+		// level bonus stops working after level 251 to balance things a bit better
+        const levelBonus = level > 31 ? Math.pow(2, Math.floor((Math.min(level, 251) - 31) / 10)) : 1;
 
         saveData.moltenCoins = (saveData.moltenCoins || 0) + baseMolten * levelBonus;
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
@@ -2837,12 +2879,12 @@ function updateMerchantDisplay() {
 				<div class="forge-header">
 					- Reset all progress up to this point for molten coins<br>
 					- Forge 10000 normal coins into one molten coin<br>
-					- 2x molten coins every 10 levels after level 31<br>
+					- 2x molten coins every 10 levels after level 31*<br>
 					- Unlock a special rare new currency<br>
 					- Unlock powerful new upgrades<br>
 					<div class="molten-coin-balance">
 						<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon">
-						Molten Coins: ${Math.floor(formatNumber(saveData.moltenCoins || 0))}
+						Molten Coins: ${formatNumber(Math.round(saveData.moltenCoins || 0))}
 					</div>
 				</div>
 				<button class="forge-btn">
@@ -2877,7 +2919,7 @@ function updateMerchantDisplay() {
     </div>
 `;
             }).join('')}
-</div>
+</div><span class="disclaimer">*molten coin level scaling stops applying after level 251</span>
 			</div>
 		  `;
         }
@@ -2991,12 +3033,12 @@ function updateMerchantDisplay() {
         // Calculate molten coins
         const baseMolten = Math.floor(coinCount / 10000);
         const level = saveData.level || 0;
-        const levelBonus = level > 31 ? Math.pow(2, Math.floor((level - 31) / 10)) : 1;
+		 const levelBonus = level > 31 ? Math.pow(2, Math.floor((Math.min(level, 251) - 31) / 10)) : 1;
         const totalMolten = baseMolten * levelBonus;
 
         // Update button text
         forgeButton.querySelector('.forge-amount').innerHTML = `
-				${Math.floor(formatNumber(totalMolten))}
+				${formatNumber(Math.floor((totalMolten)))}
 				<img src="Images/molten_coin.png" alt="molten coin" class="molten-coin-icon-2">
 			`;
 
@@ -3019,7 +3061,15 @@ function updateMerchantDisplay() {
         forgeButton.disabled = totalMolten === 0;
     }
 
-    // Add event listeners for Platinum upgrades
+	// Add event listeners for Forge upgrades
+	container.querySelectorAll('.buy-forge-btn').forEach(btn => {
+	    btn.addEventListener('click', function () {
+	        const upgradeId = parseInt(this.dataset.upgradeId);
+	        purchaseForgeUpgrade(upgradeId);
+	    });
+	});
+
+	// Add event listeners for Platinum upgrades
     container.querySelectorAll('.buy-platinum-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const upgradeId = parseInt(this.dataset.upgradeId);
@@ -3133,6 +3183,26 @@ function purchaseSpecialUpgrade(upgradeId) {
     }
 }
 
+function purchaseForgeUpgrade(upgradeId) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const forgeUpg = forgeUpgrades[upgradeId];
+    if (!forgeUpg) return;
+
+    const currentLevel = saveData.forgeUpgrades?.[upgradeId]?.level || 0;
+    if (currentLevel >= forgeUpg.levelCap) return;
+
+    const cost = Math.round(forgeUpg.scaling(forgeUpg.baseCost, currentLevel));
+    if ((saveData.moltenCoins || 0) < cost) return;
+
+    saveData.moltenCoins -= cost;
+    saveData.forgeUpgrades = saveData.forgeUpgrades || {};
+    saveData.forgeUpgrades[upgradeId] = { level: currentLevel + 1 };
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    updateMerchantDisplay();
+    applyUpgradeEffects();
+}
+
 function purchasePlatinumUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const upgrade = platinumUpgrades[upgradeId];
@@ -3164,8 +3234,16 @@ function updateEffectsDisplay() {
 
     // Calculate coin spawn rate in coins per second
     const baseSpawnInterval = 3000; // Base spawn interval in milliseconds
-    const spawnRateMultiplier = Math.pow(0.9, saveData.upgrades?.[1]?.level || 0);
-    const spawnInterval = baseSpawnInterval * spawnRateMultiplier;
+    const spawnRateUpg1 = saveData.upgrades?.[1]?.level || 0;
+    const forgeUpg1Level = saveData.forgeUpgrades?.[1]?.level || 0;
+
+    // value displayed is calculated with a slightly different number so it looks nicer when rounded
+    let spawnInterval = baseSpawnInterval * Math.pow(0.895, spawnRateUpg1);
+
+    if (forgeUpg1Level >= 1) {
+        spawnInterval /= 3;
+    }
+
     const coinsPerSecond = (1000 / spawnInterval).toFixed(1); // Convert to coins per second
 
     let effectsHTML = `<strong>Active Effects:</strong>`;
@@ -3199,21 +3277,19 @@ function updateEffectsDisplay() {
 
 function applyUpgradeEffects() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const speedUpgrade = saveData.upgrades?.[1] || {
-        level: 0
-    };
+    const spawnRateUpg1 = saveData.upgrades?.[1]?.level || 0;
+    let spawnInterval = 3000 * Math.pow(0.9, spawnRateUpg1);
 
-    // Calculate spawn rate
-    const spawnRate = 3000 * Math.pow(0.9, speedUpgrade.level);
+    // Apply Forge Upgrade: Coin Surge (ID 1)
+    const forgeUpgrade1Level = saveData.forgeUpgrades?.[1]?.level || 0;
+    if (forgeUpgrade1Level >= 1) {
+        spawnInterval /= 3; // Triples spawn rate
+    }
 
-    // Clear existing interval
     clearInterval(window.spawnInterval);
-
-    // Set up interval with calculated rate
     window.spawnInterval = setInterval(() => {
-        if (gameActive)
-            spawnCoin();
-    }, spawnRate);
+        if (gameActive) spawnCoin();
+    }, spawnInterval);
 }
 
 document.querySelector('.merchant-btn').addEventListener('click', () => {
@@ -3269,6 +3345,172 @@ function forgeReset() {
     saveData.hasPlatinumUnlocked = true;
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 }
+
+let magnetIndicator = null; // Cache the magnet indicator element
+
+function updateMagnetIndicator() {
+    if (!magnetIndicator) {
+        magnetIndicator = document.getElementById('magnet-indicator');
+        if (!magnetIndicator) {
+            requestAnimationFrame(updateMagnetIndicator); // Retry until the indicator exists
+            return;
+        }
+    }
+
+    if (!isCursorInContainer) {
+        magnetIndicator.style.display = 'none';
+        requestAnimationFrame(updateMagnetIndicator);
+        return;
+    }
+
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const magnetLevel = saveData.forgeUpgrades?.[2]?.level || 0;
+
+    if (magnetLevel < 1) {
+        magnetIndicator.style.display = 'none';
+        requestAnimationFrame(updateMagnetIndicator);
+        return;
+    }
+
+    const radius = magnetLevel * 5 * UNIT_TO_PX;
+    magnetIndicator.style.display = 'block';
+    magnetIndicator.style.width = `${radius * 2}px`;
+    magnetIndicator.style.height = `${radius * 2}px`;
+    magnetIndicator.style.transform = `translate(${cursorPosition.x - radius}px, ${cursorPosition.y - radius}px)`;
+
+    requestAnimationFrame(updateMagnetIndicator);
+}
+
+const GRID_CELL_SIZE = 1000;
+let coinGrid = [];
+
+function checkMagnetCollection() {
+    coinsCollectedThisFrame = 0;
+    if (!isCursorInContainer) return;
+
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const magnetLevel = saveData.forgeUpgrades?.[2]?.level || 0;
+    if (magnetLevel < 1) return;
+
+    const radius = magnetLevel * 5 * UNIT_TO_PX;
+    const containerRect = beachContainer.getBoundingClientRect();
+    const cursorX = cursorPosition.x;
+    const cursorY = cursorPosition.y;
+    const gridX = Math.floor(cursorX / GRID_CELL_SIZE);
+    const gridY = Math.floor(cursorY / GRID_CELL_SIZE);
+    
+    // Expand the search to a 5x5 grid (cells 2 away in each direction)
+    const cellsToCheck = [];
+    for (let i = gridY - 2; i <= gridY + 2; i++) {
+        for (let j = gridX - 2; j <= gridX + 2; j++) {
+            cellsToCheck.push([i, j]);
+        }
+    }
+
+    const bufferMargin = 5; // Increased margin
+
+    cellsToCheck.forEach(([y, x]) => {
+        if (coinGrid[y] && coinGrid[y][x]) {
+            coinGrid[y][x].forEach(coin => {
+                const rect = coin.getBoundingClientRect();
+                const coinX = (rect.left - containerRect.left) + rect.width / 2;
+                const coinY = (rect.top - containerRect.top) + rect.height / 2;
+                const distance = Math.hypot(coinX - cursorX, coinY - cursorY);
+                if (distance <= radius + bufferMargin) {
+                    safeCollect(coin);
+                }
+            });
+        }
+    });
+}
+
+// Run at 60fps
+setInterval(checkMagnetCollection, 1000/60);
+
+// Add resize observer to maintain unit consistency
+const resizeObserver = new ResizeObserver(() => {
+    // Reset cursor position on resize (reduces possibility of cheating magnet radius)
+    cursorPosition = { x: -1000, y: -1000 }; 
+});
+
+resizeObserver.observe(beachContainer);
+
+beachContainer.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) {
+        cursorPosition = { x: -1000, y: -1000 };
+    }
+});
+
+function updateCoinGrid() {
+    const containerRect = beachContainer.getBoundingClientRect();
+    const gridWidth = Math.ceil(containerRect.width / GRID_CELL_SIZE);
+    const gridHeight = Math.ceil(containerRect.height / GRID_CELL_SIZE);
+    
+    coinGrid = Array.from({ length: gridHeight }, () => 
+        Array.from({ length: gridWidth }, () => [])
+    );
+
+    const allCoins = [
+        ...document.querySelectorAll('.coin:not(.collected)'),
+        ...document.querySelectorAll('.special-coin:not(.collected)'),
+        ...document.querySelectorAll('.platinum-coin:not(.collected)'),
+        ...document.querySelectorAll('.boost-coin:not(.collected)')
+    ];
+
+    allCoins.forEach(coin => {
+        const rect = coin.getBoundingClientRect();
+        
+        // Clamp coin position to container bounds
+        const clampedLeft = Math.max(0, rect.left - containerRect.left);
+        const clampedTop = Math.max(0, rect.top - containerRect.top);
+        
+        const x = Math.floor(clampedLeft / GRID_CELL_SIZE);
+        const y = Math.floor(clampedTop / GRID_CELL_SIZE);
+        
+        if (coinGrid[y] && coinGrid[y][x]) {
+            coinGrid[y][x].push(coin);
+        }
+    });
+}
+
+// Update grid every 500ms
+setInterval(updateCoinGrid, 500);
+
+const collectedCoins = new WeakSet(); // Tracks collected coins
+function safeCollect(coin) {
+    if (!coin || !coin.parentElement || collectedCoins.has(coin)) return; // Skip if already collected or invalid
+
+    collectedCoins.add(coin);
+    coinsCollectedThisFrame++; // Increment the counter
+
+    // Determine coin type and collect accordingly
+    if (coin.classList.contains('platinum-coin')) {
+        if (coinsCollectedThisFrame <= SOUND_THRESHOLD) {
+            collectPlatinumCoin({ target: coin });
+        } else {
+            collectPlatinumCoin({ target: coin, skipSound: true });
+        }
+    } else if (coin.classList.contains('boost-coin')) {
+        if (coinsCollectedThisFrame <= SOUND_THRESHOLD) {
+            collectBoostCoin(coin);
+        } else {
+            collectBoostCoin(coin, true);
+        }
+    } else if (coin.classList.contains('special-coin')) {
+        const event = new Event('mouseenter', { bubbles: true });
+        coin.dispatchEvent(event);
+    } else {
+        coin.dispatchEvent(new Event('mouseenter', { bubbles: true }));
+    }
+    coin.classList.add('collected'); 
+
+    setTimeout(() => {
+        if (coin && coin.parentElement) {
+            coin.remove();
+        }
+    }, 300);  // Wait 300ms to allow any animations
+}
+
 
 function resetGame() {
     const windSound = document.getElementById('wind-sound');
