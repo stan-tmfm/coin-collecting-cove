@@ -715,7 +715,8 @@ const forgeUpgrades = {
         desc: "Increases coin value by 1.1x per level",
         baseCost: 10,
         levelCap: 25,
-        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level),
+		type: "coinValue"
     },
     4: {
         id: 4,
@@ -723,7 +724,8 @@ const forgeUpgrades = {
         desc: "Increases XP gain by 1.1x per level",
         baseCost: 10,
         levelCap: 25,
-        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level)
+        scaling: (baseCost, level) => baseCost * Math.pow(1.5, level),
+		type: "xpGain"
     },
     5: {
         id: 5,
@@ -739,7 +741,7 @@ const forgeUpgrades = {
         desc: "Each unspent molten coin boosts coin value by 2^log(MC/10000) where MC is your current amount of molten coins.<br>(PERMANENT UPGRADE)",
         baseCost: 10000000,
         levelCap: 1,
-        scaling: (baseCost) => baseCost
+        scaling: (baseCost) => baseCost,
     }
 };
 
@@ -1566,6 +1568,7 @@ function collectPlatinumCoin(event) {
     coin.classList.add('collected');
 
     const sound = new Audio('Sounds/platinum_coin_pickup.mp3');
+	sound.volume = 0.3;
     sound.play();
 
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
@@ -2332,23 +2335,35 @@ function getXPMultiplier() {
     const specialUpgrade1 = saveData.specialUpgrades?.[1] || {
         level: 0
     };
+	const forgeUpgrade4 = saveData.forgeUpgrades?.[4] || { level: 0 };
     const upgrade3 = saveData.upgrades?.[3] || {
         level: 0
     };
 
     // Base multipliers from permanent upgrades
-    return Math.pow(1.25, specialUpgrade1.level) * Math.pow(1.1, upgrade3.level);
+    return Math.pow(1.25, specialUpgrade1.level) * Math.pow(1.1, upgrade3.level) *  Math.pow(1.1, forgeUpgrade4.level);
 }
 
 function getCoinValueMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const specialUpgrade2 = saveData.specialUpgrades?.[2] || {
-        level: 0
-    };
+    const specialUpgrade2 = saveData.specialUpgrades?.[2] || { level: 0 };
+    const forgeUpgrade3 = saveData.forgeUpgrades?.[3] || { level: 0 };
     const playerLevel = saveData.level || 0;
+    const moltenCoins = saveData.moltenCoins || 0;
+    const moltenMasteryLevel = saveData.forgeUpgrades?.[6]?.level || 0;
 
-    // Base multipliers from permanent upgrades and level
-    return Math.pow(1.25, specialUpgrade2.level) * Math.pow(1.1, playerLevel);
+    let multiplier = (
+        Math.pow(1.25, specialUpgrade2.level) *
+        Math.pow(1.1, playerLevel) *
+        Math.pow(1.1, forgeUpgrade3.level)
+    );
+
+    if (moltenMasteryLevel >= 1) {
+        const moltenMasteryBonus = calculateMoltenMasteryBonus(moltenCoins);
+        multiplier *= moltenMasteryBonus;
+    }
+
+    return multiplier;
 }
 
 function updateCoinDisplay() {
@@ -2841,7 +2856,6 @@ function updateMerchantDisplay() {
             statusText = upg.maxLevel > 1 ? `${upg.upgName} (Level ${currentLevel}/${upg.maxLevel})` : upg.upgName;
         }
 
-        // NEW: Update button text logic for Platinum upgrade
         const buttonText = isLocked ?
             (isForgeUpgrade ? `Req: 10000 Coins & Lvl 31` :
                 isPlatinumUpgrade ? `Req: ???` :
@@ -2912,8 +2926,9 @@ function updateMerchantDisplay() {
             <p>${forgeUpg.desc}</p>
             ${forgeUpg.id === 6 && currentLevel > 0 ? `
                 <div class="molten-mastery-display">
-                    Current Bonus: ${formatNumber(calculateMoltenBonus(saveData.moltenCoins || 0))}x
-                </div>
+					Current Bonus: ${formatNumber(calculateMoltenMasteryBonus(saveData.moltenCoins || 0).toFixed(1))}x
+				</div>
+
             ` : ''}
         </div>
     </div>
@@ -3201,6 +3216,11 @@ function purchaseForgeUpgrade(upgradeId) {
 
     updateMerchantDisplay();
     applyUpgradeEffects();
+}
+
+function calculateMoltenMasteryBonus(moltenCoins) {
+    if (moltenCoins < 10000) return 1; // No bonus if MC < 10000
+    return Math.pow(2, Math.log10(moltenCoins / 10000));
 }
 
 function purchasePlatinumUpgrade(upgradeId) {
