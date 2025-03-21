@@ -1063,9 +1063,19 @@ function changePlayerName() {
 document.querySelector('.settings-btn').addEventListener('click', () => {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const nameChangeSection = document.querySelector('.name-change-section');
-    nameChangeSection.style.display = saveData.playerName ? 'block' : 'none';
+    
+    // Toggle visibility based on whether the player has a name
+    if (saveData.playerName) {
+        nameChangeSection.style.display = 'flex';
+        nameChangeSection.style.opacity = '1';
+        nameChangeSection.style.visibility = 'visible';
+    } else {
+        nameChangeSection.style.display = 'none';
+        nameChangeSection.style.opacity = '0';
+        nameChangeSection.style.visibility = 'hidden';
+    }
 
-    // Pre-fill the input field
+    // Pre-fill the input field with the current name
     document.getElementById('player-name-input').value = saveData.playerName || "Traveler";
 });
 
@@ -1692,9 +1702,12 @@ function collectPlatinumCoin(event) {
     if (coin.classList.contains('collected')) return;
     coin.classList.add('collected');
 
-    const sound = new Audio('Sounds/platinum_coin_pickup.mp3');
-    sound.volume = 0.3;
-    sound.play();
+    // Play sound if enabled
+    if (!disableSound.checked) {
+        const sound = new Audio('Sounds/platinum_coin_pickup.mp3');
+        sound.volume = 0.3;
+        sound.play().catch(() => {});
+    }
 
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const baseValue = 1;
@@ -1703,7 +1716,12 @@ function collectPlatinumCoin(event) {
     saveData.platinumCoins = (saveData.platinumCoins || 0) + (baseValue * multiplier);
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 
-    setTimeout(() => coin.remove(), 500);
+    // Animation handling
+    if (!disableAnimation.checked) {
+        setTimeout(() => coin.remove(), 500);
+    } else {
+        coin.remove();
+    }
 }
 
 function formatNumber(number, isXP = false) {
@@ -2236,12 +2254,8 @@ function addHoverEffect(coin) {
     let collected = false;
     let previousLevel = 0;
 
-    // Get boosts active when coin was spawned
-    const boostTypes = JSON.parse(coin.dataset.boosts || '[]');
-
     function collectCoin() {
-        if (collected)
-            return;
+        if (collected) return;
         collected = true;
 
         // Remove the coin from the activeCoins array
@@ -2250,21 +2264,25 @@ function addHoverEffect(coin) {
             activeCoins.splice(coinIndex, 1);
         }
 
-        const coinSound = document.createElement('audio');
-        coinSound.src = document.getElementById('coin-sound').src;
-        coinSound.volume = 0.3;
-
-        const playPromise = coinSound.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                if (error.name !== 'AbortError') {
-                    console.log('Audio play interrupted');
-                }
-            });
+        // Play sound if enabled
+        if (!disableSound.checked) {
+            const coinSound = document.createElement('audio');
+            coinSound.src = document.getElementById('coin-sound').src;
+            coinSound.volume = 0.3;
+            coinSound.play().catch(() => {});
         }
 
         // Get current save data
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+        // Animation handling
+        if (!disableAnimation.checked) {
+            coin.style.transform = 'scale(2) translateY(-20px)';
+            coin.style.opacity = '0';
+            setTimeout(() => coin.remove(), 500);
+        } else {
+            coin.remove();
+        }
 
         if (coinCount >= 10000 && (saveData.level || 0) >= 31) {
             updateGoalDisplay(); // force update the goal text for the Forge goal text
@@ -2406,35 +2424,28 @@ function addSpecialCoinHoverEffect(coin) {
     let collected = false;
 
     function collectSpecialCoin() {
-        if (collected)
-            return;
+        if (collected) return;
         collected = true;
         coin.classList.add('collected');
 
-        // Play sound
-        const specialCoinSound = document.getElementById('special-coin-sound').cloneNode(true);
-        specialCoinSound.volume = 0.6;
-
-        // Ensure sound plays
-        specialCoinSound.play()
-        .then(() => {
-            // Sound played successfully
-        })
-        .catch((error) => {
-            console.error('Error playing special coin sound:', error);
-            // Fallback to regular coin sound
-            const fallbackSound = document.getElementById('coin-sound').cloneNode(true);
-            fallbackSound.volume = 0.6;
-            fallbackSound.play();
-        });
+        // Play sound if enabled
+        if (!disableSound.checked) {
+            const specialCoinSound = document.getElementById('special-coin-sound').cloneNode(true);
+            specialCoinSound.volume = 0.6;
+            specialCoinSound.play().catch(() => {});
+        }
 
         // Update special coin count
         const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
         saveData.specialCoins = (saveData.specialCoins || 0) + 1;
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 
-        // Remove after animation
-        setTimeout(() => coin.remove(), 600);
+        // Animation handling
+        if (!disableAnimation.checked) {
+            setTimeout(() => coin.remove(), 600);
+        } else {
+            coin.remove();
+        }
     }
 
     // Add interaction handlers
@@ -2621,14 +2632,19 @@ const musicManager = {
     shuffledTracks: [],
     isMusicOn: localStorage.getItem('musicEnabled') !== 'false',
 
-    init() {
+     init() {
         this.shuffleTracks();
-        this.audio.addEventListener('ended', () => this.playNext());
+        const checkbox = document.getElementById('music-toggle');
+        checkbox.checked = !this.isMusicOn; // Checkbox checked = music disabled
         this.updateToggleButton();
 
-        // Load music state from localStorage
-        if (this.isMusicOn)
-            this.audio.volume = 0.5;
+        if (!this.isMusicOn) {
+            document.getElementById('now-playing').textContent = '';
+        } else {
+            this.playCurrent();
+        }
+
+        checkbox.addEventListener('change', () => this.toggleMusic());
     },
 
     shuffleTracks() {
@@ -2666,7 +2682,7 @@ const musicManager = {
     },
 
     toggleMusic() {
-        this.isMusicOn = !this.isMusicOn;
+        this.isMusicOn = !document.getElementById('music-toggle').checked;
         localStorage.setItem('musicEnabled', this.isMusicOn);
         this.updateToggleButton();
 
@@ -2674,13 +2690,20 @@ const musicManager = {
             this.playCurrent();
         } else {
             this.audio.pause();
+            document.getElementById('now-playing').textContent = '';
         }
     },
 
     updateToggleButton() {
-        const btn = document.getElementById('music-toggle');
-        btn.textContent = `Music: ${this.isMusicOn ? 'ON' : 'OFF'}`;
-        btn.classList.toggle('off', !this.isMusicOn);
+        const checkbox = document.getElementById('music-toggle');
+        const label = document.getElementById('music-label');
+        
+        label.textContent = 'Disable Background Music';
+        
+        checkbox.checked = !this.isMusicOn;
+        
+        checkbox.parentElement.classList.toggle('off', !this.isMusicOn);
+        checkbox.parentElement.classList.toggle('on', this.isMusicOn);
     }
 };
 
@@ -2691,6 +2714,21 @@ document.addEventListener('DOMContentLoaded', () => musicManager.init());
 const settingsBtn = document.querySelector('.settings-btn');
 const settingsModal = document.querySelector('.settings-modal');
 const closeSettingsBtn = document.querySelector('.close-settings-btn');
+const disableAnimation = document.getElementById('disable-animation');
+const disableSound = document.getElementById('disable-sound');
+
+// Initialize settings from localStorage
+disableAnimation.checked = localStorage.getItem('disableAnimation') === 'true';
+disableSound.checked = localStorage.getItem('disableSound') === 'true';
+
+// Save settings changes
+disableAnimation.addEventListener('change', () => {
+    localStorage.setItem('disableAnimation', disableAnimation.checked);
+});
+
+disableSound.addEventListener('change', () => {
+    localStorage.setItem('disableSound', disableSound.checked);
+});
 document.getElementById('coinCapacitySlider').value = MAX_COIN_CAPACITY;
 document.getElementById('coinCapacityValue').textContent = MAX_COIN_CAPACITY;
 document.getElementById('coinCapacitySlider').addEventListener('input', function (e) {
@@ -2707,7 +2745,8 @@ document.querySelector('.shuffle-btn').addEventListener('click', () => {
 
 document.querySelector('.prev-btn').addEventListener('click', () => musicManager.playPrev());
 document.querySelector('.next-btn').addEventListener('click', () => musicManager.playNext());
-document.getElementById('music-toggle').addEventListener('click', () => musicManager.toggleMusic());
+document.getElementById('music-toggle').checked = musicManager.isMusicOn;
+document.getElementById('music-label').textContent = musicManager.isMusicOn ? 'Disable Background Music' : 'Disable Background Music';
 
 // Open settings
 settingsBtn.addEventListener('click', () => {
@@ -3723,11 +3762,16 @@ setInterval(updateCoinGrid, 500);
 
 const collectedCoins = new WeakSet(); // Tracks collected coins
 function safeCollect(coin) {
-    if (!coin || !coin.parentElement || collectedCoins.has(coin))
-        return; // Skip if already collected or invalid
+    if (!coin || !coin.parentElement || collectedCoins.has(coin)) return;
 
     collectedCoins.add(coin);
-    coinsCollectedThisFrame++; // Increment the counter
+    coinsCollectedThisFrame++;
+
+    // Skip animation if disabled
+    if (disableAnimation.checked) {
+        coin.remove();
+        return;
+    }
 
     // Determine coin type and collect accordingly
     if (coin.classList.contains('platinum-coin')) {
