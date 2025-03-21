@@ -82,34 +82,75 @@
 <div class="settings-modal">
     <div class="settings-content">
         <h2>Settings</h2>
-        <div class="music-controls">
-            <div id="now-playing">🎵 Now Playing - </div>
-            <div class="playback-controls">
-                <button class="music-control prev-btn">⏮</button>
-                <button class="music-control shuffle-btn">🔀 Shuffle</button>
-                <button class="music-control next-btn">⏭</button>
+        
+        <!-- Music Section -->
+        <div class="settings-section">
+            <h3>🎵 Music</h3>
+            <div class="setting-item">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="music-toggle">
+                    <span class="checkmark"></span>
+                    <span id="music-label">Disable Background Music</span>
+                </label>
+            </div>
+            <div class="music-controls">
+                <div id="now-playing">Now Playing - </div>
+                <div class="playback-controls">
+                    <button class="music-control prev-btn">⏮</button>
+                    <button class="music-control shuffle-btn">🔀 Shuffle</button>
+                    <button class="music-control next-btn">⏭</button>
+                </div>
             </div>
         </div>
-        <!-- Name Change Section (initially hidden) -->
-        <div class="name-change-section">
-            <label for="player-name-input">Change Name:</label>
-            <input type="text" id="player-name-input" placeholder="Enter new name">
-            <button id="change-name-btn">Save</button>
-        </div>
-        <!-- Coin Capacity Slider -->
-        <div class="setting-item">
-            <label>Maximum Coin Capacity (lower number = less potential lag): <span id="coinCapacityValue">2500</span></label>
-            <input type="range" id="coinCapacitySlider" min="1000" max="10000" step="100" value="2500">
-            <div class="slider-labels">
-                <span>1000</span>
-                <span>10000</span>
+
+        <!-- Performance Section -->
+        <div class="settings-section">
+            <h3>⚡ Performance</h3>
+            <div class="setting-item">
+                <label>Max Coin Capacity: <span id="coinCapacityValue">2500</span></label>
+                <input type="range" id="coinCapacitySlider" min="1000" max="10000" step="100" value="2500">
+                <div class="slider-labels">
+                    <span>1000</span>
+                    <span>10000</span>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="disable-animation">
+                    <span class="checkmark"></span>
+                    Disable Coin Pickup Animation
+                </label>
+            </div>
+            <div class="setting-item">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="disable-sound">
+                    <span class="checkmark"></span>
+                    Disable Coin Pickup Sound
+                </label>
             </div>
         </div>
-        <div class="settings-buttons">
-            <button id="music-toggle" class="toggle-btn">Music: ON</button>
-			<button id="notation-toggle" class="toggle-btn">Notation: Standard
-            <button class="close-settings-btn">Close</button>
-</div>
+
+        <!-- Misc Section -->
+        <div class="settings-section">
+            <h3>🔧 Misc</h3>
+            <div class="setting-item">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="notation-toggle">
+                    <span class="checkmark"></span>
+                    Use Scientific Notation
+                </label>
+            </div>
+            <div class="name-change-section">
+                <div class="setting-item name-change">
+                    <label for="player-name-input">Change Player Name:</label>
+                    <input type="text" id="player-name-input" placeholder="Enter name">
+                    <button id="change-name-btn">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-footer">
+            <button class="close-settings-btn">Close Settings</button>
         </div>
     </div>
 </div>
