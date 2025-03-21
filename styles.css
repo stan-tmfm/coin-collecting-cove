@@ -716,11 +716,12 @@ body.game-active .game-background {
     margin-right: auto; /* Pushes other elements to the right */
 }
 
-.coin-icon {
+.coin-icon, .coin-icon-molten, .coin-icon-platinum {
     width: 20px;
     height: 20px;
     vertical-align: middle;
     margin-right: 5px;
+	transform: translateY(-1px);
 }
 
 .close-merchant-btn {
@@ -1644,8 +1645,9 @@ body.game-active .game-background {
 }
 
 .forge-unlocked {
-  color: #FFA500;
-  font-weight: bold;
+    color: #ffa500;
+    font-weight: bold;
+    margin: 10px 0;
 }
 
 .forge-upgrade-maxed {
@@ -1797,14 +1799,6 @@ body.game-active .game-background {
     border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
-}
-
-.coin-icon.platinum { /* in the merchant chat options */
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    filter: brightness(1.2) saturate(1.1);
-    image-rendering: crisp-edges;
 }
 
 .magnet-indicator {
