@@ -284,7 +284,7 @@ const merchantDialogues = {
                             text: "What are special coins?"
                         }, {
                             speaker: "merchant",
-                            text: "These are very special special."
+                            text: "These are very special coins."
                         }, {
                             speaker: "merchant",
                             text: "These coins are imbued with magical energy, and only those who are wise enough (i.e., have enough XP) can understand the true power they hold."
