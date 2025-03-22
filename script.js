@@ -771,7 +771,7 @@ const upgrades = {
     },
     7: {
         id: 7,
-        upgName: "Silver Lining",
+        upgName: "Silver Lining (RESET LAYER 2 WILL BE HERE EVENTUALLY)",
         upgDesc: "No this is not a metaphor, this is just an upgrade to platinum coin value",
         upgBenefits: "1.1x platinum coins per level",
         baseCost: 1e9,
