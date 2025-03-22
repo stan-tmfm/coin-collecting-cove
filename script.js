@@ -3605,7 +3605,7 @@ function updateEffectsDisplay() {
 
     // Calculate spawn rate bonus from platinum upgrade 2
     const spawnRateUpg2 = saveData.platinumUpgrades?.[2]?.level || 0;
-    const additiveSpawnRateBonus = 1 + (0.099 * spawnRateUpg2); // modified to make it look better
+    const additiveSpawnRateBonus = 1 + (0.1 * spawnRateUpg2);
 
     // Calculate final spawn interval
     let spawnInterval = baseSpawnInterval * Math.pow(0.896, spawnRateUpg1);
