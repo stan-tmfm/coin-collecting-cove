@@ -57,7 +57,7 @@
     </div>
     <div class="beach-container"></div>
     <!-- Settings Button -->
-    <button class="settings-btn">⚙️ Settings</button>
+    <button class="settings-btn">Settings</button>
     <div class="goal-message"></div>
     <button class="merchant-btn" style="display: none;">Visit Merchant</button>
 </div>
@@ -110,8 +110,8 @@
                 <label>Max Coin Capacity: <span id="coinCapacityValue">2500</span></label>
                 <input type="range" id="coinCapacitySlider" min="1000" max="10000" step="100" value="2500">
                 <div class="slider-labels">
-                    <span>1000</span>
-                    <span>10000</span>
+                    <span id="minCapacityLabel">1000</span>
+                    <span id="maxCapacityLabel">10000</span>
                 </div>
             </div>
             <div class="setting-item">
@@ -137,7 +137,7 @@
                 <label class="checkbox-container">
                     <input type="checkbox" id="notation-toggle">
                     <span class="checkmark"></span>
-                    Use Scientific Notation
+                    Enable Scientific Notation
                 </label>
             </div>
             <div class="name-change-section">
