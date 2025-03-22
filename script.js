@@ -296,7 +296,7 @@ const merchantDialogues = {
                             text: "The Cove can feel your energy residing through each and every coin you pick up, which empowers it, which gives it more energy."
                         }, {
                             speaker: "merchant",
-                            text: "You may not realize it now, but each special coin you pick up brings you closer to understand the Cove's true power."
+                            text: "You may not realize it now, but each special coin you pick up brings you closer to understanding the Cove's true power."
                         }, {
                             speaker: "merchant",
                             text: "The Cove chose you, [Player], because it sensed something special within you."
