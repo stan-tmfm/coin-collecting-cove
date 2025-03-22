@@ -2954,12 +2954,6 @@ function updateGoalDisplay() {
 
 
 
-
-
-
-
-
-
 function startMerchantCinematic() {
     if (merchantCinematicShown)
         return;
