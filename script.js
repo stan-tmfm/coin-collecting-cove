@@ -169,7 +169,7 @@ const merchantDialogues = {
 
                     ]
                 },
-                reward: 25000, // reward is so high for testing purposes
+                reward: 25, // reward is so high for testing purposes
                 completed: false
             }, {
                 id: 3,
