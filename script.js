@@ -1156,6 +1156,12 @@ function initializeSaveSlots() {
     const saveMenu = document.querySelector('.save-menu');
     saveMenu.innerHTML = '';
 
+    if (musicManager.audio && !musicManager.audio.paused) {
+        musicManager.audio.pause();
+        musicManager.audio.currentTime = 0;
+    }
+    musicManager.isMusicOn = false; // just making sure it doesn't play music
+
     saveSlots.forEach((slot) => {
         const slotElement = document.createElement('div');
         slotElement.className = `save-slot ${slot.data ? 'has-data' : 'empty'} ${manageMode ? 'manage-mode' : ''}`;
