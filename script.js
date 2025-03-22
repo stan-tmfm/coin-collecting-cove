@@ -2931,6 +2931,29 @@ function updateGoalDisplay() {
     goalMessage.classList.toggle('bounce', shouldBounce);
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 function startMerchantCinematic() {
     if (merchantCinematicShown)
         return;
