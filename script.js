@@ -336,7 +336,7 @@ const merchantDialogues = {
                             text: "Wh—Oh, sorry I misspoke. I meant I forge the molten coins, I'm the only one who is able to forge these infernal beasts!"
                         }, {
                             speaker: "merchant",
-                            text: "Here in the Forge you can convert 10000 regular boring old coins into one superforged molten coin, yielding immense energy and power."
+                            text: `Here in the Forge you can convert ${formatNumber(10000)} regular boring old coins into one superforged molten coin, yielding immense energy and power.`
                         }, {
                             speaker: "merchant",
                             text: "Aye, and also you should know that with greater wisdom comes more molten coins, why every 10 levels you'll get double molten coins from this Forge isn't that incredible."
@@ -1734,14 +1734,25 @@ function collectPlatinumCoin(event) {
         coin.remove();
     }
 }
-function formatNumber(number, isXP = false) {
+function formatNumber(number, isXP = false, isEffect = false) {
     const num = Number(number);
-    if (useScientificNotation || isXP) {
-        return num >= 1e6 ? num.toExponential(2).replace(/e\+?/, 'e') : num.toFixed(isXP ? 1 : 0);
+    
+    // Effect display specific formatting (normal formatting kicks in after 1e6)
+    if (isEffect) {
+        if (num < 100) {
+            return num.toFixed(2);
+        } else if (num < 1000) {
+            return num.toFixed(1);
+        } else if (num < 1e6) {
+            return Math.floor(num).toLocaleString();
+        }
     }
 
-    if (num < 1e6)
-        return num.toLocaleString();
+    if (useScientificNotation || isXP) {
+        return num >= 1e6 ? num.toExponential(3).replace(/e\+?/, 'e') : num.toFixed(isXP ? 1 : 0);
+    }
+
+    if (num < 1e6) return num.toLocaleString();
 
     const suffixes = [{
             value: 1e303,
@@ -2628,6 +2639,7 @@ function updateMoltenCoins() {
 
 // Music System
 const musicManager = {
+	nextTrackHandler: null,
     audio: new Audio(),
     tracks: [
         'DEAF KEV - Invincible  Glitch Hop  NCS - Copyright Free Music.mp3',
@@ -2682,16 +2694,21 @@ const musicManager = {
     },
 
     playCurrent() {
-        if (!this.isMusicOn)
-            return;
+    if (!this.isMusicOn) return;
 
-        const track = this.shuffledTracks[this.currentTrackIndex];
-        this.audio.src = `Sounds/${track}`;
-        this.audio.play().catch(() => {});
+    const track = this.shuffledTracks[this.currentTrackIndex];
+    this.audio.src = `Sounds/${track}`;
 
-        const songTitle = track.replace('.mp3', '');
-        document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
-    },
+    this.audio.removeEventListener('ended', this.nextTrackHandler);
+
+    this.nextTrackHandler = () => this.playNext();
+    this.audio.addEventListener('ended', this.nextTrackHandler);
+
+    this.audio.play().catch(() => {});
+
+    const songTitle = track.replace('.mp3', '');
+    document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
+},
 
     playNext() {
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.shuffledTracks.length;
@@ -3136,7 +3153,7 @@ function updateMerchantDisplay() {
         }
 
         const buttonText = isLocked ?
-            (isForgeUpgrade ? `Req: 10000 Coins & Lvl 31` :
+            (isForgeUpgrade ? `Req: ${formatNumber(10000)} Coins & Lvl 31` :
                 isPlatinumUpgrade ? `Req: ???` :
 `Req: ${formatNumber(upg.baseCost)} Coins`) :
             (isForgeUpgrade || isPlatinumUpgrade) && cost === 0 ? 'Unlock' : `Cost: ${formatNumber(cost)} Coins`;
@@ -3171,7 +3188,7 @@ function updateMerchantDisplay() {
 			<div class="forge-section">
 				<div class="forge-header">
 					- Reset all progress up to this point for molten coins<br>
-					- Forge 10000 normal coins into one molten coin*<br>
+					- Forge ${formatNumber(10000)} normal coins into one molten coin*<br>
 					- 2x molten coins every 10 levels after level 31*<br>
 					- Unlock a special rare new currency<br>
 					- Unlock powerful new upgrades<br>
@@ -3213,7 +3230,7 @@ function updateMerchantDisplay() {
     </div>
 `;
             }).join('')}
-</div><span class="disclaimer">*coin to molten coin conversion ratio drops from 10000:1 to  5^log(coins) after ${formatNumber(1e12)} coins and molten coin level scaling stops applying after level 251 because the merchant cannot handle it anymore</span>
+</div><span class="disclaimer">*coin to molten coin conversion ratio drops from ${formatNumber(10000)}:1 to  5^log(coins) after ${formatNumber(1e12)} coins and molten coin level scaling stops applying entirely after level 251 because the merchant cannot handle it anymore</span>
 			</div>
 		  `;
         }
@@ -3568,24 +3585,27 @@ function updateEffectsDisplay() {
     const additiveSpawnRateBonus = 1 + (0.099 * spawnRateUpg2); // modified to make it look better
 
     // Calculate final spawn interval
-    let spawnInterval = baseSpawnInterval * Math.pow(0.895, spawnRateUpg1);
+    let spawnInterval = baseSpawnInterval * Math.pow(0.896, spawnRateUpg1);
     if (forgeUpg1Level >= 1) {
         spawnInterval /= 3;
     }
     spawnInterval /= additiveSpawnRateBonus; // Apply platinum upgrade bonus
 
-    const coinsPerSecond = (1000 / spawnInterval).toFixed(1); // Convert to coins per second
+    const coinsPerSecond = 1000 / spawnInterval; // Don't use .toFixed() here
 
     let effectsHTML = `<strong>Active Effects:</strong>`;
     // Add permanent upgrades
     effectsHTML += `
     <div class="permanent-upgrades">
-        <div>• Coin Spawn Rate: ${coinsPerSecond}/sec</div>
-        ${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? `<div>• Coin Value Multi: ${formatNumber(getCoinValueMultiplier().toFixed(2))}x</div>` : ''}
-        ${(saveData.specialUpgrades?.[2]?.level || saveData.upgrades?.[3]) ? `<div>• XP Multi: ${formatNumber(getXPMultiplier().toFixed(2))}x</div>` : ''}
-        ${(saveData.platinumUpgrades?.[5]?.level || 0) > 0 ? `<div>• MC Value Multi: ${getMoltenCoinMultiplier().toFixed(2)}x</div>` : ''}
-		${saveData.upgrades?.[7]?.level > 0 || saveData.upgrades?.[9]?.level > 0 ? 
-    `<div>• PC Value Multi: ${getPlatinumCoinValueMultiplier().toFixed(2)}x</div>` : ''}
+        <div>• Coin Spawn Rate: ${formatNumber(coinsPerSecond, false, true)}/sec</div>
+        ${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? 
+            `<div>• Coin Value Multi: ${formatNumber(getCoinValueMultiplier(), false, true)}x</div>` : ''}
+        ${(saveData.specialUpgrades?.[2]?.level || saveData.upgrades?.[3]) ? 
+            `<div>• XP Multi: ${formatNumber(getXPMultiplier(), false, true)}x</div>` : ''}
+        ${(saveData.platinumUpgrades?.[5]?.level || 0) > 0 ? 
+            `<div>• MC Value Multi: ${formatNumber(getMoltenCoinMultiplier(), false, true)}x</div>` : ''}
+        ${saveData.upgrades?.[7]?.level > 0 || saveData.upgrades?.[9]?.level > 0 ? 
+            `<div>• PC Value Multi: ${formatNumber(getPlatinumCoinValueMultiplier(), false, true)}x</div>` : ''}
     </div>
 `;
 
