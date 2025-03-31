@@ -169,7 +169,7 @@ const merchantDialogues = {
 
                     ]
                 },
-                reward: 25, // reward is so high for testing purposes
+                reward: 25,
                 completed: false
             }, {
                 id: 3,
@@ -638,6 +638,24 @@ function loadDialogueProgress() {
     }
 }
 
+function restoreMerchantDialogues() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    
+    // Reset all dialogue completion states
+    merchantDialogues.introduction.options.forEach(option => {
+        option.completed = false;
+    });
+    
+    // Update save data if needed
+    if (saveData.dialogues) {
+        saveData.dialogues.forEach(dialogue => {
+            dialogue.completed = false;
+        });
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    }
+	showDialogue();
+}
+
 function promptPlayerName() {
     const name = prompt("What should I call you, traveler?");
     if (name) {
@@ -928,7 +946,7 @@ const forgeUpgrades = {
     6: {
         id: 6,
         name: "Molten Mastery",
-        desc: `Each unspent molten coin boosts coin value by 2^log(MC/${formatNumber(1e7)})<br>(VERY GOOD UPGRADE)`,
+        desc: `Each unspent molten coin boosts coin value by 2^log(MC/${formatNumber(1e7)})`,
         baseCost: 1e10,
         levelCap: 1,
         scaling: (baseCost) => baseCost,
@@ -1166,7 +1184,7 @@ function initializeSaveSlots() {
         const timestamp = slot.data?.timestamp ? new Date(slot.data.timestamp).toLocaleDateString() : 'No date';
 
         // Round the displayed coin value
-        displayCoins = slot.data ? formatNumber(Math.round(slot.data.coins || 0)) : 0;
+        displayCoins = slot.data ? formatNumber(Math.floor(slot.data.coins || 0)) : 0;
 
         slotElement.innerHTML = `
             <div class="slot-number">Slot ${slot.id}</div>
@@ -1393,6 +1411,1089 @@ function showClickPrompt() {
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeSaveSlots);
 
+let testModeEnabled = true;
+let devMenuOpen = false;
+let devMenuUpdateInterval = null;
+let activeInputElement = null;
+let pendingStatUpdates = {};
+const maxLogEntries = 100;
+function getCurrentActionLog() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    return saveData.actionLog || [];
+}
+
+const devMenuCSS = `
+.dev-menu {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0,0,0,0.9);
+    color: white;
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    width: 430px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 100000;
+    border-radius: 5px 0 0 5px;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.7);
+}
+.dev-menu-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+    padding: 10px;
+    margin: -10px -10px 10px -10px;
+    background: rgba(255,255,255,0.1);
+    position: sticky;
+    top: 0;
+    backdrop-filter: blur(5px);
+}
+.dev-section {
+    margin: 12px 0;
+    border: 1px solid #444;
+    padding: 8px;
+    border-radius: 4px;
+    background: rgba(0,0,0,0.3);
+}
+.dev-section-content {
+    display: none;
+    margin-top: 5px;
+}
+.dev-section-header {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+}
+.dev-section-header::before {
+    content: '▶';
+    margin-right: 8px;
+    font-size: 0.8em;
+}
+.dev-section-header.expanded::before {
+    content: '▼';
+}
+.stat-item {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.9em;
+}
+.stat-item span:first-child {
+    flex: 1;
+    margin-right: 15px;
+}
+.stat-item input {
+    width: 120px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+.upgrade-id {
+    font-size: 0.8em;
+    color: #888;
+    margin-left: 8px;
+}
+.flag-item {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.flag-toggle {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+.flag-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.flag-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #555;
+    transition: .2s;
+    border-radius: 12px;
+}
+.flag-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .2s;
+    border-radius: 50%;
+}
+.flag-toggle input:checked + .flag-slider {
+    background-color: #2196F3;
+}
+.flag-toggle input:checked + .flag-slider:before {
+    transform: translateX(26px);
+}
+.dev-misc-button {
+    display: block;
+    width: 100%;
+    background: #444;
+    color: white;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: background 0.2s;
+    text-align: center;
+    font-size: 0.9em;
+}
+.dev-misc-button:hover {
+    background: #555;
+}
+.dev-misc-button:active {
+    background: #333;
+}
+.action-log-entry {
+    font-size: 0.8em;
+    padding: 5px;
+    border-bottom: 1px solid #333;
+    font-family: monospace;
+    word-break: break-word;
+}
+.action-log-time {
+    color: #aaa;
+    margin-right: 8px;
+}
+.action-log-message {
+    color: #ddd;
+}
+.action-log-empty {
+    color: #aaa;
+    font-style: italic;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.9em;
+}
+.action-log-number {
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    padding: 0 2px;
+    border-radius: 3px;
+    background: rgba(255, 215, 0, 0.1);
+}
+.action-log-number::after {
+    content: "";
+    color: #FFD700;
+}
+.dev-menu::-webkit-scrollbar {
+    width: 8px;
+}
+.dev-menu::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+.dev-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.dev-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+#action-log-entries::-webkit-scrollbar {
+    width: 8px;
+}
+#action-log-entries::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+#action-log-entries::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+#action-log-entries::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+.action-log-level {
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 3px;
+    padding: 0 2px;
+}
+.action-log-level span {
+    color: #FFD700;
+}
+.action-log-gold {
+    color: #FFD700;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 3px;
+    padding: 0 2px;
+}
+`;
+
+function createDevMenu() {
+    if (!testModeEnabled || devMenuOpen) return;
+
+    // Remove existing menu if any
+    const existingMenu = document.querySelector('.dev-menu');
+    if (existingMenu) existingMenu.remove();
+
+    // Create new menu
+    const style = document.createElement('style');
+    style.id = 'dev-menu-style';
+    style.textContent = devMenuCSS;
+    document.head.appendChild(style);
+
+    const menu = document.createElement('div');
+    menu.className = 'dev-menu';
+    menu.innerHTML = `
+        <div class="dev-menu-title">Dev Menu</div>
+        <div class="dev-section">
+            <div class="dev-section-header">Stats</div>
+            <div class="dev-section-content" style="display:none" id="stats-section"></div>
+        </div>
+        <div class="dev-section">
+            <div class="dev-section-header">Upgrades</div>
+            <div class="dev-section-content" style="display:none" id="upgrades-section"></div>
+        </div>
+        <div class="dev-section">
+            <div class="dev-section-header">Flags</div>
+            <div class="dev-section-content" style="display:none" id="flags-section"></div>
+        </div>
+        <div class="dev-section">
+            <div class="dev-section-header">Misc</div>
+            <div class="dev-section-content" style="display:none" id="misc-section">
+                <button class="dev-misc-button" id="spawn-boost-coin">Spawn Boost Coin</button>
+                <button class="dev-misc-button" id="restore-dialogues">Restore Merchant Dialogues</button>
+				<button class="dev-misc-button" id="instant-complete-merchant-dialogues">Instantly Complete All Merchant Dialogues</button>
+				<button class="dev-misc-button" id="reset-all-stats">Reset All Stats to Nothing</button>
+                <button class="dev-misc-button" id="reset-all-upgrades">Reset All Upgrades to Level 0</button>
+				<button class="dev-misc-button" id="clear-active-coins">Clear All Active Coins</button>
+				<button class="dev-misc-button" id="increment-all-upgrades">+1 Level to All Upgrades</button>
+				<button class="dev-misc-button" id="hard-reset-game">Hard Reset All Progress</button>
+            </div>
+        </div>
+		<div class="dev-section">
+            <div class="dev-section-header">Action Log</div>
+            <div class="dev-section-content" style="display:none" id="action-log-section">
+                <div id="action-log-entries" style="max-height: 200px; overflow-y: auto;"></div>
+            </div>
+        </div>
+    `;
+	
+    document.body.appendChild(menu);
+    devMenuOpen = true;
+
+	document.getElementById('spawn-boost-coin').addEventListener('click', () => {
+	    logAction("Manually spawned boost coin");
+	    spawnBoostCoin();
+	});
+	document.getElementById('restore-dialogues').addEventListener('click', () => {
+	    logAction("Restored merchant dialogues");
+	    restoreMerchantDialogues();
+	    });
+	document.getElementById('instant-complete-merchant-dialogues').addEventListener('click', () => {
+		instantCompleteMerchantDialogues();
+	});
+	document.getElementById('reset-all-stats').addEventListener('click', () => {
+	   resetAllStats();
+	});
+	document.getElementById('reset-all-upgrades').addEventListener('click', () => {
+		resetAllUpgradesToZero();
+	});
+	document.getElementById('clear-active-coins').addEventListener('click', () => {
+		clearAllCoins();
+	});
+	document.getElementById('increment-all-upgrades').addEventListener('click', () => {
+	    incrementAllUpgradeLevels();
+	});
+	document.getElementById('hard-reset-game').addEventListener('click', () => {
+		if (confirm("Are you sure you want to perform a hard reset? This will wipe all stats and upgrades!")) {
+			resetGame();
+			refreshAllDisplays();
+		}
+	});
+		
+	// Initialize all sections as collapsed
+	document.querySelectorAll('.dev-section-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const wasExpanded = this.classList.contains('expanded');
+            this.classList.toggle('expanded');
+            const content = this.nextElementSibling;
+            content.style.display = wasExpanded ? 'none' : 'block';
+        });
+    });
+
+	if (localStorage.getItem('actionLog')) {
+		const actionLog = getCurrentActionLog();
+    try {
+        const storedLogs = JSON.parse(localStorage.getItem('actionLog'));
+        if (Array.isArray(storedLogs)) {
+            actionLog.push(...storedLogs);
+        }
+    } catch (e) {
+        console.error("Couldn't load action log", e);
+    }
+    updateActionLogDisplay(); // Update display with either logs or empty message
+}
+
+	// Start real-time updates
+	devMenuUpdateInterval = setInterval(updateDevMenu, 16);
+	updateDevMenu();
+	updateActionLogDisplay();
+}
+
+function handleStatChange(stat, value) {
+    const oldValue = getCurrentStatValue(stat);
+    const numValue = Number(value);
+    if (isNaN(numValue)) return;
+    
+    logAction(`Modified ${stat} from ${formatNumber(oldValue)} to ${formatNumber(numValue)}`);
+    
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    switch(stat) {
+        case 'Coins':
+            coinCount = numValue;
+            break;
+        case 'Molten Coins':
+            saveData.moltenCoins = numValue;
+            break;
+        case 'Platinum Coins':
+            saveData.platinumCoins = numValue;
+            break;
+        case 'Special Coins':
+            saveData.specialCoins = numValue;
+            break;
+        case 'Level':
+            saveData.level = numValue;
+            saveData.xpNeeded = 10 * Math.pow(1.1, numValue);
+            break;
+        case 'XP':
+            saveData.xp = numValue;
+            break;
+    }
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    refreshAllDisplays();
+}
+
+function getCurrentStatValue(stat) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    switch(stat) {
+        case 'Coins': return coinCount;
+        case 'Molten Coins': return saveData.moltenCoins || 0;
+        case 'Platinum Coins': return saveData.platinumCoins || 0;
+        case 'Special Coins': return saveData.specialCoins || 0;
+        case 'Level': return saveData.level || 0;
+        case 'XP': return saveData.xp || 0;
+        default: return '?';
+    }
+}
+
+function handleUpgradeChange(id, category, value) {
+    // Load the current saveData
+    let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    if (!saveData[category]) saveData[category] = {};
+
+    const oldLevel = saveData[category][id]?.level || 0;
+    const newLevel = Number(value);
+
+    const categoryName = Object.entries({
+        'Coin Upgrades': 'upgrades',
+        'Special Coin Upgrades': 'specialUpgrades',
+        'Molten Coin Upgrades': 'forgeUpgrades',
+        'Platinum Coin Upgrades': 'platinumUpgrades'
+    }).find(([_, cat]) => cat === category)?.[0] || category;
+
+    const upgradeName = {
+        upgrades: upgrades[id]?.upgName,
+        forgeUpgrades: forgeUpgrades[id]?.name,
+        platinumUpgrades: platinumUpgrades[id]?.name,
+        specialUpgrades: specialUpgrades[id]?.name
+    }[category] || `ID ${id}`;
+
+    logAction(`Modified ${upgradeName} (${categoryName} - ID: ${id}) from Level ${formatNumber(oldLevel)} to Level ${formatNumber(newLevel)}`);
+
+    // Reload saveData so we capture the updated actionLog
+    saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    if (!saveData[category]) saveData[category] = {};
+
+    // Update the upgrade level
+    saveData[category][id] = { level: newLevel };
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    applyUpgradeEffects();
+    updateMerchantDisplay();
+    updateDevMenu();
+}
+
+function getUpgradeName(id, category) {
+    return {
+        upgrades: upgrades[id]?.upgName,
+        forgeUpgrades: forgeUpgrades[id]?.name,
+        platinumUpgrades: platinumUpgrades[id]?.name,
+        specialUpgrades: specialUpgrades[id]?.name
+    }[category] || `ID ${id}`;
+}
+
+function updateDevMenu() {
+    if (!devMenuOpen)
+        return;
+
+    // Update stats
+    const statsSection = document.getElementById('stats-section');
+    const currentStats = {
+        'Coins': coinCount,
+        'Molten Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.moltenCoins || 0,
+        'Platinum Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.platinumCoins || 0,
+        'Special Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.specialCoins || 0,
+        'Level': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.level || 0,
+        'XP': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.xp || 0
+    };
+
+    // Create a map of existing stat items
+    const existingStats = {};
+    statsSection.querySelectorAll('.stat-item').forEach(item => {
+        const name = item.querySelector('span').textContent.replace(':', '').trim();
+        existingStats[name] = item;
+    });
+
+    // Update or create stat items
+    Object.entries(currentStats).forEach(([name, value]) => {
+        if (existingStats[name]) {
+            const input = existingStats[name].querySelector('input');
+            // Only update if not currently being edited
+            if (input && input !== activeInputElement && input.value !== String(value)) {
+                input.value = value;
+            }
+            }
+            else {
+                const item = document.createElement('div');
+                item.className = 'stat-item';
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = value;
+                input.step = 'any'; // Allow decimals
+                // Disable validation tooltip
+                input.oninvalid = (e) => e.preventDefault();
+                input.addEventListener('input', function () {
+                    handleStatChange(name, this.value);
+                });
+                input.addEventListener('focus', function () {
+                    activeInputElement = this;
+                });
+                input.addEventListener('blur', function () {
+                    activeInputElement = null;
+                    // Apply any queued updates
+                    Object.entries(pendingStatUpdates).forEach(([stat, value]) => {
+                        handleStatChange(stat, value);
+                    });
+                    pendingStatUpdates = {};
+                });
+
+                item.innerHTML = `<span>${name}:</span>`;
+                item.appendChild(input);
+                statsSection.appendChild(item);
+            }
+            });
+
+            // Update upgrades
+            const upgradeCategories = {
+                'Coin Upgrades': {
+                    object: upgrades,
+            key: 'upgrades'
+        },
+				'Special Coin Upgrades': {
+				object: specialUpgrades,
+            key: 'specialUpgrades'
+        },
+			'Molten Coin Upgrades': {
+            object: forgeUpgrades,
+            key: 'forgeUpgrades'
+        },
+			'Platinum Coin Upgrades': {
+            object: platinumUpgrades,
+            key: 'platinumUpgrades'
+        }
+    };
+
+    Object.entries(upgradeCategories).forEach(([category, data]) => {
+        const categoryId = category.replace(/\s+/g, '-');
+        let contentDiv = document.getElementById(`${categoryId}-content`);
+
+        if (!contentDiv) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'dev-subsection';
+            const header = document.createElement('div');
+            header.className = 'dev-section-header';
+            header.textContent = category;
+
+            contentDiv = document.createElement('div');
+            contentDiv.className = 'dev-section-content';
+            contentDiv.id = `${categoryId}-content`;
+
+            header.addEventListener('click', function () {
+                this.classList.toggle('expanded');
+                contentDiv.style.display =
+                    this.classList.contains('expanded') ? 'block' : 'none';
+            });
+
+            categoryDiv.appendChild(header);
+            categoryDiv.appendChild(contentDiv);
+            document.getElementById('upgrades-section').appendChild(categoryDiv);
+        }
+
+        // Create a map of existing upgrade items
+        const existingUpgrades = {};
+        contentDiv.querySelectorAll('.stat-item').forEach(item => {
+            const id = item.querySelector('input')?.dataset.upgradeId;
+            if (id)
+                existingUpgrades[id] = item;
+        });
+
+        Object.values(data.object).forEach(upg => {
+            const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+            const currentLevel = saveData[data.key]?.[upg.id]?.level || 0;
+
+            if (existingUpgrades[upg.id]) {
+                const input = existingUpgrades[upg.id].querySelector('input');
+                // Only update if not currently being edited
+                if (input && input !== activeInputElement && input.value !== String(currentLevel)) {
+                    input.value = currentLevel;
+                }
+            }
+            else {
+                const item = document.createElement('div');
+                item.className = 'stat-item';
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.value = currentLevel;
+                input.min = 0;
+                input.max = upg.maxLevel || upg.levelCap || 999;
+                input.step = 'any'; // Allow decimals
+                // Disable validation tooltip
+                input.oninvalid = (e) => e.preventDefault();
+                input.dataset.upgradeId = upg.id;
+                input.addEventListener('input', function () {
+                    handleUpgradeChange(upg.id, data.key, this.value);
+                });
+                input.addEventListener('focus', function () {
+                    activeInputElement = this;
+                });
+                input.addEventListener('blur', function () {
+                    activeInputElement = null;
+                });
+
+                item.innerHTML = `
+            <span>${upg.upgName || upg.name}
+                <span class="upgrade-id">(ID: ${upg.id})</span>
+            </span>
+        `;
+                item.appendChild(input);
+                contentDiv.appendChild(item);
+            }
+        });
+    });
+    // Update flags
+    const flagsSection = document.getElementById('flags-section');
+    const currentFlags = {
+        'Game Active': gameActive,
+        'Disable Background Music': !musicManager.isMusicOn,
+        'Disable Coin Pickup Animation': disableAnimation.checked,
+        'Disable Coin Pickup Sound': disableSound.checked,
+        'Enable Scientific Notation': useScientificNotation,
+		'Disable Formatted Numbers': JSON.parse(localStorage.getItem('disableFormattedNumbers') || 'false'),
+        'Disable Boost Coin Spawning': !boostCoinsUnlocked,
+        'Has Done Forge Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneForgeReset || false,
+		'Has Platinum Unlocked': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasPlatinumUnlocked || false,
+        'Disable Magnet': JSON.parse(localStorage.getItem('disableMagnet') || 'false')
+    };
+
+    // Create a map of existing flag items
+    const existingFlags = {};
+    flagsSection.querySelectorAll('.flag-item').forEach(item => {
+        const name = item.querySelector('span').textContent;
+        existingFlags[name] = item;
+    });
+
+    // Update or create flag items
+    Object.entries(currentFlags).forEach(([name, value]) => {
+        if (existingFlags[name]) {
+            const input = existingFlags[name].querySelector('input');
+            if (input && input.checked !== value) {
+                input.checked = value;
+            }
+        } else {
+            const item = document.createElement('div');
+            item.className = 'flag-item';
+
+            const label = document.createElement('label');
+            label.className = 'flag-toggle';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = value;
+            input.addEventListener('change', function () {
+                handleFlagChange(name, this.checked);
+            });
+
+            const slider = document.createElement('span');
+            slider.className = 'flag-slider';
+
+            label.appendChild(input);
+            label.appendChild(slider);
+
+            item.innerHTML = `<span>${name}</span>`;
+            item.appendChild(label);
+            flagsSection.appendChild(item);
+        }
+    });
+}
+
+function handleFlagChange(name, value) {
+	const currentFlags = {
+        'Game Active': gameActive,
+        'Disable Background Music': !musicManager.isMusicOn,
+        'Disable Coin Pickup Animation': disableAnimation.checked,
+        'Disable Coin Pickup Sound': disableSound.checked,
+        'Enable Scientific Notation': useScientificNotation,
+		'Disable Formatted Numbers': JSON.parse(localStorage.getItem('disableFormattedNumbers') || 'false'),
+        'Disable Boost Coin Spawning': !boostCoinsUnlocked,
+        'Has Done Forge Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneForgeReset || false,
+		'Has Platinum Unlocked': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasPlatinumUnlocked || false,
+        'Disable Magnet': JSON.parse(localStorage.getItem('disableMagnet') || 'false')
+    };
+	
+    const oldValue = currentFlags[name];
+    logAction(`Toggled flag "${name}" from ${oldValue} to ${value}`);
+	
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    
+    switch(name) {
+        case 'Game Active':
+            gameActive = value;
+            if (!value) pauseGame();
+            else startGame();
+            break;
+            
+        case 'Disable Background Music':
+            document.getElementById('music-toggle').checked = value;
+            musicManager.toggleMusic();
+            break;
+
+        case 'Disable Coin Pickup Animation':
+            disableAnimation.checked = value;
+            localStorage.setItem('disableAnimation', value);
+            break;
+            
+        case 'Disable Coin Pickup Sound':
+            disableSound.checked = value;
+            localStorage.setItem('disableSound', value);
+            break;
+            
+        case 'Enable Scientific Notation':
+            useScientificNotation = value;
+            localStorage.setItem('useScientificNotation', value);
+            document.getElementById('notation-toggle').checked = value;
+            refreshAllDisplays();
+            break;
+            
+        case 'Disable Formatted Numbers':
+            localStorage.setItem('disableFormattedNumbers', value);
+            refreshAllDisplays();
+            break;
+            
+        case 'Disable Boost Coin Spawning':
+            boostCoinsUnlocked = !value;
+            if (value) clearInterval(boostSpawnInterval);
+            else boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
+            break;
+            
+        case 'Has Done Forge Reset':
+            saveData.hasDoneForgeReset = value;
+            localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+            break;
+            
+        case 'Has Platinum Unlocked':
+			saveData.hasPlatinumUnlocked = value;
+			localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+			const platinumSection = document.querySelector('.platinum-section');
+			if (platinumSection) {
+				platinumSection.remove();
+			}
+			break;
+            
+        case 'Disable Magnet':
+            saveData.forgeUpgrades = saveData.forgeUpgrades || {};
+            
+            if (value) {
+                if (!localStorage.getItem('prevMagnetLevel')) {
+                    localStorage.setItem('prevMagnetLevel', saveData.forgeUpgrades[2]?.level || 0);
+                }
+                saveData.forgeUpgrades[2] = { level: 0 };
+            } else {
+                const prevLevel = parseInt(localStorage.getItem('prevMagnetLevel')) || 0;
+                saveData.forgeUpgrades[2] = { level: prevLevel };
+                localStorage.removeItem('prevMagnetLevel');
+            }
+            
+            localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+            localStorage.setItem('disableMagnet', value);
+            updateMagnetIndicator();
+            updateMerchantDisplay();
+            break;
+    }
+    
+    refreshAllDisplays();
+}
+
+// Close menu and cleanup
+function closeDevMenu() {
+	const actionLog = getCurrentActionLog()
+    const menu = document.querySelector('.dev-menu');
+    if (menu) menu.remove();
+    const style = document.getElementById('dev-menu-style');
+    if (style) style.remove();
+    devMenuOpen = false;
+    if (devMenuUpdateInterval) {
+        clearInterval(devMenuUpdateInterval);
+        devMenuUpdateInterval = null;
+    }
+	localStorage.setItem('actionLog', JSON.stringify(actionLog.slice(0, maxLogEntries)));
+}
+
+function updateActionLog(newEntry) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const actionLog = saveData.actionLog || [];
+    
+    actionLog.unshift(newEntry);
+    
+    // Trim to max length
+    if (actionLog.length > maxLogEntries) {
+        actionLog.length = maxLogEntries;
+    }
+    
+    saveData.actionLog = actionLog;
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    
+    return actionLog;
+}
+
+function logAction(message) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    updateActionLog({
+        time: timeString,
+        message: message,
+        timestamp: now.getTime()
+    });
+    
+    if (devMenuOpen) updateActionLogDisplay();
+}
+
+function updateActionLogDisplay() {
+    const logContainer = document.getElementById('action-log-entries');
+    if (!logContainer) return;
+    
+    const actionLog = getCurrentActionLog();
+    
+    if (actionLog.length === 0) {
+        logContainer.innerHTML = 	`
+			<div class="action-log-empty">
+                Actions you perform in the Dev Menu will be logged permanently in this action log.
+            </div>
+		`;
+    } else {
+        logContainer.innerHTML = actionLog.map(entry => {
+            let formattedMessage = entry.message.replace(
+                /\[GOLD\](.*?)\[\/GOLD\]/g,
+                '<span class="action-log-gold">$1</span>'
+            );
+            
+            formattedMessage = formattedMessage.replace(
+                /\b(Level \d+)\b/g,
+                '<span class="action-log-level">$1</span>'
+            );
+            
+            formattedMessage = formattedMessage.replace(
+                /(\d[\d,.]*(?:e[+-]?\d+)*(?:[KMBTQa-zA-Z]*))/g,
+                (match) => /\d/.test(match) ? `<span class="action-log-number">${match}</span>` : match
+            );
+            
+            return `
+                <div class="action-log-entry">
+                    <span class="action-log-time">${entry.time}:</span>
+                    <span class="action-log-message">${formattedMessage}</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
+
+
+function cleanUpLogs() {
+	const actionLog = getCurrentActionLog();
+    if (actionLog.length > maxLogEntries) {
+        actionLog = actionLog.slice(0, maxLogEntries);
+        localStorage.setItem('actionLog', JSON.stringify(actionLog));
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'c' && testModeEnabled) {
+        e.preventDefault();
+        if (devMenuOpen) {
+            closeDevMenu();
+        } else {
+            createDevMenu();
+        }
+    }
+});
+
+function instantCompleteMerchantDialogues() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    
+    let completeCount = 0;
+
+    // Iterate through the merchant dialogues and mark them as completed
+    merchantDialogues.introduction.options.forEach(option => {
+        if (!option.completed) {
+            // Mark the dialogue as completed
+            option.completed = true;
+
+            // Give the reward for this dialogue
+            if (option.reward) {
+                if (option.reward.type === 'platinum') {
+                    saveData.platinumCoins = (saveData.platinumCoins || 0) + option.reward.amount;
+                } else if (option.reward.type === 'molten') {
+                    saveData.moltenCoins = (saveData.moltenCoins || 0) + option.reward.amount;
+                } else {
+                    // Regular coins
+                    coinCount += option.reward.amount || option.reward;
+                }
+            }
+
+            completeCount++;
+        }
+    });
+
+    // Save the updated save data
+    saveData.dialogues = merchantDialogues.introduction.options.map(option => ({
+        id: option.id,
+        completed: option.completed
+    }));
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    // Log the action in the action log
+    logAction(`Instantly completed all merchant dialogues. Total dialogues completed: ${completeCount}`);
+
+    updateDevMenu();
+    refreshAllDisplays();
+	showDialogue();
+}
+
+
+function resetAllStats() {
+    // Load save data
+    let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    let resetCount = 0;
+    
+    // Reset the global coin count
+    if (coinCount !== 0) {
+        coinCount = 0;
+        resetCount++;
+    }
+    
+    // Define the correct keys and their default values
+    const statProperties = [
+        { key: 'moltenCoins', default: 0 },
+        { key: 'platinumCoins', default: 0 },
+        { key: 'specialCoins', default: 0 },
+        { key: 'level', default: 0 },
+        { key: 'xp', default: 0 },
+		{ key: 'xpNeeded', default: 10 }
+    ];
+    
+    // Reset each stat in the save data
+    statProperties.forEach(stat => {
+        // Only reset if the property exists and is different from its default value
+        if (typeof saveData[stat.key] !== 'undefined' && saveData[stat.key] !== stat.default) {
+            saveData[stat.key] = stat.default;
+            resetCount++;
+        }
+    });
+    
+    // Save the updated data
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    
+    // Log the action with the total reset count
+    logAction(`Reset all stats to nothing. Total stats reset: ${resetCount}`);
+    
+    // Update the UI immediately
+    updateDevMenu();
+    refreshAllDisplays();
+}
+
+function resetAllUpgradesToZero() {
+    let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgradeCategories = [
+        'upgrades', 
+        'specialUpgrades', 
+        'forgeUpgrades', 
+        'platinumUpgrades'
+    ];
+
+    let resetCount = 0;
+
+    upgradeCategories.forEach(category => {
+        if (saveData[category]) {
+            Object.keys(saveData[category]).forEach(id => {
+                const currentLevel = saveData[category][id].level;
+                if (currentLevel !== 0) {
+                    saveData[category][id].level = 0;
+                    resetCount++;
+                }
+            });
+        }
+    });
+
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    logAction(`Reset all upgrades to Level 0. Total upgrades reset: ${resetCount}`);
+
+    applyUpgradeEffects();
+    updateDevMenu();
+	updateMerchantDisplay();
+}
+
+function clearAllCoins() {
+    // Remove all coin elements
+    const coins = document.querySelectorAll('.coin, .special-coin, .boost-coin, .platinum-coin');
+    coins.forEach(coin => coin.remove());
+    
+    // Clear pending spawns
+    activeSpawns.forEach(timeoutId => clearTimeout(timeoutId));
+    activeSpawns = [];
+}
+
+function incrementAllUpgradeLevels() {
+    // Load current save data
+    let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    let incrementCount = 0;
+    
+    // Define the upgrade categories and their corresponding keys
+    const upgradeCategories = [
+        { key: 'upgrades', upgrades: upgrades },
+        { key: 'specialUpgrades', upgrades: specialUpgrades },
+        { key: 'forgeUpgrades', upgrades: forgeUpgrades },
+        { key: 'platinumUpgrades', upgrades: platinumUpgrades }
+    ];
+    
+    // Ensure the upgrade categories exist in saveData
+    upgradeCategories.forEach(category => {
+        if (!saveData[category.key]) {
+            saveData[category.key] = {};
+        }
+    });
+    
+    // Iterate over each category of upgrades and increment their levels
+    upgradeCategories.forEach(category => {
+        Object.entries(category.upgrades).forEach(([id, upgrade]) => {
+            // Check if the upgrade exists in the save data
+            const currentLevel = saveData[category.key][id]?.level || 0;
+            
+            // If it doesn't exist in the save data, initialize it with level 0
+            if (saveData[category.key][id] === undefined) {
+                saveData[category.key][id] = { level: 0 };
+            }
+            
+            // Increment the level by 1
+            saveData[category.key][id].level = currentLevel + 1;
+            incrementCount++;
+        });
+    });
+    
+    // Save the updated data
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    
+    // Log the action
+    logAction(`Incremented all upgrade levels by 1. Total upgrades incremented: ${incrementCount}`);
+    
+    // Update the UI to reflect the changes
+    updateDevMenu();
+	applyUpgradeEffects();
+    refreshAllDisplays();
+}
+
+function resetGame() {
+    // Load current save data
+    let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+    const upgradeCategories = [
+        'upgrades', 'specialUpgrades', 'forgeUpgrades', 'platinumUpgrades'
+    ];
+	
+	if (coinCount !== 0) {
+        coinCount = 0;
+	}
+
+    upgradeCategories.forEach(category => {
+        saveData[category] = {}; 
+    });
+
+    const statsToReset = [
+        'coins', 'moltenCoins', 'platinumCoins', 'specialCoins', 'level', 'xp', 'xpNeeded'
+    ];
+
+    statsToReset.forEach(stat => {
+        if (stat === 'xpNeeded') {
+            saveData[stat] = 10;
+        } else {
+            saveData[stat] = 0; 
+        }
+    });
+
+    // Set key flags to false
+    const flagsToReset = [
+        'hasReached10Coins', 'hasDoneForgeReset', 'hasPlatinumUnlocked',
+    ];
+
+    flagsToReset.forEach(flag => {
+        saveData[flag] = false;
+    });
+
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+    updateDevMenu();
+    updateActionLogDisplay();
+
+    restoreMerchantDialogues();
+
+    logAction('Performed a hard reset. All stats and upgrades have been wiped.');
+	clearAllCoins();
+	applyUpgradeEffects();
+}
+
 function loadGame(saveData) {
     // Create normalized save data
     const fullSaveData = {
@@ -1401,7 +2502,7 @@ function loadGame(saveData) {
             1: {
                 level: 0
             }
-        }, // Default structure
+        },
         merchantCinematicShown: false,
         timestamp: Date.now(),
         ...saveData
@@ -1433,7 +2534,7 @@ function loadGame(saveData) {
     console.log(`Welcome back, ${playerName}!`);
 
     // Update UI with rounded values
-    updateCoinDisplay(); // Use the centralized display function
+    updateCoinDisplay();
     document.querySelector('.merchant-btn').style.display = merchantCinematicShown ? 'block' : 'none';
 
     // XP System initialization
@@ -1493,9 +2594,14 @@ function loadGame(saveData) {
         document.querySelector('.music-controls').style.display = 'flex'; // Keep as flex
         document.getElementById('now-playing').style.display = 'block';
     }
+	cleanUpLogs();
 }
 
 function startGame() {
+	if (JSON.parse(localStorage.getItem('disableCoinSpawning') || 'false')) {
+	    clearInterval(window.spawnInterval);
+	}
+
     const windSound = document.getElementById('wind-sound');
 
     // Clear any pending wind sound timeout
@@ -1572,8 +2678,7 @@ function startGame() {
 }
 
 function spawnCoin() {
-    if (!gameActive)
-        return; // Prevent spawning when game is inactive
+    if (!gameActive) return;
 
     // Get current spawn rate
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
@@ -1672,8 +2777,9 @@ function spawnCoin() {
 }
 
 function spawnPlatinumCoin() {
-    if (!gameActive)
-        return;
+	if (!gameActive) return;
+	if (!JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasPlatinumUnlocked) return;
+	
     if (activeCoins.length + activeBoostCoins.length + document.querySelectorAll('special-coin').length + document.querySelectorAll('.platinum-coin').length >= MAX_COIN_CAPACITY)
         return;
 
@@ -1707,11 +2813,6 @@ function spawnPlatinumCoin() {
     }, 50); // small delay to ensure things work correctly
 }
 
-
-
-
-
-
 function collectPlatinumCoin(event) {
     const coin = event.target;
     if (coin.classList.contains('collected'))
@@ -1739,9 +2840,14 @@ function collectPlatinumCoin(event) {
         coin.remove();
     }
 }
+
 function formatNumber(number, isXP = false, isEffect = false) {
+	if (JSON.parse(localStorage.getItem('disableFormattedNumbers') || 'false')) {
+        return number.toLocaleString();
+    }
+	
     const num = Number(number);
-    
+
     // Effect display specific formatting (normal formatting kicks in after 1e6)
     if (isEffect) {
         if (num < 100) {
@@ -1757,7 +2863,8 @@ function formatNumber(number, isXP = false, isEffect = false) {
         return num >= 1e6 ? num.toExponential(3).replace(/e\+?/, 'e') : num.toFixed(isXP ? 1 : 0);
     }
 
-    if (num < 1e6) return num.toLocaleString();
+    if (num < 1e6)
+        return num.toLocaleString();
 
     const suffixes = [{
             value: 1e303,
@@ -2399,8 +3506,8 @@ function addHoverEffect(coin) {
 }
 
 function spawnSpecialCoin() {
-    if (!gameActive)
-        return;
+    if (!gameActive) return;
+	if (JSON.parse(localStorage.getItem('disableSpecialSpawning') || 'false')) return;
 
     // Check current active coins (regular, boost, uncollected special)
     const currentRegular = activeCoins.length;
@@ -2515,13 +3622,15 @@ function getXPMultiplier() {
     const wisdomFlow = Math.pow(1.1, saveData.upgrades?.[8]?.level || 0); // Upgrade 8
     const arcaneMastery = Math.pow(1.5, saveData.upgrades?.[10]?.level || 0); // Upgrade 10
 
-    return (
+    let multiplier = (
         Math.pow(1.25, specialUpgrade1.level) *
         Math.pow(1.1, upgrade3.level) *
         Math.pow(1.1, forgeUpgrade4.level) *
         getPlatinumXPMultiplier() *
         wisdomFlow *
         arcaneMastery);
+		
+	return multiplier;
 }
 
 function getCoinValueMultiplier() {
@@ -2576,7 +3685,7 @@ function getMoltenCoinMultiplier() {
 
 function updateCoinDisplay() {
     // Round coin count before formatting
-    const roundedCoins = Math.round(coinCount);
+    const roundedCoins = Math.floor(coinCount);
     const formatted = formatNumber(roundedCoins);
 
     // Update game screen display
@@ -2644,7 +3753,7 @@ function updateMoltenCoins() {
 
 // Music System
 const musicManager = {
-	nextTrackHandler: null,
+    nextTrackHandler: null,
     audio: new Audio(),
     tracks: [
         'DEAF KEV - Invincible  Glitch Hop  NCS - Copyright Free Music.mp3',
@@ -2699,21 +3808,22 @@ const musicManager = {
     },
 
     playCurrent() {
-    if (!this.isMusicOn) return;
+        if (!this.isMusicOn)
+            return;
 
-    const track = this.shuffledTracks[this.currentTrackIndex];
-    this.audio.src = `Sounds/${track}`;
+        const track = this.shuffledTracks[this.currentTrackIndex];
+        this.audio.src = `Sounds/${track}`;
 
-    this.audio.removeEventListener('ended', this.nextTrackHandler);
+        this.audio.removeEventListener('ended', this.nextTrackHandler);
 
-    this.nextTrackHandler = () => this.playNext();
-    this.audio.addEventListener('ended', this.nextTrackHandler);
+        this.nextTrackHandler = () => this.playNext();
+        this.audio.addEventListener('ended', this.nextTrackHandler);
 
-    this.audio.play().catch(() => {});
+        this.audio.play().catch(() => {});
 
-    const songTitle = track.replace('.mp3', '');
-    document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
-},
+        const songTitle = track.replace('.mp3', '');
+        document.getElementById('now-playing').textContent = `🎵 Now Playing - ${songTitle}`;
+    },
 
     playNext() {
         this.currentTrackIndex = (this.currentTrackIndex + 1) % this.shuffledTracks.length;
@@ -2935,23 +4045,6 @@ function updateGoalDisplay() {
     shouldBounce = false;
     goalMessage.classList.toggle('bounce', shouldBounce);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function startMerchantCinematic() {
     if (merchantCinematicShown)
@@ -3263,7 +4356,7 @@ function updateMerchantDisplay() {
 
         // Render special coins section
         if (isSpecialUpgrade && hasSpecialCoins) {
-    const specialSectionHTML = `
+            const specialSectionHTML = `
         <div class="special-coins-section">
             <div class="special-coins-header">
                 Collect coins for XP!<br>
@@ -3314,9 +4407,8 @@ function updateMerchantDisplay() {
             </div>
         </div>
     `;
-    container.innerHTML += specialSectionHTML;
-}
-
+            container.innerHTML += specialSectionHTML;
+        }
 
         if (isPlatinumUpgrade && currentLevel >= 1 && saveData.hasPlatinumUnlocked) {
             container.innerHTML += `
@@ -3405,9 +4497,9 @@ function updateMerchantDisplay() {
         forgeButton.disabled = totalMolten === 0;
     }
 
-    // Add event listeners for Forge upgrades
-    container.querySelectorAll('.buy-forge-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
+	// Add event listeners for Forge upgrades
+	container.querySelectorAll('.buy-forge-btn').forEach(btn => {
+	    btn.addEventListener('click', function () {
             const upgradeId = parseInt(this.dataset.upgradeId);
             purchaseForgeUpgrade(upgradeId);
         });
@@ -3514,6 +4606,7 @@ function purchaseUpgrade(upgradeId) {
         updateMerchantDisplay();
         applyUpgradeEffects();
     }
+	updateEffectsDisplay();
 }
 
 function purchaseSpecialUpgrade(upgradeId) {
@@ -3597,44 +4690,49 @@ function updateEffectsDisplay() {
     const effectsContainer = document.querySelector('.current-effects');
     const now = Date.now();
 
-    // Calculate coin spawn rate in coins per second
-    const baseSpawnInterval = 3000; // Base spawn interval in milliseconds
-    const spawnRateUpg1 = saveData.upgrades?.[1]?.level || 0;
-    const forgeUpg1Level = saveData.forgeUpgrades?.[1]?.level || 0;
+    // Initialize unlocked multipliers tracking - convert array back to Set
+    const unlocked = new Set(saveData.unlockedMultipliers || []);
 
-    // Calculate spawn rate bonus from platinum upgrade 2
-    const spawnRateUpg2 = saveData.platinumUpgrades?.[2]?.level || 0;
-    const additiveSpawnRateBonus = 1 + (0.1 * spawnRateUpg2);
+    // Calculate all multipliers
+    const multipliers = {
+        spawnRate: 1000 / calculateSpawnInterval(saveData),
+        coinValue: getCoinValueMultiplier(),
+        xp: getXPMultiplier(),
+        mc: getMoltenCoinMultiplier(),
+        pc: getPlatinumCoinValueMultiplier()
+    };
 
-    // Calculate final spawn interval
-    let spawnInterval = baseSpawnInterval * Math.pow(0.896, spawnRateUpg1);
-    if (forgeUpg1Level >= 1) {
-        spawnInterval /= 3;
+    // Track which multipliers have been ever activated
+    Object.entries(multipliers).forEach(([key, value]) => {
+        if (value > 1) unlocked.add(key);
+    });
+
+    // Build effects display
+    let effectsHTML = `<strong>Active Effects:</strong><div class="permanent-upgrades">`;
+    
+    // Always show spawn rate
+    effectsHTML += `<div>• Coin Spawn Rate: ${formatNumber(multipliers.spawnRate, false, true)}/sec</div>`;
+
+    // Conditionally show other multipliers if ever unlocked
+    if (unlocked.has('coinValue')) {
+        effectsHTML += `<div>• Coin Value Multi: ${formatNumber(multipliers.coinValue, false, true)}x</div>`;
     }
-    spawnInterval /= additiveSpawnRateBonus; // Apply platinum upgrade bonus
+    if (unlocked.has('xp')) {
+        effectsHTML += `<div>• XP Multi: ${formatNumber(multipliers.xp, false, true)}x</div>`;
+    }
+    if (unlocked.has('mc')) {
+        effectsHTML += `<div>• MC Value Multi: ${formatNumber(multipliers.mc, false, true)}x</div>`;
+    }
+    if (unlocked.has('pc')) {
+        effectsHTML += `<div>• PC Value Multi: ${formatNumber(multipliers.pc, false, true)}x</div>`;
+    }
 
-    const coinsPerSecond = 1000 / spawnInterval; // Don't use .toFixed() here
+    effectsHTML += `</div>`;
 
-    let effectsHTML = `<strong>Active Effects:</strong>`;
-    // Add permanent upgrades
-    effectsHTML += `
-    <div class="permanent-upgrades">
-        <div>• Coin Spawn Rate: ${formatNumber(coinsPerSecond, false, true)}/sec</div>
-        ${(saveData.specialUpgrades?.[2]?.level || saveData.level > 0) ? 
-            `<div>• Coin Value Multi: ${formatNumber(getCoinValueMultiplier(), false, true)}x</div>` : ''}
-        ${(saveData.specialUpgrades?.[2]?.level || saveData.upgrades?.[3]) ? 
-            `<div>• XP Multi: ${formatNumber(getXPMultiplier(), false, true)}x</div>` : ''}
-        ${(saveData.platinumUpgrades?.[5]?.level || 0) > 0 ? 
-            `<div>• MC Value Multi: ${formatNumber(getMoltenCoinMultiplier(), false, true)}x</div>` : ''}
-        ${saveData.upgrades?.[7]?.level > 0 || saveData.upgrades?.[9]?.level > 0 ? 
-            `<div>• PC Value Multi: ${formatNumber(getPlatinumCoinValueMultiplier(), false, true)}x</div>` : ''}
-    </div>
-`;
-
+    // Add boost displays (unchanged)
     Object.entries(activeBoosts).forEach(([type, expiry]) => {
         const remaining = Math.max(0, Math.ceil((expiry - now) / 1000));
         if (remaining > 0) {
-            // Map boost type to its effect
             const boostEffect = type === 'coins' ? '3x Coins' : '3x XP';
             effectsHTML += `<div class="active-boost">${type.toUpperCase()} Boost — ${boostEffect}: ${remaining}s remaining</div>`;
         }
@@ -3648,6 +4746,39 @@ function updateEffectsDisplay() {
     if (Object.keys(activeBoosts).length > 0) {
         setTimeout(updateEffectsDisplay, 1000);
     }
+}
+
+// Helper function to initialize save data
+function initializeSaveData() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    if (!saveData.unlockedMultipliers) {
+        saveData.unlockedMultipliers = [];
+        // Start with spawn rate always visible
+        saveData.unlockedMultipliers.push('spawnRate');
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    }
+}
+
+// Initialize save data with unlockedMultipliers if it doesn't exist
+function initializeSaveData() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    if (!saveData.unlockedMultipliers) {
+        saveData.unlockedMultipliers = [];
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    }
+}
+
+// Helper function for spawn rate calculation
+function calculateSpawnInterval(saveData) {
+    const base = 3000;
+    let interval = base * Math.pow(0.896, saveData.upgrades?.[1]?.level || 0);
+    
+    if (saveData.forgeUpgrades?.[1]?.level >= 1) {
+        interval /= 3;
+    }
+    
+    const platinumBonus = 1 + (0.1 * (saveData.platinumUpgrades?.[2]?.level || 0));
+    return interval / platinumBonus;
 }
 
 function applyUpgradeEffects() {
@@ -3741,14 +4872,14 @@ function forgeReset() {
     saveData.xpNeeded = 10;
 
     if (!saveData.hasDoneForgeReset) {
-		saveData.hasDoneForgeReset = true;
-		saveData.hasPlatinumUnlocked = true;
-	}
+        saveData.hasDoneForgeReset = true;
+        saveData.hasPlatinumUnlocked = true;
+    }
 
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 
     coinCount = saveData.coins;
-	
+
     updateCoinDisplay();
     updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
     updateMerchantDisplay();
@@ -3805,6 +4936,8 @@ const GRID_CELL_SIZE = 1000;
 let coinGrid = [];
 
 function checkMagnetCollection() {
+	if (JSON.parse(localStorage.getItem('disableMagnet') || 'false')) return;
+	
     coinsCollectedThisFrame = 0;
     if (!isCursorInContainer)
         return;
@@ -3869,7 +5002,6 @@ beachContainer.addEventListener('touchstart', (e) => {
     }
 });
 
-
 function updateCoinGrid() {
     const containerRect = beachContainer.getBoundingClientRect();
     const gridWidth = Math.ceil(containerRect.width / GRID_CELL_SIZE);
@@ -3919,7 +5051,8 @@ function safeCollect(coin) {
     // Skip animation if disabled
     if (disableAnimation.checked) {
         setTimeout(() => {
-            if (coin.parentElement) coin.remove();
+            if (coin.parentElement)
+                coin.remove();
         }, 100);
     }
 
@@ -3958,22 +5091,6 @@ function safeCollect(coin) {
             coin.remove();
         }
     }, 300); // Wait 300ms to allow any animations
-}
-
-function resetGame() {
-    const windSound = document.getElementById('wind-sound');
-    gameActive = false;
-    windSound.pause();
-    windSound.currentTime = 0;
-
-    musicManager.audio.pause();
-
-    coinCount = 0;
-    document.body.classList.remove('game-active');
-    document.querySelector('.game-screen').style.display = 'none';
-    beachContainer.innerHTML = '';
-    coinCounter.textContent = 'Coins: 0';
-    document.querySelector('.menu-container').style.display = 'flex';
 }
 
 document.querySelector('.manage-saves-btn').textContent = 'Manage Save Slots';
