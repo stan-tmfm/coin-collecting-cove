@@ -1336,7 +1336,7 @@ function initializeSaveSlots() {
         <div class="slot-data">
             <div>Coins: ${displayCoins}</div>
             ${hasInfuse ?
-            '<div class="forge-unlocked">Magic Infused</div>' :
+            '<div class="infuse-unlocked">Magic Infused</div>' :
             (hasForge ?
                 '<div class="forge-unlocked">Forge Ignited</div>' :
                 (hasMerchant ?
@@ -3491,7 +3491,7 @@ function updateMerchantDisplay() {
                     const costText = cost === 1 ? "Cost: 1 Special Coin" : `Cost: ${formatNumber(cost)} Special Coins`;
 
                     return `
-                        <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
+                        <div class="special-upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
                             ${meetsRequirement ? `
                                 <h4>${upgrade.name}</h4>
                                 <p>${upgrade.desc}</p>
@@ -3532,9 +3532,9 @@ function updateMerchantDisplay() {
                 Platinum Coins: ${formatNumber(Math.floor(saveData.platinumCoins || 0))}
                 ${mysteriousUpgrades.length > 0 ? `
                 <div class="platinum-navigation">
-                    <button class="automation-arrow" ${platinumPage === 0 ? 'disabled' : ''} 
+                    <button class="platinum-arrow" ${platinumPage === 0 ? 'disabled' : ''} 
                         id="platinum-prev">← Page 1</button>
-                    <button class="automation-arrow" ${platinumPage === 1 ? 'disabled' : ''} 
+                    <button class="platinum-arrow" ${platinumPage === 1 ? 'disabled' : ''} 
                         id="platinum-next">→ Page 2</button>
                 </div>` : ''}
             </div>
@@ -3547,7 +3547,7 @@ function updateMerchantDisplay() {
                     const isMaxed = currentLevel >= upgrade.levelCap;
 
                     return `
-                        <div class="upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
+                        <div class="platinum-upgrade-placeholder ${!meetsRequirement ? 'locked' : ''}">
                             <h4>${meetsRequirement ? upgrade.name : '???'}</h4>
                             <p>${meetsRequirement ? upgrade.desc : upgrade.reqText || '???'}</p>
                             ${meetsRequirement ? `<p>Level ${currentLevel}/${upgrade.levelCap}</p>` : ''}
@@ -3579,15 +3579,29 @@ function updateMerchantDisplay() {
                 Infuse +1 <img src="Images/infused_coin.png" class="infused-coin-icon-2">
             </button>
             <div class="infuse-upgrades-grid">
-                ${Object.values(infuseUpgrades).map(upg => `
-                    <div class="infuse-upgrade-placeholder">
-                        <div class="infuse-upgrade">
-                            <h4>${upg.name} (0/${upg.levelCap})</h4>
-                            <p>${upg.desc}</p>
-                            <button class="buy-infuse-btn" disabled>${formatNumber(upg.baseCost)} IC</button>
+                ${Object.values(infuseUpgrades).map(upg => {
+                    const currentLevel = saveData.infuseUpgrades?.[upg.id]?.level || 0;
+                    const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
+                    const canAfford = (saveData.infusedCoins || 0) >= cost;
+                    const isMaxed = currentLevel >= upg.levelCap;
+
+                    return `
+                        <div class="infuse-upgrade-placeholder">
+                            <div class="infuse-upgrade">
+                                <h4>${upg.name} (${currentLevel}/${upg.levelCap})</h4>
+                                <p>${upg.desc}</p>
+                                ${isMaxed ? 
+                                    '<span class="infuse-upgrade-maxed">MAXED</span>' :
+                                    `<button class="buy-infuse-btn" 
+                                        data-upgrade-id="${upg.id}"
+                                        ${!canAfford ? 'disabled' : ''}>
+                                        ${formatNumber(cost)} IC
+                                    </button>`
+                                }
+                            </div>
                         </div>
-                    </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         </div>
     `;
@@ -3595,21 +3609,23 @@ function updateMerchantDisplay() {
 
 	if (isAutomationUpgrade && currentLevel >= 1) {
     const automationPage = saveData.automationPage || 0;
-    const visibleUpgrades = Object.values(automationUpgrades).slice(automationPage*4, (automationPage+1)*4);
+    const allUpgrades = Object.values(automationUpgrades);
+    const pageCount = Math.ceil(allUpgrades.length / 4);
+    const visibleUpgrades = allUpgrades.slice(automationPage * 4, (automationPage + 1) * 4);
     
     container.innerHTML += `
         <div class="automation-section">
             <div class="automation-navigation">
                 <button class="automation-arrow" ${automationPage === 0 ? 'disabled' : ''} id="automation-prev">←</button>
-                <span>Page ${automationPage + 1}/${Math.ceil(automationUpgrades.length/4)}</span>
-                <button class="automation-arrow" ${automationPage >= Math.ceil(automationUpgrades.length/4)-1 ? 'disabled' : ''} id="automation-next">→</button>
+                <span>Page ${automationPage + 1}/${pageCount}</span>
+                <button class="automation-arrow" ${automationPage >= pageCount - 1 ? 'disabled' : ''} id="automation-next">→</button>
             </div>
             <div class="automation-upgrades-grid">
                 ${visibleUpgrades.map(upg => `
-                    <div class="upgrade-placeholder">
+                    <div class="automation-upgrade-placeholder">
                         <h4>${upg.name}</h4>
                         <p>${upg.desc}</p>
-                        <button class="buy-platinum-btn" disabled>${formatNumber(upg.baseCost)} AC</button>
+                        <button class="buy-automation-btn" disabled>${formatNumber(upg.baseCost)} AC</button>
                     </div>
                 `).join('')}
             </div>
@@ -3695,6 +3711,14 @@ function updateMerchantDisplay() {
 	        updateMerchantDisplay();
 	    });
 	}
+	
+	// Add event listeners for Infuse upgrades
+	document.querySelectorAll('.buy-infuse-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const upgradeId = parseInt(this.dataset.upgradeId);
+        purchaseInfuseUpgrade(upgradeId);
+    });
+});
 	
 	// Platinum navigation
 	document.getElementById('platinum-prev')?.addEventListener('click', () => {
@@ -3879,6 +3903,27 @@ function purchasePlatinumUpgrade(upgradeId) {
     };
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 
+    updateMerchantDisplay();
+}
+
+function purchaseInfuseUpgrade(upgradeId) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const upgrade = infuseUpgrades[upgradeId];
+    if (!upgrade) return;
+
+    const currentLevel = saveData.infuseUpgrades?.[upgradeId]?.level || 0;
+    if (currentLevel >= upgrade.levelCap) return;
+
+    const cost = Math.round(upgrade.scaling(upgrade.baseCost, currentLevel));
+    if ((saveData.infusedCoins || 0) < cost) return;
+
+    saveData.infusedCoins -= cost;
+    saveData.infuseUpgrades = saveData.infuseUpgrades || {};
+    saveData.infuseUpgrades[upgradeId] = {
+        level: currentLevel + 1
+    };
+    
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
     updateMerchantDisplay();
 }
 
