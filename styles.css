@@ -1964,3 +1964,187 @@ body.game-active .game-background {
 	transition: transform 0.05s linear;
 	display: none;
 }
+
+.infuse-section {
+    margin-top: -8px;
+    padding: 20px 15px 15px;
+    background: rgba(0, 255, 255, 0.1);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    position: relative;
+}
+
+.infuse-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(0, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.infused-coin-icon {
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.infused-coin-balance {
+    color: #00ffff;
+    font-size: 1em;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.automation-section {
+    margin-top: -8px;
+    padding: 20px 15px 15px;
+    background: rgba(0, 255, 0, 0.1);
+    border-radius: 0 0 8px 8px;
+    border-top: none;
+    position: relative;
+}
+
+.automation-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 15px;
+    right: 15px;
+    height: 2px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(0, 255, 0, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.automation-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.automation-arrow {
+    padding: 5px 10px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.automation-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.platinum-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+/* Infuse Section Styles */
+.infuse-header {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #00ffff;
+}
+
+.infuse-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 3em;
+    background: linear-gradient(to bottom, #00aaff, #0066cc);
+    border: 2px solid #00ffff;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    padding-top: 20px;
+    padding-left: 25px;
+}
+
+.infuse-btn:hover {
+    background: linear-gradient(to bottom, #00bbff, #0077dd);
+    transform: scale(1.02);
+}
+
+.infuse-btn:active {
+    transform: scale(0.98);
+}
+
+.infused-coin-icon-2 {
+    width: 75px;
+    height: 75px;
+    filter: drop-shadow(0 0 2px rgba(0, 200, 255, 0.5));
+    vertical-align: middle;
+    margin-bottom: 12px;
+    margin-left: -12px;
+}
+
+.infuse-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.infuse-upgrade-placeholder {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 200, 255, 0.3);
+    padding: 12px;
+    min-height: 120px;
+    padding-bottom: 40px;
+    border-radius: 6px;
+    text-align: center;
+    color: #aaddff;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-direction: column;
+    position: relative;
+}
+
+.buy-infuse-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: linear-gradient(to bottom, #00aaff, #0066cc);
+    border: 1px solid #00ffff;
+    color: white;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    white-space: nowrap;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.buy-infuse-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Animation for infused coins */
+.infuse-btn:hover .infused-coin-icon-2 {
+    animation: infused-glow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes infused-glow {
+    0% { filter: drop-shadow(0 0 2px rgba(0, 200, 255, 0.5)); }
+    100% { filter: drop-shadow(0 0 4px rgba(0, 200, 255, 0.8)); }
+}
