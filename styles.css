@@ -2338,13 +2338,6 @@ body.game-active .game-background {
     display: none;
 }
 
-.automation-upgrade-placeholder:hover {
-    background: rgba(255, 50, 50, 0.15);
-    border-color: rgba(255, 100, 100, 0.5);
-    box-shadow: 0 0 8px rgba(255, 50, 50, 0.2);
-}
-
-/* Automation Buy Button */
 .buy-automation-btn {
     background: linear-gradient(to bottom, #cc2222, #991111);
     border: none;
@@ -2353,16 +2346,22 @@ body.game-active .game-background {
     border-radius: 4px;
     cursor: pointer;
     margin-top: 10px;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease-out;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px; 
+    gap: 5px;
+    position: relative; /* For pseudo-elements */
+    outline: none; /* Remove focus outline */
+    -webkit-tap-highlight-color: transparent; /* Remove mobile tap flash */
 }
 
 .buy-automation-btn:hover {
-    border: 1px solid #ffffff;
-    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+    border-color: #ff8888;
+    box-shadow: 
+        0 0 8px rgba(255, 80, 80, 0.4),
+        0 0 12px rgba(255, 120, 120, 0.2);
+    background: linear-gradient(to bottom, #ff5555, #cc3333);
 }
 
 .buy-automation-btn:disabled {
