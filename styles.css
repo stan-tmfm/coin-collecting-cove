@@ -1408,7 +1408,7 @@ body.game-active .game-background {
     margin-top: 10px;
 }
 
-.upgrade-placeholder {
+.special-upgrade-placeholder {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(0, 188, 212, 0.2);
     padding: 15px;
@@ -1471,13 +1471,13 @@ body.game-active .game-background {
         transparent 70%);
 }
 
-.upgrade-placeholder.locked {
+.special-upgrade-placeholder.locked {
     opacity: 0.6;
     background: rgba(0, 0, 0, 0.3);
     cursor: not-allowed;
 }
 
-.upgrade-placeholder.locked button {
+.special-upgade-placeholder.locked button {
     display: none;
 }
 
@@ -1735,30 +1735,6 @@ body.game-active .game-background {
 	margin-left: -12px
 }
 
-
-.forge-btn:hover .molten-coin-icon-2 {
-    animation: molten-glow 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes molten-glow {
-    0% {
-        filter: drop-shadow(0 0 2px rgba(255, 69, 0, 0.5));
-    }
-    100% {
-        filter: drop-shadow(0 0 4px rgba(255, 69, 0, 0.8));
-    }
-}
-
-.molten-glow {
-    animation: molten-pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes molten-pulse {
-    0% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
-    50% { text-shadow: 0 0 20px rgba(255, 69, 0, 0.8); }
-    100% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.5); }
-}
-
 .forge-upgrade-item {
     background: rgba(255, 69, 0, 0.1);
     border: 1px solid rgba(255, 69, 0, 0.3);
@@ -1789,6 +1765,11 @@ body.game-active .game-background {
     transition: all 0.2s ease;
 }
 
+.buy-forge-btn:hover {
+    border: 1px solid #ffa500;
+    box-shadow: 0 0 5px rgba(209, 96, 4, 0.9);
+}
+
 .buy-forge-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
@@ -1812,6 +1793,44 @@ body.game-active .game-background {
     white-space: nowrap;
 }
 
+.molten-coin-icon-2 {
+    animation: molten-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes molten-glow {
+    0% { 
+        filter: drop-shadow(0 0 5px rgba(255, 100, 0, 0.7)) 
+               drop-shadow(0 0 10px rgba(255, 140, 0, 0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 10px rgba(255, 69, 0, 0.9))
+               drop-shadow(0 0 15px rgba(255, 165, 0, 0.7));
+    }
+    100% { 
+        filter: drop-shadow(0 0 5px rgba(255, 100, 0, 0.7))
+               drop-shadow(0 0 20px rgba(255, 200, 0, 0.4));
+    }
+}
+
+.forge-btn:hover {
+    animation: forge-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes forge-glow {
+    0% { 
+        box-shadow: 0 0 5px rgba(255, 100, 0, 0.7),
+                    0 0 10px rgba(255, 140, 0, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(255, 69, 0, 0.9),
+                    0 0 15px rgba(255, 165, 0, 0.7);
+    }
+    100% { 
+        box-shadow: 0 0 5px rgba(255, 100, 0, 0.7),
+                    0 0 20px rgba(255, 200, 0, 0.4);
+    }
+}
+
 .molten-mastery-display {
     position: absolute;
     bottom: 8px;
@@ -1819,11 +1838,11 @@ body.game-active .game-background {
 	padding: 4px 8px;
     display: flex;
     align-items: center;
-    justify-content: space-between; /* Spreads items to opposite sides */
+    justify-content: space-between;
 }
 
 .bonus-value {
-    color: #ff8c00; /* Adjust color for visibility */
+    color: #ff8c00;
     font-weight: bold;
     font-size: 0.9em;
 }
@@ -1933,6 +1952,11 @@ body.game-active .game-background {
     gap: 5px; 
 }
 
+.buy-platinum-btn:hover {
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
 .buy-platinum-btn:disabled {
     background: #717275;
     cursor: not-allowed;
@@ -1949,6 +1973,41 @@ body.game-active .game-background {
     border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
+}
+
+.platinum-upgrade-placeholder {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    color: #e1f5fe;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.platinum-upgrade-placeholder h4 {
+    color: #e1f5fe;
+    margin-bottom: 8px;
+}
+
+.platinum-upgrade-placeholder p {
+    color: #e1f5fe;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.platinum-upgrade-placeholder.locked {
+    opacity: 0.6;
+    background: rgba(0, 0, 0, 0.3);
+    cursor: not-allowed;
+}
+
+.platinum-upgade-placeholder.locked button {
+    display: none;
 }
 
 .magnet-indicator {
@@ -2003,10 +2062,202 @@ body.game-active .game-background {
     font-weight: bold;
 }
 
+.platinum-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.infuse-header {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #db2dfa; /* Matching purple-pink */
+    text-shadow: 0 0 5px rgba(219, 45, 250, 0.5);
+}
+
+.infuse-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 3em;
+    background: linear-gradient(to bottom, #c43cff, #8a2be2);
+    border: 2px solid #db2dfa;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    padding-top: 20px;
+    padding-left: 25px;
+    box-shadow: 0 0 10px rgba(219, 45, 250, 0.3);
+}
+
+.infuse-btn:hover {
+    background: linear-gradient(to bottom, #d15cff, #9b30e9);
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(219, 45, 250, 0.5);
+}
+
+.infuse-btn:active {
+    transform: scale(0.98);
+}
+
+.infused-coin-icon-2 {
+    width: 75px;
+    height: 75px;
+    filter: drop-shadow(0 0 5px rgba(219, 45, 250, 0.7));
+    vertical-align: middle;
+    margin-bottom: 12px;
+    margin-left: -12px;
+    transition: all 0.3s ease;
+}
+
+.infuse-upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.infuse-upgrade-placeholder {
+    background: rgba(34, 0, 51, 0.3);
+    border: 1px solid rgba(219, 45, 250, 0.4);
+    padding: 12px;
+    min-height: 120px;
+    padding-bottom: 40px;
+    border-radius: 6px;
+    text-align: center;
+    color: #e9a8ff;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-direction: column;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.buy-infuse-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: linear-gradient(to bottom, #c43cff, #8a2be2);
+    color: white;
+    font-size: 0.9em;
+    padding: 6px 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none !important;
+    border-radius: 4px;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.buy-infuse-btn:hover {
+    border: 1px solid #db2dfa;
+    box-shadow: 0 0 5px rgba(219, 45, 250, 0.7);
+}
+
+.buy-infuse-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: linear-gradient(to bottom, #5a2d7a, #3a1a56);
+}
+
+.infuse-upgrade-maxed {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    color: #db2dfa;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
+}
+
+.infused-coin-icon-2 {
+    animation: infused-coin-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes infused-coin-glow {
+    0% { 
+        filter: 
+            drop-shadow(0 0 5px rgba(200, 80, 255, 0.7)) 
+            drop-shadow(0 0 10px rgba(220, 100, 255, 0.5));
+    }
+    50% {
+        filter: 
+            drop-shadow(0 0 10px rgba(180, 70, 255, 0.9))
+            drop-shadow(0 0 15px rgba(230, 110, 255, 0.7));
+    }
+    100% { 
+        filter: 
+            drop-shadow(0 0 5px rgba(200, 80, 255, 0.7))
+            drop-shadow(0 0 20px rgba(240, 130, 255, 0.4));
+    }
+}
+
+.infuse-btn:hover {
+    animation: infuse-btn-glow 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes infuse-btn-glow {
+    0% { 
+        box-shadow: 0 0 5px rgba(180, 70, 255, 0.7),
+                    0 0 10px rgba(200, 80, 255, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 10px rgba(160, 50, 255, 0.9),
+                    0 0 15px rgba(220, 100, 255, 0.7);
+    }
+    100% { 
+        box-shadow: 0 0 5px rgba(180, 70, 255, 0.7),
+                    0 0 20px rgba(240, 130, 255, 0.4);
+    }
+}
+
+.infuse-section {
+    background: rgba(138, 43, 226, 0.08);
+    border-top: 1px solid rgba(219, 45, 250, 0.2);
+}
+
+.infuse-section::before {
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(219, 45, 250, 0.3) 50%,
+        transparent 100%
+    );
+}
+
+.infuse-unlocked {
+    color: #db2dfa;
+    font-weight: bold;
+    margin: 10px 0;
+}
+
+.platinum-arrow {
+    padding: 5px 10px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: white; /* Red text */
+    border: 1px solid rgba(0, 0, 0, 0.7);
+}
+
+.platinum-arrow:disabled {
+    opacity: 0.5;
+    background: rgba(0, 0, 0, 0.05);
+}
+
 .automation-section {
     margin-top: -8px;
     padding: 20px 15px 15px;
-    background: rgba(0, 255, 0, 0.1);
+    background: rgba(255, 50, 50, 0.1);
     border-radius: 0 0 8px 8px;
     border-top: none;
     position: relative;
@@ -2022,7 +2273,7 @@ body.game-active .game-background {
     background: linear-gradient(
         to right,
         transparent 0%,
-        rgba(0, 255, 0, 0.3) 50%,
+        rgba(255, 50, 50, 0.3) 50%,
         transparent 100%
     );
 }
@@ -2039,6 +2290,8 @@ body.game-active .game-background {
     cursor: pointer;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
+    color: #ff5555;
+    border: 1px solid rgba(255, 50, 50, 0.3);
 }
 
 .automation-upgrades-grid {
@@ -2048,109 +2301,84 @@ body.game-active .game-background {
     margin-top: 10px;
 }
 
-.platinum-navigation {
+/* Automation Upgrade Items - Red Theme */
+.automation-upgrade-placeholder {
+    background: rgba(255, 50, 50, 0.1);
+    border: 1px solid rgba(255, 80, 80, 0.3);
+    padding: 15px;
+    border-radius: 6px;
+    text-align: center;
+    color: #ffcccc;
+    min-height: 80px;
     display: flex;
+    align-items: center;
     justify-content: center;
-    gap: 10px;
-    margin: 10px 0;
-}
-
-/* Infuse Section Styles */
-.infuse-header {
-    text-align: center;
-    margin-bottom: 15px;
-    color: #00ffff;
-}
-
-.infuse-btn {
-    width: 100%;
-    padding: 12px;
-    font-size: 3em;
-    background: linear-gradient(to bottom, #00aaff, #0066cc);
-    border: 2px solid #00ffff;
-    border-radius: 6px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: center;
-    padding-top: 20px;
-    padding-left: 25px;
-}
-
-.infuse-btn:hover {
-    background: linear-gradient(to bottom, #00bbff, #0077dd);
-    transform: scale(1.02);
-}
-
-.infuse-btn:active {
-    transform: scale(0.98);
-}
-
-.infused-coin-icon-2 {
-    width: 75px;
-    height: 75px;
-    filter: drop-shadow(0 0 2px rgba(0, 200, 255, 0.5));
-    vertical-align: middle;
-    margin-bottom: 12px;
-    margin-left: -12px;
-}
-
-.infuse-upgrades-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin-top: 10px;
-}
-
-.infuse-upgrade-placeholder {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(0, 200, 255, 0.3);
-    padding: 12px;
-    min-height: 120px;
-    padding-bottom: 40px;
-    border-radius: 6px;
-    text-align: center;
-    color: #aaddff;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
     flex-direction: column;
-    position: relative;
 }
 
-.buy-infuse-btn {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    background: linear-gradient(to bottom, #00aaff, #0066cc);
-    border: 1px solid #00ffff;
-    color: white;
+.automation-upgrade-placeholder h4 {
+    color: #ff9999;
+    margin-bottom: 8px;
+    text-shadow: 0 0 2px rgba(255, 50, 50, 0.3);
+}
+
+.automation-upgrade-placeholder p {
+    color: #ffbbbb;
     font-size: 0.9em;
-    padding: 6px 12px;
-    white-space: nowrap;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    margin-bottom: 15px;
 }
 
-.buy-infuse-btn:disabled {
+.automation-upgrade-placeholder.locked {
     opacity: 0.6;
+    background: rgba(0, 0, 0, 0.3);
     cursor: not-allowed;
 }
 
-/* Animation for infused coins */
-.infuse-btn:hover .infused-coin-icon-2 {
-    animation: infused-glow 0.5s ease-in-out infinite alternate;
+.automation-upgade-placeholder.locked button {
+    display: none;
 }
 
-@keyframes infused-glow {
-    0% { filter: drop-shadow(0 0 2px rgba(0, 200, 255, 0.5)); }
-    100% { filter: drop-shadow(0 0 4px rgba(0, 200, 255, 0.8)); }
+.automation-upgrade-placeholder:hover {
+    background: rgba(255, 50, 50, 0.15);
+    border-color: rgba(255, 100, 100, 0.5);
+    box-shadow: 0 0 8px rgba(255, 50, 50, 0.2);
 }
 
-.infuse-unlocked {
-    color: #db2dfa;
+/* Automation Buy Button */
+.buy-automation-btn {
+    background: linear-gradient(to bottom, #cc2222, #991111);
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px; 
+}
+
+.buy-automation-btn:hover {
+    border: 1px solid #ffffff;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.7);
+}
+
+.buy-automation-btn:disabled {
+    background: linear-gradient(to bottom, #3a1a1a, #2a0a0a);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.automation-upgrade-maxed {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    color: #ff5555;
     font-weight: bold;
-    margin: 10px 0;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    white-space: nowrap;
 }
