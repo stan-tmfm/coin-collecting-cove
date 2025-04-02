@@ -3946,26 +3946,6 @@ function updateEffectsDisplay() {
     }
 }
 
-// Helper function to initialize save data
-function initializeSaveData() {
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    if (!saveData.unlockedMultipliers) {
-        saveData.unlockedMultipliers = [];
-        // Start with spawn rate always visible
-        saveData.unlockedMultipliers.push('spawnRate');
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-    }
-}
-
-// Initialize save data with unlockedMultipliers if it doesn't exist
-function initializeSaveData() {
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    if (!saveData.unlockedMultipliers) {
-        saveData.unlockedMultipliers = [];
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-    }
-}
-
 // Helper function for spawn rate calculation
 function calculateSpawnInterval(saveData) {
     const base = 3000;
