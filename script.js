@@ -1146,7 +1146,7 @@ const infuseUpgrades = {
         id: 5,
         name: "Chrono Acceleration",
         desc: "Improves Time Warp efficiency by +2% per level",
-        baseCost: 1e5,
+        baseCost: 100,
         levelCap: 50,
         scaling: (baseCost, level) => baseCost * Math.pow(2, level)
     },
@@ -3788,19 +3788,24 @@ function updateMerchantDisplay() {
     });
 	
 	// manual automation click for those who want it
-	document.querySelector('.automation-core-icon')?.addEventListener('click', function() {
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+	const coreIcon = document.querySelector('.automation-core-icon');
+if (coreIcon) {
+    // Mouse click
+    coreIcon.addEventListener('click', handleCoreClick);
     
-        saveData.automationCores = (saveData.automationCores || 0) + 1;
-        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-        
-        this.classList.add('core-click-animation');
-        setTimeout(() => this.classList.remove('core-click-animation'), 300);
-        
-        // Update display if merchant UI is open
-        if (document.querySelector('.merchant-modal')?.style.display === 'flex') {
-            updateMerchantDisplay();
-        }
+    // Touch events (mobile)
+    coreIcon.addEventListener('touchstart', handleCoreClick, { passive: true });
+    coreIcon.addEventListener('touchend', (e) => e.preventDefault());
+}
+
+coreIcon?.addEventListener('touchend', () => {
+    coreIcon.classList.remove('core-tap-active');
+});
+coreIcon?.addEventListener('mouseup', () => {
+    coreIcon.classList.remove('core-tap-active');
+});
+coreIcon?.addEventListener('mouseleave', () => {
+    coreIcon.classList.remove('core-tap-active');
 });
 
     // Platinum navigation
@@ -4072,6 +4077,23 @@ function generateAutomationCores() {
         }
     }
 }
+
+function handleCoreClick() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    
+    if (saveData.infuseUpgrades?.[2]?.level >= 1) {
+        // Visual feedback - immediate response
+        this.classList.add('core-tap-active');
+       
+            saveData.automationCores = (saveData.automationCores || 0) + 1;
+            localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+            
+            // Update UI if merchant open
+            if (document.querySelector('.merchant-modal')?.style.display === 'flex') {
+                updateMerchantDisplay();
+            }
+        }
+    }
 
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
