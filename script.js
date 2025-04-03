@@ -3636,7 +3636,7 @@ function updateMerchantDisplay() {
     `;
         }
 
-        if (isAutomationUpgrade && currentLevel >= 1) {
+       if (isAutomationUpgrade && currentLevel >= 1) {
     const automationPage = saveData.automationPage || 0;
     const allUpgrades = Object.values(automationUpgrades);
     const pageCount = Math.ceil(allUpgrades.length / 4);
@@ -3645,26 +3645,33 @@ function updateMerchantDisplay() {
     const coresPerSecond = awakeningLevel > 0 ? Math.pow(2, awakeningLevel - 1) : 0;
 
     container.innerHTML += `
+    <div class="automation-section">
         <div class="automation-header">
-    <div class="core-icon-left">
-        <img src="Images/automation_core.png" alt="Automation Core" class="automation-core-icon">
-    </div>
-    
-    <div class="automation-features">
-        <div class="feature-item">- Purchase "Automaton Awakening" to start generating cores</div>
-        <div class="feature-item">- These cores can be spent on automating various things</div>
-        <div class="feature-item">- Automation Cores and other generated currencies will generate OFFLINE while you're away!</div>
-		<div class="feature-item">- You can also click the icon to the left to earn cores I guess</div>
-    </div>
-    
-    <div class="core-balance">
-        <img src="Images/automation_core.png" alt="Automation Core" class="automation-core-icon-small">
-        <span class="core-count">${formatNumber(Math.floor(saveData.automationCores || 0))}</span>
-        <span class="core-rate">(${formatNumber(coresPerSecond)}/sec)</span>
-    </div>
-</div>
-            <div class="automation-navigation">
+            <div class="core-icon-left">
+                <img src="Images/automation_core.png" alt="Automation Core" class="automation-core-icon">
             </div>
+            
+            <div class="automation-features">
+                <div class="feature-item">- Purchase "Automaton Awakening" to generate cores</div>
+                <div class="feature-item">- Cores can be spent on automating various things</div>
+                <div class="feature-item">- Automation Cores and other generated currencies will generate OFFLINE while you're away!</div>
+                <div class="feature-item">- You can also click the icon to the left to earn cores</div>
+            </div>
+            
+            <div class="core-balance">
+                <img src="Images/automation_core.png" alt="Automation Core" class="automation-core-icon-small">
+                <span class="core-count">${formatNumber(Math.floor(saveData.automationCores || 0))}</span>
+                <span class="core-rate">(${formatNumber(coresPerSecond)}/sec)</span>
+            </div>
+        </div>
+        
+        <div class="automation-navigation">
+            <button class="automation-arrow" ${automationPage === 0 ? 'disabled' : ''} id="automation-prev">←</button>
+            <span class="automation-navigation-text">Page ${automationPage + 1}/${pageCount}</span>
+            <button class="automation-arrow" ${automationPage >= pageCount - 1 ? 'disabled' : ''} id="automation-next">→</button>
+        </div>
+        
+        <div class="automation-upgrades-container">
             <div class="automation-upgrades-grid">
                 ${visibleUpgrades.map(upg => {
                     const currentLevel = saveData.automationUpgrades?.[upg.id]?.level || 0;
@@ -3689,8 +3696,9 @@ function updateMerchantDisplay() {
                 }).join('')}
             </div>
         </div>
+    </div>
     `;
-    }
+}
 });
 
     // Add event listeners for special upgrades
