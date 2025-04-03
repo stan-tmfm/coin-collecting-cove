@@ -1367,7 +1367,6 @@ body.game-active .game-background {
 }
 
 .special-coins-section {
-    margin-top: -8px;
     padding: 20px 15px 15px;
     background: rgba(0, 188, 212, 0.1);
     border-radius: 0 0 8px 8px;
@@ -1391,6 +1390,7 @@ body.game-active .game-background {
 }
 
 .special-coins-header {
+	color: #90caf9;
     text-align: center;
 }
 
@@ -1457,7 +1457,7 @@ body.game-active .game-background {
 .special-coin-balance {
     color: #00bcd4;
     font-size: 1em;
-    margin-top: 5px;
+    margin-top: 10px;
     font-weight: bold;
 }
 
@@ -1631,6 +1631,7 @@ body.game-active .game-background {
 .forge-header {
     text-align: center;
     margin-bottom: 15px;
+	color: #ff8945;
 }
 
 .molten-coin-icon {
@@ -1642,9 +1643,9 @@ body.game-active .game-background {
 }
 
 .molten-coin-balance {
-	color: orange;
+	color: #ff6a13;
     font-size: 1em;
-    margin-top: 5px;
+    margin-top: 10px;
     font-weight: bold;
 }
 
@@ -1658,7 +1659,7 @@ body.game-active .game-background {
 .forge-upgrade p {
     margin: 8px 0;
     font-size: 0.95em;
-    color: #ffb38a;
+    color: #ff8945;
     text-align: left;
     flex-grow: 1;
 }
@@ -1686,7 +1687,7 @@ body.game-active .game-background {
 	min-height: 120px;
 	padding-bottom: 40px;
     border-radius: 6px;
-    text-align: center;
+    text-align: left;
     color: #ffa07a;
     display: flex;
     align-items: flex-start;
@@ -1732,7 +1733,7 @@ body.game-active .game-background {
     filter: drop-shadow(0 0 2px rgba(255, 69, 0, 0.5));
     vertical-align: middle;
     margin-bottom: 12px;
-	margin-left: -12px
+	margin-left: -8px
 }
 
 .forge-upgrade-item {
@@ -1791,6 +1792,10 @@ body.game-active .game-background {
     border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
+}
+
+.forge-disclaimer {
+	color: #ff8945;
 }
 
 .molten-coin-icon-2 {
@@ -1964,15 +1969,12 @@ body.game-active .game-background {
 }
 
 .platinum-upgrade-maxed {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    color: #a9b4c9;
+    color: #e1f5fe;
     font-weight: bold;
-    padding: 4px 8px;
-    border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
+    padding: 4px 8px;
+    background: none;
 }
 
 .platinum-upgrade-placeholder {
@@ -2056,9 +2058,9 @@ body.game-active .game-background {
 }
 
 .infused-coin-balance {
-    color: #00ffff;
+    color: #db2dfa;
     font-size: 1em;
-    margin-top: 5px;
+    margin-top: 10px;
     font-weight: bold;
 }
 
@@ -2072,7 +2074,7 @@ body.game-active .game-background {
 .infuse-header {
     text-align: center;
     margin-bottom: 15px;
-    color: #db2dfa; /* Matching purple-pink */
+    color: #db2dfa;
     text-shadow: 0 0 5px rgba(219, 45, 250, 0.5);
 }
 
@@ -2083,7 +2085,7 @@ body.game-active .game-background {
     background: linear-gradient(to bottom, #c43cff, #8a2be2);
     border: 2px solid #db2dfa;
     border-radius: 6px;
-    color: white;
+    color: #e17efc;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -2127,7 +2129,7 @@ body.game-active .game-background {
     min-height: 120px;
     padding-bottom: 40px;
     border-radius: 6px;
-    text-align: center;
+    text-align: left;
     color: #e9a8ff;
     display: flex;
     align-items: flex-start;
@@ -2136,6 +2138,11 @@ body.game-active .game-background {
     position: relative;
     transition: all 0.3s ease;
 }
+
+.infuse-upgrade-placeholder *:first-child {
+    margin-top: 0;
+}
+
 
 .buy-infuse-btn {
     position: absolute;
@@ -2380,4 +2387,148 @@ body.game-active .game-background {
     border-radius: 4px;
     font-size: 0.9em;
     white-space: nowrap;
+}
+
+.automation-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 15px;
+    margin: -8px 0 15px 0;
+    padding: 20px 15px 15px 15px;
+    background: rgba(255, 50, 50, 0.1);
+    border-radius: 0 0 10px 10px;
+    border: none;
+    border-top: 1px solid rgba(255, 50, 50, 0.3);
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Glowing top border effect */
+.automation-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 50, 50, 0.1) 50%,
+        transparent 100%
+    );
+}
+
+.core-icon-left {
+    grid-row: span 2;
+    align-self: center;
+    margin-left: 5px;
+}
+
+.automation-core-icon {
+    width: 120px;
+    height: 120px;
+    filter: 
+        drop-shadow(0 0 5px rgba(230, 57, 57, 0.7))
+        drop-shadow(0 0 10px rgba(230, 57, 57, 0.4));
+    transition: all 0.3s ease;
+}
+
+.automation-features {
+    align-self: center;
+    font-size: 0.95em;
+    color: #00ddff; /* Brighter teal for better contrast */
+    text-shadow: 0 0 5px rgba(0, 200, 255, 0.3);
+    line-height: 1.5;
+	margin-bottom: -15px;
+}
+
+.feature-item {
+    margin-bottom: 6px;
+    text-align: left;
+    padding-left: 5px;
+    position: relative;
+	color: #ff9999;
+}
+
+.core-balance {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0, 200, 255, 0.2);
+    margin-top: 5px;
+}
+
+.automation-core-icon-small {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 0 3px rgba(230, 57, 57, 0.7));
+}
+
+.core-count {
+    color: #ff5555; /* Brighter red */
+    font-weight: bold;
+    font-size: 1.1em;
+    text-shadow: 0 0 5px rgba(230, 57, 57, 0.3);
+}
+
+.core-rate {
+    color: #ffaaaa;
+    font-size: 0.85em;
+    opacity: 0.9;
+    text-shadow: 0 0 3px rgba(255, 170, 170, 0.3);
+}
+
+/* Base transition to smooth out the power-up and power-down */
+.automation-core-icon {
+    transition: transform 0.2s ease-out, filter 0.3s ease-out;
+}
+
+/* 🌀 CRAZY Hover Effect 🌀 */
+.automation-core-icon:hover {
+    transform: scale(1.5) rotate(15deg) translateX(3px) translateY(-3px);
+    filter: 
+        drop-shadow(0 0 25px rgba(255, 50, 50, 1)) 
+        drop-shadow(0 0 50px rgba(180, 0, 0, 1)) 
+        drop-shadow(0 0 80px rgba(120, 0, 0, 0.8));
+    animation: core-mania 0.1s infinite alternate, 
+               core-electricity 0.08s infinite alternate, 
+               core-color-cycle 0.5s infinite linear;
+}
+
+/* 💥 Rapid erratic shaking (destabilization) */
+@keyframes core-mania {
+    0% { transform: scale(1.52) rotate(14deg) translateX(-3px) translateY(2px); }
+    100% { transform: scale(1.48) rotate(16deg) translateX(3px) translateY(-2px); }
+}
+
+/* ⚡ Electric bursts */
+@keyframes core-electricity {
+    0% { filter: drop-shadow(0 0 30px rgba(255, 50, 50, 1)); }
+    100% { filter: drop-shadow(0 0 80px rgba(180, 0, 0, 1)); }
+}
+
+/* 🔴⚫ Wild color shifting between Red & Gray */
+@keyframes core-color-cycle {
+    0% { filter: drop-shadow(0 0 30px rgba(255, 50, 50, 1)); }
+    33% { filter: drop-shadow(0 0 40px rgba(120, 120, 120, 1)); }
+    66% { filter: drop-shadow(0 0 50px rgba(180, 0, 0, 1)); }
+    100% { filter: drop-shadow(0 0 30px rgba(255, 50, 50, 1)); }
+}
+
+
+
+@keyframes core-collapse {
+    0% { transform: scale(1.5) rotate(15deg); filter: drop-shadow(0 0 50px rgba(255, 50, 50, 1)); }
+    40% { transform: scale(1.2) rotate(0deg); filter: drop-shadow(0 0 20px rgba(120, 120, 120, 1)); }
+    70% { transform: scale(0.8) rotate(-10deg); filter: drop-shadow(0 0 5px rgba(50, 50, 50, 0.5)); }
+    100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 0px rgba(0, 0, 0, 0)); }
+}
+
+.automation-core-icon {
+    cursor: pointer;
 }
