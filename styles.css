@@ -2531,4 +2531,12 @@ body.game-active .game-background {
 
 .automation-core-icon {
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+@media (touch-enabled) {
+    .automation-core-icon {
+        touch-action: manipulation;
+    }
 }
