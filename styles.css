@@ -2097,7 +2097,6 @@ body.game-active .game-background {
 
 .infuse-btn:hover {
     background: linear-gradient(to bottom, #d15cff, #9b30e9);
-    transform: scale(1.02);
     box-shadow: 0 0 15px rgba(219, 45, 250, 0.5);
 }
 
@@ -2295,10 +2294,18 @@ body.game-active .game-background {
 .automation-arrow {
     padding: 5px 10px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 127, 127, 0.3);
     border-radius: 4px;
     color: #ff5555;
-    border: 1px solid rgba(255, 50, 50, 0.3);
+    border: 1px solid rgba(255, 50, 50, 0.5);
+}
+
+.automation-arrow:disabled {
+	background: rgba(255, 127, 127, 0.1);
+}
+
+.automation-navigation-text {
+	color: #ff9999;
 }
 
 .automation-upgrades-grid {
@@ -2358,17 +2365,14 @@ body.game-active .game-background {
     align-items: center;
     justify-content: center;
     gap: 5px;
-    position: relative; /* For pseudo-elements */
-    outline: none; /* Remove focus outline */
+    position: relative;
+    outline: none;
     -webkit-tap-highlight-color: transparent; /* Remove mobile tap flash */
 }
 
 .buy-automation-btn:hover {
-    border-color: #ff8888;
-    box-shadow: 
-        0 0 8px rgba(255, 80, 80, 0.4),
-        0 0 12px rgba(255, 120, 120, 0.2);
-    background: linear-gradient(to bottom, #ff5555, #cc3333);
+	border: 1px solid #ff8888;
+    box-shadow: 0 0 5px rgba(255, 80, 80, 0.4);
 }
 
 .buy-automation-btn:disabled {
@@ -2393,16 +2397,15 @@ body.game-active .game-background {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 15px;
-    margin: -8px 0 15px 0;
+    margin: 0 0 15px 0;
     padding: 20px 15px 15px 15px;
     background: rgba(255, 50, 50, 0.1);
-    border-radius: 0 0 10px 10px;
-    border: none;
-    border-top: 1px solid rgba(255, 50, 50, 0.3);
     position: relative;
     width: 100%;
     box-sizing: border-box;
+	border-radius: 4px;
     overflow: hidden;
+	border: 1px solid rgba(255, 80, 80, 0.3);
 }
 
 /* Glowing top border effect */
@@ -2428,8 +2431,8 @@ body.game-active .game-background {
 }
 
 .automation-core-icon {
-    width: 120px;
-    height: 120px;
+    width: 125px;
+    height: 125px;
     filter: 
         drop-shadow(0 0 5px rgba(230, 57, 57, 0.7))
         drop-shadow(0 0 10px rgba(230, 57, 57, 0.4));
@@ -2442,7 +2445,7 @@ body.game-active .game-background {
     color: #00ddff; /* Brighter teal for better contrast */
     text-shadow: 0 0 5px rgba(0, 200, 255, 0.3);
     line-height: 1.5;
-	margin-bottom: -15px;
+	margin-bottom: -10px;
 }
 
 .feature-item {
