@@ -1096,7 +1096,7 @@ const platinumUpgrades = {
     },
 };
 
-const infuseUpgrades = {
+const infusedUpgrades = {
     1: {
         id: 1,
         name: "Arcane Knowledge",
@@ -1650,7 +1650,7 @@ function loadGame(saveData) {
     cleanUpLogs();
 	
 	// Add Automation Core generation
-	if (saveData.infuseUpgrades?.[2]?.level >= 1) {
+	if (saveData.infusedUpgrades?.[2]?.level >= 1) {
 	    if (automationCoreInterval)
 	        clearInterval(automationCoreInterval);
 	    automationCoreInterval = setInterval(generateAutomationCores, 1000);
@@ -1692,7 +1692,7 @@ function startGame() {
 		clearInterval(automationCoreInterval);
 		automationCoreInterval = null;
 	}
-	if (saveData.infuseUpgrades?.[2]?.level >= 1) {
+	if (saveData.infusedUpgrades?.[2]?.level >= 1) {
 	    automationCoreInterval = setInterval(generateAutomationCores, 1000);
 	}
 
@@ -2723,7 +2723,7 @@ function getXPMultiplier() {
     const wisdomBoost = saveData.specialUpgrades?.[1]?.level || 0;
     const educatedCoins = saveData.upgrades?.[3]?.level || 0;
     const emberWisdom = saveData.forgeUpgrades?.[4]?.level || 0;
-    const arcaneKnowledge = saveData.infuseUpgrades?.[1]?.level || 0;
+    const arcaneKnowledge = saveData.infusedUpgrades?.[1]?.level || 0;
     const wisdomFlow = saveData.upgrades?.[10]?.level || 0;
     const arcaneMastery = saveData.upgrades?.[12]?.level || 0;
     let multiplier = 1;
@@ -3355,15 +3355,14 @@ function updateMerchantDisplay() {
             saveData.hasPlatinumUnlocked :
             true;
 
-        const isInfuseUpgrade = upg.id === 8;
+        const isInfusedUpgrade = upg.id === 8;
         const isAutomationUpgrade = upg.id === 9;
-        const isTimeMachineUpgrade = upg.id === 10;
 
         const isLocked = upg.mysterious && currentLevel === 0 &&
             (isForgeUpgrade ? !forgeRequirementsMet :
                 isPlatinumUpgrade ? !platinumRequirementsMet :
-                isInfuseUpgrade ? !(coinCount >= upg.requirements.coins && (saveData.level || 0) >= upg.requirements.level) :
-                (isAutomationUpgrade || isTimeMachineUpgrade) ? !upg.requirement(saveData) :
+                isInfusedUpgrade ? !(coinCount >= upg.requirements.coins && (saveData.level || 0) >= upg.requirements.level) :
+                (isAutomationUpgrade) ? !upg.requirement(saveData) :
                 coinCount < upg.baseCost);
 
         const isMaxed = currentLevel >= upg.maxLevel;
@@ -3382,10 +3381,10 @@ function updateMerchantDisplay() {
         }
 
         const buttonText = isLocked ?
-            (isInfuseUpgrade ? upg.reqText :
-                isAutomationUpgrade || isTimeMachineUpgrade ? "Req: ???" :
+            (isInfusedUpgrade ? upg.reqText :
+                isAutomationUpgrade ? "Req: ???" :
 `Req: ${formatNumber(upg.baseCost)} Coins`) :
-            (isInfuseUpgrade || isAutomationUpgrade || isTimeMachineUpgrade || isPlatinumUpgrade || isForgeUpgrade) && cost === 0 ?
+            (isInfusedUpgrade || isAutomationUpgrade || isPlatinumUpgrade || isForgeUpgrade) && cost === 0 ?
             'Unlock' :
 `Cost: ${formatNumber(cost)} Coins`;
 
@@ -3577,7 +3576,7 @@ function updateMerchantDisplay() {
     `;
 }
 
-        if (isInfuseUpgrade && currentLevel >= 1) {
+        if (isInfusedUpgrade && currentLevel >= 1) {
             container.innerHTML += `
         <div class="infuse-section">
             <div class="infuse-header">
@@ -3595,8 +3594,8 @@ function updateMerchantDisplay() {
                 Infuse +1 <img src="Images/infused_coin.png" class="infused-coin-icon-2">
             </button>
             <div class="infuse-upgrades-grid">
-                ${Object.values(infuseUpgrades).map(upg => {
-                const currentLevel = saveData.infuseUpgrades?.[upg.id]?.level || 0;
+                ${Object.values(infusedUpgrades).map(upg => {
+                const currentLevel = saveData.infusedUpgrades?.[upg.id]?.level || 0;
                 const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
                 const canAfford = (saveData.infusedCoins || 0) >= cost;
                 const isMaxed = currentLevel >= upg.levelCap;
@@ -3628,7 +3627,7 @@ function updateMerchantDisplay() {
     const allUpgrades = Object.values(automationUpgrades);
     const pageCount = Math.ceil(allUpgrades.length / 4);
     const visibleUpgrades = allUpgrades.slice(automationPage * 4, (automationPage + 1) * 4);
-    const awakeningLevel = saveData.infuseUpgrades?.[2]?.level || 0;
+    const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
     const coresPerSecond = awakeningLevel > 0 ? Math.pow(2, awakeningLevel - 1) : 0;
 
     container.innerHTML += `
@@ -3773,7 +3772,7 @@ function updateMerchantDisplay() {
     document.querySelectorAll('.buy-infuse-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             const upgradeId = parseInt(this.dataset.upgradeId);
-            purchaseInfuseUpgrade(upgradeId);
+            purchaseInfusedUpgrade(upgradeId);
         });
     });
 	
@@ -4015,20 +4014,20 @@ function purchasePlatinumUpgrade(upgradeId) {
     updateMerchantDisplay();
 }
 
-function purchaseInfuseUpgrade(upgradeId) {
+function purchaseInfusedUpgrade(upgradeId) {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const upgrade = infuseUpgrades[upgradeId];
+    const upgrade = infusedUpgrades[upgradeId];
     if (!upgrade) return;
 
-    const currentLevel = saveData.infuseUpgrades?.[upgradeId]?.level || 0;
+    const currentLevel = saveData.infusedUpgrades?.[upgradeId]?.level || 0;
     if (currentLevel >= upgrade.levelCap) return;
 
     const cost = Math.floor(upgrade.scaling(upgrade.baseCost, currentLevel));
     if ((saveData.infusedCoins || 0) < cost) return;
 
     saveData.infusedCoins -= cost;
-    saveData.infuseUpgrades = saveData.infuseUpgrades || {};
-    saveData.infuseUpgrades[upgradeId] = {
+    saveData.infuseUpgrades = saveData.infusedUpgrades || {};
+    saveData.infusedUpgrades[upgradeId] = {
         level: currentLevel + 1
     };
     
@@ -4060,7 +4059,7 @@ function purchaseAutomationUpgrade(upgradeId) {
 
 function updateAutomationCoreDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const awakeningLevel = saveData.infuseUpgrades?.[2]?.level || 0;
+    const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
     const coresPerSecond = awakeningLevel >= 1 ? Math.pow(2, awakeningLevel - 1) : 0;
     
     const coreCountElement = document.querySelector('.core-count');
@@ -4078,7 +4077,7 @@ function generateAutomationCores() {
     if (!gameActive) return;
     
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const awakeningLevel = saveData.infuseUpgrades?.[2]?.level || 0;
+    const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
     
     if (awakeningLevel >= 1) {
         const coresPerSecond = Math.pow(2, awakeningLevel - 1);
@@ -4092,7 +4091,7 @@ function generateAutomationCores() {
 function handleCoreClick() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     
-    if (saveData.infuseUpgrades?.[2]?.level >= 1) {
+    if (saveData.infusedUpgrades?.[2]?.level >= 1) {
         // Visual feedback - immediate response
         this.classList.add('core-tap-active');
        
@@ -4888,22 +4887,28 @@ function handleStatChange(stat, value) {
     case 'Coins':
         coinCount = numValue;
         break;
+	case 'XP':
+        saveData.xp = numValue;
+        break;
+	case 'Level':
+        saveData.level = numValue;
+        saveData.xpNeeded = 10 * Math.pow(1.1, numValue);
+        break;
+	case 'Special Coins':
+        saveData.specialCoins = numValue;
+        break;
     case 'Molten Coins':
         saveData.moltenCoins = numValue;
         break;
     case 'Platinum Coins':
         saveData.platinumCoins = numValue;
         break;
-    case 'Special Coins':
-        saveData.specialCoins = numValue;
-        break;
-    case 'Level':
-        saveData.level = numValue;
-        saveData.xpNeeded = 10 * Math.pow(1.1, numValue);
-        break;
-    case 'XP':
-        saveData.xp = numValue;
-        break;
+	case 'Infused Coins':
+		saveData.infusedCoins = numValue;
+		break;
+	case 'Automation Cores':
+		saveData.automationCores = numValue;
+		break;
     }
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
     refreshAllDisplays();
@@ -4914,16 +4919,20 @@ function getCurrentStatValue(stat) {
     switch (stat) {
     case 'Coins':
         return coinCount;
+	case 'XP':
+        return saveData.xp || 0;
+	case 'Level':
+        return saveData.level || 0;
+	case 'Special Coins':
+        return saveData.specialCoins || 0;
     case 'Molten Coins':
         return saveData.moltenCoins || 0;
     case 'Platinum Coins':
         return saveData.platinumCoins || 0;
-    case 'Special Coins':
-        return saveData.specialCoins || 0;
-    case 'Level':
-        return saveData.level || 0;
-    case 'XP':
-        return saveData.xp || 0;
+	case 'Infused Coins':
+        return saveData.infusedCoins || 0;
+	case 'Automation Cores':
+        return saveData.automationCores || 0;
     default:
         return '?';
     }
@@ -4942,14 +4951,18 @@ function handleUpgradeChange(id, category, value) {
         'Coin Upgrades': 'upgrades',
         'Special Coin Upgrades': 'specialUpgrades',
         'Molten Coin Upgrades': 'forgeUpgrades',
-        'Platinum Coin Upgrades': 'platinumUpgrades'
+        'Platinum Coin Upgrades': 'platinumUpgrades',
+		'Infused Coin Upgrades': 'infusedUpgrades',
+		'Automation Upgrades': 'automationUpgrades'
     }).find(([_, cat]) => cat === category)?.[0] || category;
 
     const upgradeName = {
         upgrades: upgrades[id]?.upgName,
+		specialUpgrades: specialUpgrades[id]?.name,
         forgeUpgrades: forgeUpgrades[id]?.name,
         platinumUpgrades: platinumUpgrades[id]?.name,
-        specialUpgrades: specialUpgrades[id]?.name
+		infusedUpgrades: infusedUpgrades[id]?.name,
+		automationUpgrades: automationUpgrades[id]?.name,
     }
     [category] || `ID ${id}`;
 
@@ -4971,16 +4984,6 @@ function handleUpgradeChange(id, category, value) {
     updateDevMenu();
 }
 
-function getUpgradeName(id, category) {
-    return {
-        upgrades: upgrades[id]?.upgName,
-        forgeUpgrades: forgeUpgrades[id]?.name,
-        platinumUpgrades: platinumUpgrades[id]?.name,
-        specialUpgrades: specialUpgrades[id]?.name
-    }
-    [category] || `ID ${id}`;
-}
-
 function updateDevMenu() {
     if (!devMenuOpen)
         return;
@@ -4994,6 +4997,8 @@ function updateDevMenu() {
         'Special Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.specialCoins || 0,
         'Molten Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.moltenCoins || 0,
         'Platinum Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.platinumCoins || 0,
+		'Infused Coins': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.infusedCoins || 0,
+		'Automation Cores': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.automationCores || 0,
     };
 
     // Create a map of existing stat items
@@ -5058,6 +5063,14 @@ function updateDevMenu() {
         'Platinum Coin Upgrades': {
             object: platinumUpgrades,
             key: 'platinumUpgrades'
+        },
+		'Infused Coin Upgrades': {
+            object: infusedUpgrades,
+            key: 'infusedUpgrades'
+        },
+		'Automation Upgrades': {
+            object: automationUpgrades,
+            key: 'automationUpgrades'
         }
     };
 
@@ -5149,6 +5162,7 @@ function updateDevMenu() {
         'Disable Boost Coin Spawning': !boostCoinsUnlocked,
         'Has Done Forge Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneForgeReset || false,
         'Has Platinum Unlocked': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasPlatinumUnlocked || false,
+		'Has Done Infuse Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneInfuseReset || false,
         'Disable Magnet': JSON.parse(localStorage.getItem('disableMagnet') || 'false')
     };
 
@@ -5204,6 +5218,7 @@ function handleFlagChange(name, value) {
         'Disable Boost Coin Spawning': !boostCoinsUnlocked,
         'Has Done Forge Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneForgeReset || false,
         'Has Platinum Unlocked': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasPlatinumUnlocked || false,
+		'Has Done Infuse Reset': JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`))?.hasDoneInfuseReset || false,
         'Disable Magnet': JSON.parse(localStorage.getItem('disableMagnet') || 'false')
     };
 
@@ -5268,6 +5283,11 @@ function handleFlagChange(name, value) {
         if (platinumSection) {
             platinumSection.remove();
         }
+        break;
+		
+	case 'Has Done Infuse Reset':
+        saveData.hasDoneInfuseReset = value;
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
         break;
 
     case 'Disable Magnet':
@@ -5512,7 +5532,9 @@ function resetAllUpgradesToZero() {
         'upgrades',
         'specialUpgrades',
         'forgeUpgrades',
-        'platinumUpgrades'
+        'platinumUpgrades',
+		'infusedUpgrades',
+		'automationUpgrades',
     ];
 
     let resetCount = 0;
@@ -5566,7 +5588,14 @@ function incrementAllUpgradeLevels() {
         }, {
             key: 'platinumUpgrades',
             upgrades: platinumUpgrades
+        }, {
+            key: 'infusedUpgrades',
+            upgrades: infusedUpgrades
+        }, {
+            key: 'automationUpgrades',
+            upgrades: automationUpgrades
         }
+		
     ];
 
     // Ensure the upgrade categories exist in saveData
@@ -5612,7 +5641,7 @@ function resetGame() {
     let saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
 
     const upgradeCategories = [
-        'upgrades', 'specialUpgrades', 'forgeUpgrades', 'platinumUpgrades'
+        'upgrades', 'specialUpgrades', 'forgeUpgrades', 'platinumUpgrades', 'infusedUpgrades', 'automationUpgrades'
     ];
 
     if (coinCount !== 0) {
@@ -5624,7 +5653,7 @@ function resetGame() {
     });
 
     const statsToReset = [
-        'coins', 'moltenCoins', 'platinumCoins', 'specialCoins', 'level', 'xp', 'xpNeeded'
+        'coins', 'moltenCoins', 'platinumCoins', 'specialCoins', 'level', 'xp', 'xpNeeded', 'infusedCoins', 'automationCores'
     ];
 
     statsToReset.forEach(stat => {
@@ -5637,7 +5666,7 @@ function resetGame() {
 
     // Set key flags to false
     const flagsToReset = [
-        'hasReached10Coins', 'hasDoneForgeReset', 'hasPlatinumUnlocked',
+        'hasReached10Coins', 'hasDoneForgeReset', 'hasPlatinumUnlocked', 'hasDoneInfuseReset'
     ];
 
     flagsToReset.forEach(flag => {
