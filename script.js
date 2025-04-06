@@ -441,6 +441,8 @@ const merchantDialogues = {
     },
 };
 
+let currentDialogue = merchantDialogues.introduction;
+
 function showDialogue() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const playerName = saveData.playerName || "Traveler";
@@ -4026,7 +4028,7 @@ function purchaseInfusedUpgrade(upgradeId) {
     if ((saveData.infusedCoins || 0) < cost) return;
 
     saveData.infusedCoins -= cost;
-    saveData.infuseUpgrades = saveData.infusedUpgrades || {};
+    saveData.infusedUpgrades = saveData.infusedUpgrades || {};
     saveData.infusedUpgrades[upgradeId] = {
         level: currentLevel + 1
     };
@@ -4090,20 +4092,36 @@ function generateAutomationCores() {
 
 function handleCoreClick() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    
+
     if (saveData.infusedUpgrades?.[2]?.level >= 1) {
         // Visual feedback - immediate response
         this.classList.add('core-tap-active');
-       
-            saveData.automationCores = (saveData.automationCores || 0) + 1;
-            localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-            
-            // Update UI if merchant open
-            if (document.querySelector('.merchant-modal')?.style.display === 'flex') {
-                updateMerchantDisplay();
-            }
+
+        saveData.automationCores = (saveData.automationCores || 0) + 1;
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+
+        // Update UI if merchant open
+        if (document.querySelector('.merchant-modal')?.style.display === 'flex') {
+            updateMerchantDisplay();
         }
     }
+}
+	
+function updateAutomationCoreDisplay() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
+    const coresPerSecond = awakeningLevel >= 1 ? Math.pow(2, awakeningLevel - 1) : 0;
+    
+    const coreCountElement = document.querySelector('.core-count');
+    const coreRateElement = document.querySelector('.core-rate');
+    
+    if (coreCountElement) {
+        coreCountElement.textContent = formatNumber(Math.floor(saveData.automationCores || 0));
+    }
+    if (coreRateElement) {
+        coreRateElement.textContent = `(${formatNumber(coresPerSecond)}/sec)`;
+    }
+}
 
 function updateEffectsDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
