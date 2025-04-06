@@ -2543,3 +2543,93 @@ body.game-active .game-background {
         touch-action: manipulation;
     }
 }
+
+/* Offline Progress Popup */
+.offline-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: offlineEntry 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.offline-content {
+    background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+    border: 2px solid #404040;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 50, 50, 0.3);
+}
+
+.offline-time {
+    color: #888;
+    font-size: 1.1em;
+    margin: 1.5rem 0;
+    text-shadow: 0 0 8px rgba(255,255,255,0.1);
+}
+
+.currency-gains {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.currency-gain {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    animation: currencyPop 0.6s ease-out;
+}
+
+.automationCores-gain {
+    background: rgba(255, 50, 50, 0.1);
+    border: 1px solid #ff3232;
+    color: #ff6060;
+}
+
+.currency-icon {
+    width: 32px;
+    height: 32px;
+    filter: drop-shadow(0 0 4px currentColor);
+}
+
+.close-offline {
+    background: linear-gradient(145deg, #ff3232, #cc0000);
+    border: none;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.close-offline:hover {
+    transform: scale(1.05);
+}
+
+@keyframes offlineEntry {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes offlineExit {
+    to { opacity: 0; transform: scale(1.2); }
+}
+
+@keyframes currencyPop {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
