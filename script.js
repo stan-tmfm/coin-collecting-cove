@@ -830,21 +830,8 @@ const upgrades = {
         requirement: (saveData) => saveData.hasDoneInfuseReset,
         reqText: "Req: ???"
     },
-	10: {
+    10: {
         id: 10,
-        upgName: "Time Machine",
-        upgDesc: "time machine",
-        upgBenefits: "Unlocks the Time Machine",
-        baseCost: 0,
-        maxLevel: 1,
-        currentLevel: 0,
-        scaling: () => 0,
-        mysterious: true,
-        requirement: (saveData) => saveData.hasDoneInfuseReset,
-        reqText: "Req: ???"
-    },
-    11: {
-        id: 11,
         upgName: "Wisdom's Flow",
         upgDesc: "The wisdom flows deeper within you, providing an XP boost",
         upgBenefits: "1.1x XP per level",
@@ -854,8 +841,8 @@ const upgrades = {
         scaling: (baseCost, level) => (baseCost + 2e11 * level) * Math.pow(1.5, level),
         mysterious: true
     },
-    12: {
-        id: 12,
+    11: {
+        id: 11,
         upgName: "Purified Platinum",
         upgDesc: "Purified platinum is extra shiny and valuable",
         upgBenefits: "1.25x platinum coins per level",
@@ -865,8 +852,8 @@ const upgrades = {
         scaling: (baseCost, level) => (baseCost + 2e14 * level) * Math.pow(1.5, level),
         mysterious: true
     },
-    13: {
-        id: 13,
+    12: {
+        id: 12,
         upgName: "Arcane Mastery",
         upgDesc: "Tap into the ancient arcane forces and gain a large XP boost",
         upgBenefits: "1.5x XP per level",
@@ -2737,8 +2724,8 @@ function getXPMultiplier() {
     const educatedCoins = saveData.upgrades?.[3]?.level || 0;
     const emberWisdom = saveData.forgeUpgrades?.[4]?.level || 0;
     const arcaneKnowledge = saveData.infuseUpgrades?.[1]?.level || 0;
-    const wisdomFlow = saveData.upgrades?.[11]?.level || 0;
-    const arcaneMastery = saveData.upgrades?.[13]?.level || 0;
+    const wisdomFlow = saveData.upgrades?.[10]?.level || 0;
+    const arcaneMastery = saveData.upgrades?.[12]?.level || 0;
     let multiplier = 1;
     
     multiplier *= Math.pow(1.25, wisdomBoost);
@@ -2787,7 +2774,7 @@ function getPlatinumCoinMultiplier() { // to clarify this function is for coins 
 function getPlatinumCoinValueMultiplier() { // this function is for platinum coin value
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const silverLining = Math.pow(1.1, saveData.upgrades?.[7]?.level || 0);
-    const purifiedPlatinum = Math.pow(1.25, saveData.upgrades?.[9]?.level || 0);
+    const purifiedPlatinum = Math.pow(1.25, saveData.upgrades?.[11]?.level || 0);
     return silverLining * purifiedPlatinum;
 }
 
@@ -3698,8 +3685,11 @@ function updateMerchantDisplay() {
         </div>
     </div>
     `;
+
 }
 });
+
+
 
     // Add event listeners for special upgrades
     container.querySelectorAll('.buy-special-btn').forEach(btn => {
@@ -4068,6 +4058,22 @@ function purchaseAutomationUpgrade(upgradeId) {
     applyUpgradeEffects(); // If these upgrades affect gameplay
 }
 
+function updateAutomationCoreDisplay() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const awakeningLevel = saveData.infuseUpgrades?.[2]?.level || 0;
+    const coresPerSecond = awakeningLevel >= 1 ? Math.pow(2, awakeningLevel - 1) : 0;
+    
+    const coreCountElement = document.querySelector('.core-count');
+    const coreRateElement = document.querySelector('.core-rate');
+    
+    if (coreCountElement) {
+        coreCountElement.textContent = formatNumber(Math.floor(saveData.automationCores || 0));
+    }
+    if (coreRateElement) {
+        coreRateElement.textContent = `(${formatNumber(coresPerSecond)}/sec)`;
+    }
+}
+
 function generateAutomationCores() {
     if (!gameActive) return;
     
@@ -4078,11 +4084,8 @@ function generateAutomationCores() {
         const coresPerSecond = Math.pow(2, awakeningLevel - 1);
         saveData.automationCores = (saveData.automationCores || 0) + coresPerSecond;
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-        
-        // Only update display if merchant UI is open
-        if (document.querySelector('.merchant-modal').style.display === 'flex') {
-            updateMerchantDisplay();
-        }
+
+        updateAutomationCoreDisplay();
     }
 }
 
