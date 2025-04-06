@@ -2354,7 +2354,7 @@ body.game-active .game-background {
 
 .buy-automation-btn {
     background: linear-gradient(to bottom, #cc2222, #991111);
-    border: none;
+    border: 1px solid #991111;
     color: white;
     padding: 8px 16px;
     border-radius: 4px;
