@@ -1009,7 +1009,7 @@ const platinumUpgrades = {
         name: "Cove's Treasure",
         desc: "Increases coin value by 1.5x per level",
         baseCost: 10,
-        levelCap: 5,
+        levelCap: 10,
         scaling: (baseCost, level) => baseCost * Math.pow(5, level)
     },
     4: {
@@ -1017,7 +1017,7 @@ const platinumUpgrades = {
         name: "Tidal Knowledge",
         desc: "Increases XP gain by 1.5x per level",
         baseCost: 10,
-        levelCap: 5,
+        levelCap: 10,
         scaling: (baseCost, level) => baseCost * Math.pow(5, level)
     },
     5: {
@@ -1133,15 +1133,15 @@ const infusedUpgrades = {
     },
     5: {
         id: 5,
-        name: "Chrono Acceleration",
-        desc: "Improves Time Warp efficiency by +2% per level",
+        name: "Arcane Refinement",
+        desc: "Multiplies platinum coin gain by 10x per level",
         baseCost: 100,
-        levelCap: 50,
-        scaling: (baseCost, level) => baseCost * Math.pow(2, level)
+        levelCap: 5,
+        scaling: (baseCost, level) => baseCost * Math.pow(1000, level)
     },
     6: {
         id: 6,
-        name: "Arcane Mastery",
+        name: "Arcane Awakening",
         desc: `Each unspent infused coin boosts XP gain by 1.5^log(IC/${formatNumber(1e17)})`,
         baseCost: 1e20,
         levelCap: 1,
@@ -1314,8 +1314,14 @@ function initializeSaveSlots() {
         // Safely check merchant status
         const hasMerchant = slot.data?.merchantCinematicShown || false;
         const hasForge = slot.data?.hasDoneForgeReset || false;
-		const hasInfuse = slot.data?.hasDoneInfuseReset || false;
-        const timestamp = slot.data?.timestamp ? new Date(slot.data.timestamp).toLocaleDateString() : 'No date';
+        const hasInfuse = slot.data?.hasDoneInfuseReset || false;
+        
+        // Use createdAt if available, fallback to timestamp (for backwards compatibility)
+        const creationDate = slot.data?.createdAt 
+            ? new Date(slot.data.createdAt).toLocaleDateString() 
+            : slot.data?.timestamp 
+                ? new Date(slot.data.timestamp).toLocaleDateString() 
+                : 'No date';
 
         // Round the displayed coin value
         displayCoins = slot.data ? formatNumber(Math.floor(slot.data.coins || 0)) : 0;
@@ -1331,11 +1337,9 @@ function initializeSaveSlots() {
                 '<div class="forge-unlocked">Forge Ignited</div>' :
                 (hasMerchant ?
                     '<div class="merchant-unlocked">Merchant Unlocked</div>' : ''))}
-            <div>Created on: ${timestamp}</div>
-        </div>` :
+            <div>Created on: ${creationDate}</div>` :
             '<div class="no-data">No Save Data</div>'}
 `;
-
 
         // Reattach click handler
         slotElement.addEventListener('click', (e) => {
@@ -1505,7 +1509,8 @@ function showContinueButton() {
             coins: 0,
             upgrades: {},
             merchantCinematicShown: false,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+			createdAt: Date.now()
         };
 
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(newSave));
@@ -1548,6 +1553,60 @@ function showClickPrompt() {
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', initializeSaveSlots);
+
+function calculateOfflineProgress(saveData) {
+    const elapsedTime = Date.now() - (saveData.timestamp || Date.now());
+    const generated = {};
+
+    if (elapsedTime > 0) {
+        // Automation Cores
+        const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
+        if (awakeningLevel >= 1) {
+            const coresPerSecond = Math.pow(2, awakeningLevel - 1);
+            const seconds = Math.floor(elapsedTime / 1000);
+            const coresGenerated = coresPerSecond * seconds;
+            if (coresGenerated > 0) {
+                generated['Automation Cores'] = coresGenerated;
+                saveData.automationCores = (saveData.automationCores || 0) + coresGenerated;
+            }
+        }
+        saveData.timestamp = Date.now();
+        localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+        
+        return { generated, elapsedTime };
+    }
+    
+    return { generated: {}, elapsedTime: 0 };
+}
+
+function showOfflineProgressPopup(currencies) {
+    const popup = document.createElement('div');
+    popup.className = 'offline-progress-popup';
+    let html = `<h2>Offline Progress</h2>`;
+    Object.entries(currencies).forEach(([currency, amount]) => {
+        const color = getCurrencyColor(currency);
+        html += `
+            <div class="currency-item" style="color: ${color}">
+                +${formatNumber(amount)} ${currency}
+            </div>
+        `;
+    });
+    html += `<button class="close-offline-popup">Close</button>`;
+    popup.innerHTML = html;
+    
+    popup.querySelector('.close-offline-popup').addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
+    
+    document.body.appendChild(popup);
+}
+
+function getCurrencyColor(currency) {
+    const colors = {
+        'Automation Cores': '#FFA500' // Orange
+    };
+    return colors[currency] || '#FFFFFF';
+}
 
 function loadGame(saveData) {
     // Create normalized save data
@@ -1620,10 +1679,6 @@ function loadGame(saveData) {
     // Load dialogue progress
     loadDialogueProgress();
 
-    // Start game and apply upgrades
-    startGame();
-    applyUpgradeEffects();
-
     // Determine if boost coins are unlocked and start the interval
     boostCoinsUnlocked = saveData.boostsUnlocked || saveData.merchantCinematicShown;
 
@@ -1664,6 +1719,16 @@ function loadGame(saveData) {
 	if (!saveData.automationUpgrades) {
 	    saveData.automationUpgrades = {};
 	}
+	
+	const { generated, elapsedTime } = calculateOfflineProgress(fullSaveData);
+	if (Object.keys(generated).length > 0) {
+		showOfflineProgressPopup(generated, elapsedTime);
+		updateAutomationCoreDisplay();
+	}
+	
+	// Start game and apply upgrades
+    startGame();
+    applyUpgradeEffects();
 }
 
 function startGame() {
@@ -2726,6 +2791,8 @@ function getXPMultiplier() {
     const educatedCoins = saveData.upgrades?.[3]?.level || 0;
     const emberWisdom = saveData.forgeUpgrades?.[4]?.level || 0;
     const arcaneKnowledge = saveData.infusedUpgrades?.[1]?.level || 0;
+	const wisdomInfused = saveData.infusedUpgrades?.[4]?.level || 0;
+	const arcaneAwakening = saveData.infusedUpgrades?.[6]?.level || 0;
     const wisdomFlow = saveData.upgrades?.[10]?.level || 0;
     const arcaneMastery = saveData.upgrades?.[12]?.level || 0;
     let multiplier = 1;
@@ -2735,8 +2802,14 @@ function getXPMultiplier() {
     multiplier *= Math.pow(1.1, emberWisdom);
     multiplier *= Math.pow(1.1, wisdomFlow);
     multiplier *= Math.pow(1.5, arcaneMastery);
+	multiplier *= Math.pow(1.25, wisdomInfused);
     if (arcaneKnowledge >= 1) {
         multiplier *= 3;
+    }
+	if (arcaneAwakening >= 1) {
+        const infusedCoins = saveData.infusedCoins || 0;
+        const logBonus = Math.log10(Math.max(infusedCoins, 1) / 1e17);
+        multiplier *= Math.pow(1.5, logBonus);
     }
     multiplier *= getPlatinumXPMultiplier();
 
@@ -2745,20 +2818,20 @@ function getXPMultiplier() {
 
 function getCoinValueMultiplier() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const specialUpgrade2 = saveData.specialUpgrades?.[2] || {
-        level: 0
-    };
-    const forgeUpgrade3 = saveData.forgeUpgrades?.[3] || {
-        level: 0
-    };
+    
+    const specialUpgrade2 = saveData.specialUpgrades?.[2]?.level || 0;
+    const forgeUpgrade3 = saveData.forgeUpgrades?.[3]?.level || 0;
     const playerLevel = saveData.level || 0;
-    const moltenCoins = saveData.moltenCoins || 0;
+    const moltenCoins = saveData.moltenCoins || 0; 
     const moltenMasteryLevel = saveData.forgeUpgrades?.[6]?.level || 0;
+    const wealthInfusion = saveData.infusedUpgrades?.[3]?.level || 0;
 
     let multiplier = (
-        Math.pow(1.25, specialUpgrade2.level) *
+        Math.pow(1.25, specialUpgrade2) *
         Math.pow(1.1, playerLevel) *
-        Math.pow(1.1, forgeUpgrade3.level));
+        Math.pow(1.1, forgeUpgrade3) *
+        Math.pow(1.25, wealthInfusion)
+    );
 
     if (moltenMasteryLevel >= 1) {
         const moltenMasteryBonus = calculateMoltenMasteryBonus(moltenCoins);
@@ -2777,7 +2850,8 @@ function getPlatinumCoinValueMultiplier() { // this function is for platinum coi
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const silverLining = Math.pow(1.1, saveData.upgrades?.[7]?.level || 0);
     const purifiedPlatinum = Math.pow(1.25, saveData.upgrades?.[11]?.level || 0);
-    return silverLining * purifiedPlatinum;
+	const infusionBoost = Math.pow(10, saveData.infusedUpgrades?.[5]?.level || 0);
+    return silverLining * purifiedPlatinum * infusionBoost;
 }
 
 function getPlatinumXPMultiplier() {
@@ -2792,6 +2866,34 @@ function getMoltenCoinMultiplier() {
     const platinumBoost = Math.pow(1.25, saveData.platinumUpgrades?.[5]?.level || 0);
     return forgeEnhancement * platinumBoost;
 }
+
+function calculateInfusedCoins(coins, level) {
+    // No infused coins below level 121
+    if (level < 121) return 0;
+    
+    // Base value starts at 1 at level 121
+    let baseIC = 1;
+    
+    // Level scaling (1.25x per level from 121-250)
+    const scalingLevels = Math.min(level, 250) - 121;
+    baseIC *= Math.pow(1.25, scalingLevels);
+    
+    // Diminished scaling after 250 (1.1x per level)
+    if (level > 250) {
+        const extraLevels = level - 250;
+        baseIC *= Math.pow(1.1, extraLevels);
+    }
+    
+    // Coin scaling (2x per OoM above 1 billion, capped at 1e18)
+    if (coins > 1e9) {
+        const coinFactor = Math.min(coins, 1e18);
+        const oom = Math.floor(Math.log10(coinFactor / 1e9));
+        baseIC *= Math.pow(2, oom);
+    }
+    
+    return Math.floor(baseIC);
+}
+
 
 function updateCoinDisplay() {
     // Round coin count before formatting
@@ -3578,50 +3680,44 @@ function updateMerchantDisplay() {
     `;
 }
 
-        if (isInfusedUpgrade && currentLevel >= 1) {
-            container.innerHTML += `
-        <div class="infuse-section">
-            <div class="infuse-header">
-				- text<br>
-				- text<br>
-				- more text<br>
-				- even more text<br>
-				- even more even more text<br>
-					<div class="infused-coin-balance">
-						<img src="Images/infused_coin.png" alt="infused coin" class="infused-coin-icon">
-						Infused Coins: ${formatNumber(Math.floor(saveData.infusedCoins || 0))}
-					</div>
-            </div>
-            <button class="infuse-btn" id="infuse-btn">
-                Infuse +1 <img src="Images/infused_coin.png" class="infused-coin-icon-2">
-            </button>
-            <div class="infuse-upgrades-grid">
-                ${Object.values(infusedUpgrades).map(upg => {
-                const currentLevel = saveData.infusedUpgrades?.[upg.id]?.level || 0;
-                const cost = Math.round(upg.scaling(upg.baseCost, currentLevel));
-                const canAfford = (saveData.infusedCoins || 0) >= cost;
-                const isMaxed = currentLevel >= upg.levelCap;
-
-                return `
-                        <div class="infuse-upgrade-placeholder">
-                            <div class="infuse-upgrade">
-                                <h4>${upg.name} (${currentLevel}/${upg.levelCap})</h4>
-                                <p>${upg.desc}</p>
-                                ${isMaxed ?
-                '<span class="infuse-upgrade-maxed">MAXED</span>' :
-                `<button class="buy-infuse-btn" 
-                                        data-upgrade-id="${upg.id}"
-                                        ${!canAfford ? 'disabled' : ''}>
-                                        ${formatNumber(cost)} IC
-                                    </button>`
-}
-                            </div>
-                        </div>
-                    `;
-            }).join('')}
-            </div>
+       if (isInfusedUpgrade && currentLevel >= 1) {
+    container.innerHTML += `
+<div class="infuse-section">
+    <div class="infuse-header">
+        - Reset all coin, special coin and molten coin upgrades (except permanent ones) up to this point in exchange for infused coins (requires level 121)<br>
+        - Each additional level after 121 yields ${formatNumber(1.25)}x infused coins, rounded down*<br>
+        - Each additional OoM (digit) of coins after ${formatNumber(1e9)} doubles infused coin gain*<br>
+		- Unlocks powerful new upgrades<br>
+        <div class="infused-coin-balance">
+            <img src="Images/infused_coin.png" alt="infused coin" class="infused-coin-icon">
+            Infused Coins: ${formatNumber(Math.floor(saveData.infusedCoins || 0))}
         </div>
-    `;
+    </div>
+    <button class="infuse-btn" id="infuse-btn">
+        Infuse +<span class="infuse-amount">0</span>
+        <img src="Images/infused_coin.png" class="infused-coin-icon-2">
+    </button>
+    <div class="infuse-upgrades-grid">
+        ${Object.values(infusedUpgrades).map(upg => `
+            <div class="infuse-upgrade-placeholder">
+                <div class="infuse-upgrade">
+                    <h4>${upg.name} (${saveData.infusedUpgrades?.[upg.id]?.level || 0}/${upg.levelCap})</h4>
+                    <p>${upg.desc}</p>
+                    ${(saveData.infusedUpgrades?.[upg.id]?.level || 0) < upg.levelCap ? `
+                        <button class="buy-infuse-btn" 
+                            data-upgrade-id="${upg.id}" 
+                            ${(saveData.infusedCoins || 0) >= Math.round(upg.scaling(upg.baseCost, saveData.infusedUpgrades?.[upg.id]?.level || 0)) ? '' : 'disabled'}>
+                            ${formatNumber(Math.round(upg.scaling(upg.baseCost, saveData.infusedUpgrades?.[upg.id]?.level || 0)))} IC
+                        </button>
+                    ` : '<span class="infuse-upgrade-maxed">MAXED</span>'}
+                </div>
+            </div>
+        `).join('')}
+		<span class="infuse-disclaimer">
+        *Infused coin level bonus drops to 1.1x compounding after level 251 and the infused coin OoM bonus from coins stops applying after ${formatNumber(1e18)} coins
+		</span>
+    </div>
+</div>`;
         }
 
        if (isAutomationUpgrade && currentLevel >= 1) {
@@ -3734,6 +3830,7 @@ function updateMerchantDisplay() {
                 saveData.moltenCoins = (saveData.moltenCoins || 0) + totalMolten;
                 localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
                 updateMerchantDisplay();
+				clearAllCoins();
             }
         });
 
@@ -3757,18 +3854,25 @@ function updateMerchantDisplay() {
         });
     });
 
-    // Add event listener for Infuse button
     const infuseButton = document.getElementById('infuse-btn');
-    if (infuseButton) {
-        infuseButton.addEventListener('click', () => {
-            const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-            saveData.infusedCoins = (saveData.infusedCoins || 0) + 1;
-            if (!saveData.hasDoneInfuseReset)
-                saveData.hasDoneInfuseReset = true;
-            localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
-            updateMerchantDisplay();
-        });
+if (infuseButton) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    const playerLevel = saveData.level || 0;
+    const totalInfused = calculateInfusedCoins(coinCount, playerLevel);
+    const amountDisplay = infuseButton.querySelector('.infuse-amount');
+    
+    if (playerLevel < 121) {
+        if (amountDisplay) amountDisplay.textContent = "0";
+        infuseButton.disabled = true;
+    } else {
+        if (amountDisplay) amountDisplay.textContent = formatNumber(totalInfused);
+        infuseButton.disabled = totalInfused === 0;
     }
+	
+    infuseButton.onclick = () => {
+		infuseReset();
+	};
+}
 
     // Add event listeners for Infuse upgrades
     document.querySelectorAll('.buy-infuse-btn').forEach(btn => {
@@ -4059,6 +4163,76 @@ function purchaseAutomationUpgrade(upgradeId) {
     applyUpgradeEffects(); // If these upgrades affect gameplay
 }
 
+function formatTimeOffline(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const years = Math.floor(days / 365);
+
+    const parts = [];
+    if (years > 0) parts.push(`${years} year${years > 1 ? 's' : ''}`);
+    if (days % 365 > 0) parts.push(`${days % 365} day${days % 365 > 1 ? 's' : ''}`);
+    if (hours % 24 > 0) parts.push(`${hours % 24} hour${hours % 24 > 1 ? 's' : ''}`);
+    if (minutes % 60 > 0) parts.push(`${minutes % 60} minute${minutes % 60 > 1 ? 's' : ''}`);
+    if (seconds % 60 > 0 || parts.length === 0) {
+        parts.push(`${seconds % 60} second${seconds % 60 !== 1 ? 's' : ''}`);
+    }
+
+    return parts.join(', ');
+}
+
+function showOfflineProgressPopup(currencies, elapsedTime) {
+    const popup = document.createElement('div');
+    const overlay = document.createElement('div');
+    
+    // Create overlay
+    overlay.className = 'popup-overlay';
+    document.body.appendChild(overlay);
+    
+    // Create popup
+    popup.className = 'offline-progress-popup';
+    
+    let html = `
+        <h2>Offline Progress</h2>
+        <div class="time-offline">
+            Time offline: ${formatTimeOffline(elapsedTime)}
+        </div>
+    `;
+    
+    Object.entries(currencies).forEach(([currency, amount]) => {
+        const color = getCurrencyColor(currency);
+        html += `
+            <div class="currency-item" style="color: ${color}">
+                <span class="currency-name">${currency}:</span>
+                <span class="currency-amount">+${formatNumber(amount)}</span>
+            </div>
+        `;
+    });
+    
+    html += `<button class="close-offline-popup">Close</button>`;
+    popup.innerHTML = html;
+    
+    document.body.appendChild(popup);
+
+    // Close functions
+    function handleEscape(e) {
+        if (e.key === 'Escape') closePopup();
+    }
+
+    function closePopup() {
+        document.body.removeChild(popup);
+        document.body.removeChild(overlay);
+        document.removeEventListener('keydown', handleEscape);
+        overlay.removeEventListener('click', closePopup);
+    }
+
+    // Event listeners
+    document.addEventListener('keydown', handleEscape);
+    overlay.addEventListener('click', closePopup);
+    popup.querySelector('.close-offline-popup').addEventListener('click', closePopup);
+}
+
 function updateAutomationCoreDisplay() {
     const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
     const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
@@ -4104,22 +4278,6 @@ function handleCoreClick() {
         if (document.querySelector('.merchant-modal')?.style.display === 'flex') {
             updateMerchantDisplay();
         }
-    }
-}
-	
-function updateAutomationCoreDisplay() {
-    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
-    const awakeningLevel = saveData.infusedUpgrades?.[2]?.level || 0;
-    const coresPerSecond = awakeningLevel >= 1 ? Math.pow(2, awakeningLevel - 1) : 0;
-    
-    const coreCountElement = document.querySelector('.core-count');
-    const coreRateElement = document.querySelector('.core-rate');
-    
-    if (coreCountElement) {
-        coreCountElement.textContent = formatNumber(Math.floor(saveData.automationCores || 0));
-    }
-    if (coreRateElement) {
-        coreRateElement.textContent = `(${formatNumber(coresPerSecond)}/sec)`;
     }
 }
 
@@ -4206,6 +4364,7 @@ function applyUpgradeEffects() {
     const spawnRateUpg2 = saveData.platinumUpgrades?.[2]?.level || 0;
     const additiveSpawnRateBonus = 1 + (0.10 * spawnRateUpg2);
     let spawnInterval = 3000 * Math.pow(0.9, spawnRateUpg1);
+	
 
     spawnInterval /= additiveSpawnRateBonus;
 
@@ -4317,6 +4476,71 @@ function forgeReset() {
         updateMerchantDisplay();
     }
 }
+
+function infuseReset() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+
+    // Capture pre-reset values for calculation
+    const preResetCoins = saveData.coins || 0;
+    const preResetLevel = saveData.level || 0;
+
+    // Reset coins and basic progress
+    saveData.coins = 0;
+    saveData.level = 0;
+    saveData.xp = 0;
+    saveData.xpNeeded = 10;
+
+    // Preserve these specific upgrades (2,4,5,8,9)
+    const preserveUpgradeIds = [2, 4, 5, 8, 9];
+    
+    // Reset all upgrades except preserved ones
+    if (saveData.upgrades) {
+        Object.keys(saveData.upgrades).forEach(upgradeId => {
+            const id = parseInt(upgradeId);
+            if (!preserveUpgradeIds.includes(id)) {
+                saveData.upgrades[upgradeId].level = 0;
+            }
+        });
+    }
+
+    // Reset special coins and upgrades
+    saveData.specialCoins = 0;
+    saveData.specialUpgrades = {};
+
+    // Reset Forge upgrades except ID 2 (permanent one)
+    if (saveData.forgeUpgrades) {
+        Object.keys(saveData.forgeUpgrades).forEach(forgeUpgradeId => {
+            const id = parseInt(forgeUpgradeId);
+            if (id !== 2) { // Only preserve Forge upgrade ID 2
+                saveData.forgeUpgrades[forgeUpgradeId].level = 0;
+            }
+        });
+    }
+
+    // Calculate and add new infused coins
+    const newInfusedCoins = calculateInfusedCoins(preResetCoins, preResetLevel);
+    saveData.infusedCoins = (saveData.infusedCoins || 0) + newInfusedCoins;
+
+    // Set first reset flag if needed
+    if (!saveData.hasDoneInfuseReset) {
+        saveData.hasDoneInfuseReset = true;
+    }
+
+    // Save and update everything
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    coinCount = saveData.coins;
+
+    // Update all displays
+    updateCoinDisplay();
+    updateXPDisplay(saveData.xp, saveData.level, saveData.xpNeeded);
+    updateMerchantDisplay();
+    updateEffectsDisplay();
+    applyUpgradeEffects();
+
+    clearAllCoins();
+    updateGoalDisplay();
+}
+
 
 let magnetIndicator = null; // Cache the magnet indicator element
 
@@ -4820,6 +5044,7 @@ function createDevMenu() {
 				<button class="dev-misc-button" id="clear-active-coins">Clear All Active Coins</button>
 				<button class="dev-misc-button" id="increment-all-upgrades">+1 Level to All Upgrades</button>
 				<button class="dev-misc-button" id="hard-reset-game">Hard Reset All Progress</button>
+				<button class="dev-misc-button" id="time-warp-button">OP Time Warp</button>
             </div>
         </div>
 		<div class="dev-section">
@@ -4862,6 +5087,36 @@ function createDevMenu() {
             refreshAllDisplays();
         }
     });
+	
+	document.getElementById('time-warp-button').addEventListener('click', () => {
+    let seconds = prompt("Enter seconds to warp forward:");
+    if (!seconds || isNaN(seconds) || seconds <= 0) return;
+    
+    seconds = Number(seconds); // Ensure it's a number
+    
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    
+    // Simulate elapsed time by setting the timestamp in the past
+    saveData.timestamp = Date.now() - (seconds * 1000);
+    
+    // Calculate progress, destructuring the returned object
+    const { generated, elapsedTime } = calculateOfflineProgress(saveData);
+    
+    // Update the localStorage with the new save data
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+    
+    // Show offline progress and log action if there are any generated resources.
+    // Pass elapsedTime to the popup function.
+    if (Object.keys(generated).length > 0) {
+        showOfflineProgressPopup(generated, elapsedTime);
+        logAction(`Time warp: +${seconds}s | Gained ${Object.entries(generated)
+            .map(([k, v]) => `${formatNumber(v)} ${k}`)
+            .join(', ')}`);
+    }
+});
+
+
+
 
     // Initialize all sections as collapsed
     document.querySelectorAll('.dev-section-header').forEach(header => {
