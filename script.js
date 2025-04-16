@@ -1152,49 +1152,48 @@ const infusedUpgrades = {
 const automationUpgrades = {
     1: {
         id: 1,
-        name: "Auto-Clicker",
-        desc: "Automatically clicks coins for you (1 click/sec per level)",
-        baseCost: 1e3,
-        levelCap: 10,
-        scaling: (base, lvl) => base * Math.pow(2, lvl),
-        effect: (level) => level // Returns clicks per second
+        name: "Automation I",
+        desc: "Autobuys coin upgrades 1-6",
+        extraInfo: "",
+        baseCost: 100,
+        levelCap: 1,
+        scaling: (baseCost) => baseCost
     },
     2: {
         id: 2,
-        name: "Coin Magnetizer",
-        desc: "Automatically collects coins within radius (5 units per level)",
-        baseCost: 1e4,
-        levelCap: 10,
-        scaling: (base, lvl) => base * Math.pow(2, lvl),
-        effect: (level) => level * 5
+        name: "Auto-Collect",
+        desc: "Automatically collects coins each second. +1 collected/sec per level.",
+        extraInfo: "",
+        baseCost: 1000,
+        levelCap: 6,
+        scaling: (baseCost, lvl) => baseCost * Math.pow(2, lvl)
     },
-	3: {
+    3: {
         id: 3,
-        name: "Coin Magnetizer",
-        desc: "Automatically collects coins within radius (5 units per level)",
-        baseCost: 1e4,
-        levelCap: 10,
-        scaling: (base, lvl) => base * Math.pow(2, lvl),
-        effect: (level) => level * 5
+        name: "Automation II",
+        desc: "Autobuys coin upgrades 7-10",
+        extraInfo: "",
+        baseCost: 10000,
+        levelCap: 1,
+        scaling: (baseCost) => baseCost
     },
-	4: {
+    4: {
         id: 4,
-        name: "Coin Magnetizer",
-        desc: "Automatically collects coins within radius (5 units per level)",
-        baseCost: 1e4,
-        levelCap: 10,
-        scaling: (base, lvl) => base * Math.pow(2, lvl),
-        effect: (level) => level * 5
+        name: "Forge Automation",
+        desc: "Autobuys all Forge upgrades",
+        baseCost: 100000,
+        levelCap: 1,
+        scaling: (baseCost) => baseCost
     },
-	5: {
+    5: {
         id: 5,
-        name: "Coin Magnetizer",
-        desc: "Automatically collects coins within radius (5 units per level)",
-        baseCost: 1e4,
-        levelCap: 10,
-        scaling: (base, lvl) => base * Math.pow(2, lvl),
-        effect: (level) => level * 5
-    },
+        name: "Automation III",
+        desc: "Autobuys coin upgrades 11-??",
+        extraInfo: "",
+        baseCost: 1e6,
+        levelCap: 1,
+        scaling: (baseCost) => baseCost
+    }
 };
 
 document.getElementById('change-name-btn').addEventListener('click', changePlayerName);
@@ -1315,18 +1314,13 @@ function initializeSaveSlots() {
         const hasMerchant = slot.data?.merchantCinematicShown || false;
         const hasForge = slot.data?.hasDoneForgeReset || false;
         const hasInfuse = slot.data?.hasDoneInfuseReset || false;
-        
-        // Use createdAt if available, fallback to timestamp (for backwards compatibility)
-        const creationDate = slot.data?.createdAt 
-            ? new Date(slot.data.createdAt).toLocaleDateString() 
-            : slot.data?.timestamp 
-                ? new Date(slot.data.timestamp).toLocaleDateString() 
-                : 'No date';
 
         // Round the displayed coin value
         displayCoins = slot.data ? formatNumber(Math.floor(slot.data.coins || 0)) : 0;
 
-        slotElement.innerHTML = `
+        const creationDate = new Date(slot.data?.createdOn || Date.now()).toLocaleDateString();
+
+slotElement.innerHTML = `
     <div class="slot-number">Slot ${slot.id}</div>
     ${slot.data ? `
         <div class="slot-data">
@@ -1337,8 +1331,9 @@ function initializeSaveSlots() {
                 '<div class="forge-unlocked">Forge Ignited</div>' :
                 (hasMerchant ?
                     '<div class="merchant-unlocked">Merchant Unlocked</div>' : ''))}
-            <div>Created on: ${creationDate}</div>` :
-            '<div class="no-data">No Save Data</div>'}
+            <div>Created on: ${creationDate}</div>
+        </div>` :
+        '<div class="no-data">No Save Data</div>'}
 `;
 
         // Reattach click handler
@@ -1510,7 +1505,7 @@ function showContinueButton() {
             upgrades: {},
             merchantCinematicShown: false,
             timestamp: Date.now(),
-			createdAt: Date.now()
+			createdOn: Date.now()
         };
 
         localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(newSave));
@@ -1609,7 +1604,13 @@ function getCurrencyColor(currency) {
 }
 
 function loadGame(saveData) {
-    // Create normalized save data
+    // Preserve original creation date from existing save
+    const originalCreationDate = saveData?.createdOn
+        ? saveData.createdOn
+        : saveData?.timestamp 
+            ? saveData.timestamp 
+            : Date.now();
+
     const fullSaveData = {
         coins: 0,
         upgrades: {
@@ -1618,7 +1619,8 @@ function loadGame(saveData) {
             }
         },
         merchantCinematicShown: false,
-        timestamp: Date.now(),
+        createdOn: originalCreationDate,
+        lastPlayed: Date.now(),
         ...saveData
     };
 
@@ -1817,6 +1819,11 @@ function startGame() {
     if (boostCoinsUnlocked && !boostSpawnInterval) {
         boostSpawnInterval = setInterval(spawnBoostCoin, 60000);
     }
+	
+	if (window.autoCollectInterval) {
+		clearInterval(window.autoCollectInterval);
+		window.autoCollectInterval = null;
+	}
 }
 
 function spawnCoin() {
@@ -2561,6 +2568,7 @@ function addHoverEffect(coin) {
         if (collected)
             return;
         collected = true;
+		coin.classList.add('collected');
 
         // Remove the coin from the activeCoins array
         const coinIndex = activeCoins.indexOf(coin);
@@ -3765,24 +3773,25 @@ function updateMerchantDisplay() {
 
                     return `
                         <div class="automation-upgrade-placeholder">
-                            <h4>${upg.name} (${currentLevel}/${upg.levelCap})</h4>
-                            <p>${upg.desc}</p>
-                            ${isMaxed ? 
-                                '<span class="automation-upgrade-maxed">MAXED</span>' :
-                                `<button class="buy-automation-btn" 
-                                    data-upgrade-id="${upg.id}"
-                                    ${!canAfford ? 'disabled' : ''}>
-                                    ${formatNumber(cost)} AC
-                                </button>`
-                            }
-                        </div>
+    <h4>${upg.name} (${currentLevel}/${upg.levelCap})
+        ${upg.extraInfo ? `<span class="info-button" data-tooltip="${upg.extraInfo}">i</span>` : ''}
+    </h4>
+    <p>${upg.desc}</p>
+    ${isMaxed ? 
+        '<span class="automation-upgrade-maxed">MAXED</span>' :
+        `<button class="buy-automation-btn" 
+            data-upgrade-id="${upg.id}"
+            ${!canAfford ? 'disabled' : ''}>
+            ${formatNumber(cost)} AC
+        </button>`
+    }
+</div>
                     `;
                 }).join('')}
             </div>
         </div>
     </div>
     `;
-
 }
 });
 
@@ -3889,6 +3898,24 @@ if (infuseButton) {
             purchaseAutomationUpgrade(upgradeId);
         });
     });
+	
+	document.querySelectorAll('.info-button').forEach(button => {
+    const tooltip = document.createElement('div');
+    tooltip.className = 'info-tooltip';
+    tooltip.textContent = button.dataset.tooltip;
+    document.body.appendChild(tooltip);
+    
+    button.addEventListener('mouseenter', (e) => {
+        const rect = button.getBoundingClientRect();
+        tooltip.style.display = 'block';
+        tooltip.style.left = `${rect.left + window.scrollX}px`;
+        tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    });
+    
+    button.addEventListener('mouseleave', () => {
+        tooltip.style.display = 'none';
+    });
+});
 	
 	// manual automation click for those who want it
 	const coreIcon = document.querySelector('.automation-core-icon');
@@ -4152,15 +4179,56 @@ function purchaseAutomationUpgrade(upgradeId) {
     const cost = Math.floor(upgrade.scaling(upgrade.baseCost, currentLevel));
     if ((saveData.automationCores || 0) < cost) return;
 
+    // Deduct cost normally
     saveData.automationCores -= cost;
     saveData.automationUpgrades = saveData.automationUpgrades || {};
     saveData.automationUpgrades[upgradeId] = {
         level: currentLevel + 1
     };
     
+    // Handle special automation behaviors
+    switch(upgradeId) {
+        case 1: // Automation I
+            autobuyCoinUpgrades(1, 6);
+            break;
+        case 3: // Automation II
+            autobuyCoinUpgrades(7, 10);
+            break;
+        case 4: // Forge Automation
+            autobuyForgeUpgrades();
+            break;
+    }
+    
     localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
     updateMerchantDisplay();
-    applyUpgradeEffects(); // If these upgrades affect gameplay
+    applyUpgradeEffects();
+}
+
+function autobuyCoinUpgrades(startId, endId) {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    for (let id = startId; id <= endId; id++) {
+        const upg = upgrades[id];
+        if (!upg) continue;
+        
+        const currentLevel = saveData.upgrades?.[id]?.level || 0;
+        if (currentLevel < upg.maxLevel) {
+            // Autobuy without spending coins
+            saveData.upgrades[id] = saveData.upgrades[id] || { level: 0 };
+            saveData.upgrades[id].level++;
+        }
+    }
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
+}
+
+function autobuyForgeUpgrades() {
+    const saveData = JSON.parse(localStorage.getItem(`saveSlot${currentSlotId}`)) || {};
+    Object.values(forgeUpgrades).forEach(upg => {
+        const currentLevel = saveData.forgeUpgrades?.[upg.id]?.level || 0;
+        if (currentLevel < upg.levelCap) {
+            saveData.forgeUpgrades[upg.id] = { level: currentLevel + 1 };
+        }
+    });
+    localStorage.setItem(`saveSlot${currentSlotId}`, JSON.stringify(saveData));
 }
 
 function formatTimeOffline(ms) {
@@ -4364,7 +4432,6 @@ function applyUpgradeEffects() {
     const spawnRateUpg2 = saveData.platinumUpgrades?.[2]?.level || 0;
     const additiveSpawnRateBonus = 1 + (0.10 * spawnRateUpg2);
     let spawnInterval = 3000 * Math.pow(0.9, spawnRateUpg1);
-	
 
     spawnInterval /= additiveSpawnRateBonus;
 
@@ -4379,6 +4446,38 @@ function applyUpgradeEffects() {
         if (gameActive)
             spawnCoin();
     }, spawnInterval);
+
+    // Handle auto-collect
+    const autoCollectLevel = saveData.automationUpgrades?.[2]?.level || 0;
+    if (autoCollectLevel > 0) {
+        if (window.autoCollectInterval) {
+            clearInterval(window.autoCollectInterval);
+        }
+
+        // Calculate dynamic interval based on level (1000ms divided by level)
+        const collectInterval = 1000 / autoCollectLevel;
+        window.autoCollectInterval = setInterval(() => {
+            // Collect for each coin type separately
+            const processCoinType = (selector, eventType) => {
+                const coins = Array.from(document.querySelectorAll(selector))
+                    .filter(coin => !coin.classList.contains('collected'))
+                    .slice(0, 1); // Collect 1 coin per type per interval
+
+                coins.forEach(coin => {
+                    coin.dispatchEvent(new(eventType === 'click' ? Event : MouseEvent)(eventType));
+                });
+            };
+
+            // Process each coin type with its own count
+            processCoinType('.coin:not(.boost-coin)', 'mouseenter');
+            processCoinType('.special-coin:not(.boost-coin)', 'mouseenter');
+            processCoinType('.platinum-coin:not(.boost-coin)', 'click');
+        }, collectInterval); // Dynamic interval
+
+    } else if (window.autoCollectInterval) {
+        clearInterval(window.autoCollectInterval);
+        window.autoCollectInterval = null;
+    }
 }
 
 document.querySelector('.merchant-btn').addEventListener('click', () => {
