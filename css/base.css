@@ -6,43 +6,27 @@ body {
   font-family: var(--font-ui);
   color: var(--text-1);
   background: var(--bg-1);
-  line-height: 1.4;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 h1,h2,h3,p { margin: 0; }
-button {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-button:focus-visible, .focus-ring:focus-visible {
-  outline: 0;
-  box-shadow: 0 0 0 3px var(--ring);
-  border-radius: var(--radius-md);
-}
+button { font: inherit; color: inherit; background: none; border: none; padding: 0; cursor: pointer; }
+button:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--ring); border-radius: 10px; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* Generic button styles */
+/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
   gap: .5ch;
   padding: .6rem 1rem;
-  border-radius: var(--radius-md);
+  border-radius: 10px;
   background: linear-gradient(180deg, #1b2333, #121826);
   border: 1px solid #1f2a3d;
   box-shadow: var(--shadow-2);
 }
 .btn:hover { background: #172032; }
-.btn.ghost {
-  background: transparent;
-  border: 1px solid #26334a;
-}
-.btn.ghost:hover {
-  background: #141c2b;
-}
+.btn.ghost { background: transparent; border: 1px solid #26334a; }
+.btn.ghost:hover { background: #141c2b; }
