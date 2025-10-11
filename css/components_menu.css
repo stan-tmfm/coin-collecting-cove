@@ -134,6 +134,7 @@
 
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .menu-header .coin-o {
-    vertical-align: -0.27em;
+    vertical-align: -0.26em;
   }
 }
+
