@@ -80,7 +80,7 @@
   font-weight: 700;
   color: var(--text-1);
   letter-spacing: 0.5px;
-  line-height: 1.2;
+  line-height: 2;
 }
 
 /* ===== Coins: perfect on desktop ===== */
@@ -90,7 +90,7 @@
   width: var(--coin-size);
   height: var(--coin-size);
   background: url("../img/coin.png") center/contain no-repeat;
-  transform: translateY(0.37em); 
+  transform: translateY(0.76em); 
   vertical-align: baseline;
   margin-left: -0.08em;
   margin-right: -0.08em;
@@ -105,11 +105,11 @@
 
 /* ===== Mobile / Short viewports ===== */
 @media (max-width: 900px), (max-height: 420px) {
-  .menu-header h1 { line-height: 1.08; }
+  .menu-header h1 { line-height: 2; }
 
   .coin-o {
     transform: none;
-    vertical-align: -0.24em;
+    vertical-align: -0.78em;
     --coin-size: 0.8em;
     margin-left: -0.06em;
     margin-right: -0.06em;
@@ -126,7 +126,7 @@
 
   .coin-o {
     --coin-size: 0.78em;
-    vertical-align: -0.25em;
+    vertical-align: -0.8em;
     margin-left: -0.05em;
     margin-right: -0.05em;
   }
