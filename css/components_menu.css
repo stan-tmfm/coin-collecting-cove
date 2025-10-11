@@ -53,3 +53,21 @@
 }
 .slot-title { font-weight: 600; margin-bottom: var(--space-1); }
 .slot-meta  { color: var(--text-2); font-size: .9rem; }
+
+.game-title { font-size: var(--h1); letter-spacing: .02em; } /* tighter title */
+
+.coin-o{
+  --coin-size: 1em;
+  display:inline-block; width:var(--coin-size); height:var(--coin-size);
+  background:url("../img/coin.png") center/contain no-repeat;
+  transform: translateY(0.25em);   /* baseline */
+  margin-left:-0.08em; margin-right:-0.08em;  /* tighter kerning */
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+
+.menu-header h1 {
+  font-size: clamp(4rem, 10vw, 6.5rem);
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: 0.5px;
+}
