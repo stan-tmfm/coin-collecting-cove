@@ -1,45 +1,29 @@
-.brand-mark {
-  font-size: 2rem;
-  opacity: .9;
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
-}
+/* Title: cleaner, no emoji, sized responsively */
 .game-title {
   font-size: var(--h1);
-  margin-top: var(--space-2);
-  letter-spacing: 0.5px;
-}
-.game-tagline {
-  margin-top: var(--space-2);
-  color: var(--text-2);
+  letter-spacing: .5px;
 }
 
-/* Panel content */
-.panel-title {
-  font-size: var(--h2);
-  margin-bottom: var(--space-4);
-  color: var(--text-2);
-  letter-spacing: .4px;
-  text-transform: uppercase;
-}
-
-/* Slots grid */
+/* Slots grid: 3-up desktop, 1-up mobile */
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
 }
-@media (max-width: 880px) {
+@media (max-width: 900px) {
   .slots-grid { grid-template-columns: 1fr; }
 }
 
+/* Card look = “game launcher” */
 .slot-card {
   text-align: left;
   background: linear-gradient(180deg, var(--card), #0e1420);
   border: 1px solid #222b3d;
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
+  border-radius: 16px; /* slightly tighter than panel */
+  padding: clamp(var(--space-5), 2vw, var(--space-6));
   transition: transform .15s ease, background .15s ease, border-color .15s ease;
   box-shadow: var(--shadow-2);
+  outline-offset: 2px; /* nicer focus on keyboard */
 }
 .slot-card:hover {
   background: var(--card-hover);
@@ -69,16 +53,16 @@
   font-size: .9rem;
 }
 
-/* Actions row */
+/* Actions */
 .menu-actions {
   margin-top: var(--space-6);
   display: flex;
   gap: var(--space-3);
   justify-content: flex-end;
 }
-@media (max-width: 480px) {
-  .menu-actions { justify-content: center; }
+@media (max-width: 520px) {
+  .menu-actions {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
 }
-
-/* Footer */
-.tiny { font-size: var(--tiny); color: var(--text-2); }
