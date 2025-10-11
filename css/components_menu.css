@@ -15,7 +15,7 @@
   .slots-grid { grid-template-columns: 1fr; }
 }
 
-/* Short viewports: use 2 columns when possible to reduce total height */
+/* Short viewports: 2 columns to reduce height */
 @media (max-height: 640px) and (min-width: 380px) {
   .slots-grid { grid-template-columns: repeat(2, 1fr); }
 }
@@ -30,12 +30,10 @@
   box-shadow: var(--shadow-2);
   transition: transform .15s ease, background .15s ease, border-color .15s ease;
   outline-offset: 2px;
-
-  /* height budget that adapts to viewport height */
   min-height: clamp(96px, 16vh, 140px);
 }
 
-/* Remove aspect ratio on narrow/short screens so height can shrink */
+/* Remove aspect ratio on narrow/short screens */
 @media (max-width: 900px), (max-height: 700px) {
   .slot-card { aspect-ratio: auto; }
 }
@@ -76,45 +74,60 @@
   letter-spacing: .02em;
 }
 
-.coin-o {
-  --coin-size: 0.85em;
-  display: inline-block;
-  width: var(--coin-size);
-  height: var(--coin-size);
-  background: url("../img/coin.png") center/contain no-repeat;
-  transform: translateY(0.45em);
-  margin-left: -0.08em;
-  margin-right: -0.08em;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
-}
-
+/* ===== Title & Coin Styling ===== */
 .menu-header h1 {
   font-size: clamp(2rem, 7.5vw, 6.5rem);
   font-weight: 700;
   color: var(--text-1);
   letter-spacing: 0.5px;
+  line-height: 1.05;
 }
 
-/* Keep words like C[coin]ve together on all widths */
+/* ===== Coins: perfect on desktop ===== */
+.coin-o {
+  --coin-size: 0.8em; /* slightly smaller than before */
+  display: inline-block;
+  width: var(--coin-size);
+  height: var(--coin-size);
+  background: url("../img/coin.png") center/contain no-repeat;
+  transform: translateY(0.3em); /* subtle lower alignment for balance */
+  vertical-align: baseline;
+  margin-left: -0.08em;
+  margin-right: -0.08em;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+
+/* prevent wrapping */
 .coin-o::before,
 .coin-o::after {
-  content: "\2060"; /* WORD JOINER (U+2060): prevents a line break */
+  content: "\2060"; /* WORD JOINER */
 }
-/* Narrow phones (portrait). Keep the title on one line without a big jump. */
-@media (max-width: 430px) {
+
+/* ===== Mobile / Short viewports ===== */
+@media (max-width: 900px), (max-height: 420px) {
+  .menu-header h1 { line-height: 1.08; }
+
+  .coin-o {
+    transform: none;
+    vertical-align: -0.10em;
+    --coin-size: 0.8em; /* smaller mobile coins */
+    margin-left: -0.06em;
+    margin-right: -0.06em;
+  }
+}
+
+/* ===== Ultra-narrow portrait ===== */
+@media (max-width: 414px) {
   .menu-header h1 {
-    white-space: nowrap;             /* don't wrap the title */
-    /* keep the same fluid feel but just a touch smaller on very narrow widths */
-    font-size: clamp(1.55rem, 6.2vw, 2.25rem);
-    /* gently tighten tracking so we don't need a big size drop */
+    white-space: nowrap;
+    font-size: clamp(1.55rem, 6.2vw, 2.2rem);
     letter-spacing: 0.25px;
   }
 
-  /* Make the coins fractionally smaller and closer to neighbors */
   .coin-o {
-    --coin-size: 0.9em;
-    margin-left: -0.06em;
-    margin-right: -0.06em;
-    transform: translateY(0.18em);
+    --coin-size: 0.78em;
+    vertical-align: -0.08em;
+    margin-left: -0.05em;
+    margin-right: -0.05em;
   }
 }
