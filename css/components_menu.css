@@ -109,7 +109,7 @@
 
   .coin-o {
     transform: none;
-    vertical-align: -0.3em;
+    vertical-align: -0.25em;
     --coin-size: 0.8em;
     margin-left: -0.06em;
     margin-right: -0.06em;
@@ -126,7 +126,7 @@
 
   .coin-o {
     --coin-size: 0.78em;
-    vertical-align: -0.3em;
+    vertical-align: -0.25em;
     margin-left: -0.05em;
     margin-right: -0.05em;
   }
