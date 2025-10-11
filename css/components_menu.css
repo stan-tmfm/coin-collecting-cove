@@ -1,68 +1,56 @@
-/* Title: cleaner, no emoji, sized responsively */
-.game-title {
-  font-size: var(--h1);
-  letter-spacing: .5px;
-}
+/* Cleaner title */
+.game-title { font-size: var(--h1); letter-spacing: .5px; }
 
-/* Slots grid: 3-up desktop, 1-up mobile */
+/* Grid adapts to width; we also adapt to height below */
 .slots-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-4);
 }
-@media (max-width: 900px) {
-  .slots-grid { grid-template-columns: 1fr; }
-}
 
-/* Card look = “game launcher” */
+/* Cards sized to fit without scrolling, but with future room */
 .slot-card {
   text-align: left;
   background: linear-gradient(180deg, var(--card), #0e1420);
   border: 1px solid #222b3d;
-  border-radius: 16px; /* slightly tighter than panel */
+  border-radius: 16px;
   padding: clamp(var(--space-5), 2vw, var(--space-6));
-  transition: transform .15s ease, background .15s ease, border-color .15s ease;
   box-shadow: var(--shadow-2);
-  outline-offset: 2px; /* nicer focus on keyboard */
+  transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  outline-offset: 2px;
+
+  /* Height budget: never too tall for the viewport */
+  min-height: clamp(110px, 18vh, 150px);
+  aspect-ratio: 16 / 9; /* keeps space for future preview/badges without growing tall */
 }
-.slot-card:hover {
-  background: var(--card-hover);
-  transform: translateY(-2px);
-  border-color: #2a3852;
-}
+.slot-card:hover { background: var(--card-hover); transform: translateY(-2px); border-color: #2a3852; }
 .slot-card:active { transform: translateY(0); }
 
 .slot-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: .5ch;
-  padding: .25rem .55rem;
-  border-radius: 999px;
-  background: #0d1522;
-  border: 1px solid #22314a;
-  color: var(--text-2);
-  font-size: var(--tiny);
-  margin-bottom: var(--space-3);
+  display: inline-flex; align-items: center; gap: .5ch;
+  padding: .25rem .55rem; border-radius: 999px;
+  background: #0d1522; border: 1px solid #22314a;
+  color: var(--text-2); font-size: var(--tiny); margin-bottom: var(--space-3);
 }
-.slot-title {
-  font-weight: 600;
-  margin-bottom: var(--space-1);
-}
-.slot-meta {
-  color: var(--text-2);
-  font-size: .9rem;
+.slot-title { font-weight: 600; margin-bottom: var(--space-1); }
+.slot-meta  { color: var(--text-2); font-size: .9rem; }
+
+/* WIDTH-DRIVEN changes (phones): stack vertically */
+@media (max-width: 900px) {
+  .slots-grid { grid-template-columns: 1fr; }
 }
 
-/* Actions */
-.menu-actions {
-  margin-top: var(--space-6);
-  display: flex;
-  gap: var(--space-3);
-  justify-content: flex-end;
+/* HEIGHT-DRIVEN changes (short screens & landscape phones):
+   squeeze vertical space by switching to 2 or 3 columns to avoid scroll */
+@media (max-height: 760px) and (min-width: 700px) {
+  .slots-grid { grid-template-columns: repeat(3, 1fr); }
 }
-@media (max-width: 520px) {
-  .menu-actions {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+@media (max-height: 640px) and (min-width: 520px) {
+  .slots-grid { grid-template-columns: repeat(3, 1fr); }
+  .slot-card { min-height: clamp(100px, 16vh, 140px); aspect-ratio: 15/9; }
+}
+@media (max-height: 520px) {
+  .slots-grid { grid-template-columns: repeat(3, 1fr); }
+  .slot-card { min-height: clamp(90px, 14vh, 120px); aspect-ratio: 14/9; }
+  .game-title { font-size: clamp(1.2rem, 3.4vw, 1.6rem); }
 }
