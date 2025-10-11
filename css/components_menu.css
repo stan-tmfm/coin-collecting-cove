@@ -100,3 +100,21 @@
 .coin-o::after {
   content: "\2060"; /* WORD JOINER (U+2060): prevents a line break */
 }
+/* Narrow phones (portrait). Keep the title on one line without a big jump. */
+@media (max-width: 430px) {
+  .menu-header h1 {
+    white-space: nowrap;             /* don't wrap the title */
+    /* keep the same fluid feel but just a touch smaller on very narrow widths */
+    font-size: clamp(1.55rem, 6.2vw, 2.25rem);
+    /* gently tighten tracking so we don't need a big size drop */
+    letter-spacing: 0.25px;
+  }
+
+  /* Make the coins fractionally smaller and closer to neighbors */
+  .coin-o {
+    --coin-size: 0.9em;
+    margin-left: -0.06em;
+    margin-right: -0.06em;
+    transform: translateY(0.18em);
+  }
+}
