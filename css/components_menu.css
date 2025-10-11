@@ -109,8 +109,8 @@
 
   .coin-o {
     transform: none;
-    vertical-align: -0.10em;
-    --coin-size: 0.8em; /* smaller mobile coins */
+    vertical-align: -0.20em;
+    --coin-size: 0.8em;
     margin-left: -0.06em;
     margin-right: -0.06em;
   }
