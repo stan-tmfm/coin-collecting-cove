@@ -5,32 +5,41 @@
     linear-gradient(180deg, var(--bg-2), var(--bg-1));
 }
 
-/* Centered shell */
-.menu-shell {
-  min-height: 100dvh;
+/* Root layout: safe on iOS, perfectly centered */
+.menu-root {
+  min-height: 100svh;                /* better than 100vh on mobile */
+  display: grid;
+  grid-template-rows: auto 1fr;      /* header + center panel */
+  gap: var(--space-5);
+  padding:
+    calc(env(safe-area-inset-top, 0px) + var(--space-6))
+    max(var(--space-6), 3vw)
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-6));
+}
+
+/* Header is simple — just the title */
+.menu-header {
   display: grid;
   place-items: center;
-  padding: var(--space-6);
-}
-
-/* Panel stack */
-.menu-header {
   text-align: center;
-  margin-bottom: var(--space-6);
 }
 
+/* The panel stays centered and width-capped */
 .menu-panel {
-  width: min(900px, 95vw);
+  margin: 0 auto;
+  width: min(980px, 95vw);
   background: var(--panel);
   border: 1px solid #1e2a3d;
   border-radius: var(--radius-lg);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow-1);
-  padding: var(--space-6);
+  padding: clamp(var(--space-5), 2.2vw, var(--space-8));
 }
 
-.menu-footer {
-  text-align: center;
-  margin-top: var(--space-6);
+.panel-title {
+  font-size: var(--h2);
+  margin-bottom: var(--space-4);
   color: var(--text-2);
+  letter-spacing: .4px;
+  text-transform: uppercase;
 }
