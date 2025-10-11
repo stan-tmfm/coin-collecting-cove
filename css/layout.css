@@ -1,45 +1,57 @@
-/* Background gradient for the menu screen (no animation yet) */
+/* Background */
 .menu-bg {
   background:
     radial-gradient(1200px 600px at 50% -10%, #17304f 0%, transparent 60%),
     linear-gradient(180deg, var(--bg-2), var(--bg-1));
 }
 
-/* Root layout: safe on iOS, perfectly centered */
+/* Root: fills viewport, centers content, respects notches/toolbars */
 .menu-root {
-  min-height: 100svh;                /* better than 100vh on mobile */
-  display: grid;
-  grid-template-rows: auto 1fr;      /* header + center panel */
-  gap: var(--space-5);
+  height: 100svh;
   padding:
-    calc(env(safe-area-inset-top, 0px) + var(--space-6))
+    calc(env(safe-area-inset-top, 0px) + var(--space-4))
     max(var(--space-6), 3vw)
-    calc(env(safe-area-inset-bottom, 0px) + var(--space-6));
-}
+    calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
 
-/* Header is simple — just the title */
-.menu-header {
   display: grid;
-  place-items: center;
-  text-align: center;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  align-items: center; /* centers the panel vertically */
+  gap: var(--space-5);
 }
 
-/* The panel stays centered and width-capped */
+/* Header */
+.menu-header { text-align: center; }
+
+/* Panel stays within viewport without causing scroll */
 .menu-panel {
-  margin: 0 auto;
-  width: min(980px, 95vw);
+  width: min(980px, 96vw);
+  /* Cap height so three cards + title fit; content scales down via media rules */
+  max-height: calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 10vh);
   background: var(--panel);
   border: 1px solid #1e2a3d;
   border-radius: var(--radius-lg);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow-1);
   padding: clamp(var(--space-5), 2.2vw, var(--space-8));
+  display: grid;
+  grid-auto-rows: min-content;
+  row-gap: var(--space-4);
+  overflow: hidden; /* no internal panel scrollbars */
 }
 
+/* Title inside panel */
 .panel-title {
   font-size: var(--h2);
-  margin-bottom: var(--space-4);
   color: var(--text-2);
   letter-spacing: .4px;
   text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+/* Compact mode for short screens (landscape phones, small windows) */
+@media (max-height: 640px) {
+  .menu-root { gap: var(--space-3); }
+  .menu-panel { padding: var(--space-5); }
+  .panel-title { font-size: clamp(.95rem, 2.2vw, 1.1rem); }
 }
