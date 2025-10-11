@@ -5,14 +5,20 @@
     linear-gradient(180deg, var(--bg-2), var(--bg-1));
 }
 
-/* ===== Root layout ===== */
+/* ===== Root layout =====
+   Always treat title + panel as a single stack:
+   - two min-content rows
+   - centered as a unit
+   - small, consistent gap between them
+*/
 .menu-root {
   height: 100svh;
   display: grid;
-  grid-template-rows: auto 1fr;      /* title, then panel */
+  grid-template-rows: min-content min-content; /* never a stretchy 1fr row */
   justify-items: center;
-  align-items: center;
-  row-gap: var(--space-5);
+  align-items: start;          /* items sit at top of their own rows */
+  align-content: center;       /* center the two-row block in the viewport */
+  row-gap: var(--space-3);     /* title–panel spacing */
 
   padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-4));
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
@@ -24,7 +30,7 @@
   text-align: center;
 }
 
-/* ===== Panel base ===== */
+/* ===== Panel base (mobile/tablet base) ===== */
 .menu-panel {
   position: relative;
   width: 100%;
@@ -41,6 +47,7 @@
   grid-auto-rows: min-content;
   row-gap: var(--space-4);
 
+  /* caps only for large screens; mobile override below removes this */
   max-height: calc(
     100svh - env(safe-area-inset-top, 0px)
     - env(safe-area-inset-bottom, 0px)
@@ -59,24 +66,9 @@
   margin-bottom: var(--space-2);
 }
 
-/* ===== Desktop ===== */
+/* ===== Desktop visuals (keep the wide, darker container) ===== */
 @media (min-width: 1024px) {
-  /* Center title + panel as one unit */
-  .menu-root {
-    display: grid;
-    grid-template-rows: min-content min-content; /* no stretchy row */
-    align-items: start;
-    align-content: center; /* vertically center the two-row block */
-    row-gap: var(--space-3);
-  }
-
-  .menu-header {
-    align-self: auto;
-    margin-bottom: 0;
-  }
-
   .menu-panel {
-    align-self: auto;
     max-width: 1200px;
     background: linear-gradient(180deg, #111827f5, #0b1220f5);
     border: 1px solid #2a3852;
@@ -86,7 +78,9 @@
   }
 }
 
-/* ===== Mobile / short screens ===== */
+/* ===== Mobile / short screens =====
+   Enable scroll + use dynamic viewport height.
+   Let the panel grow so 2-row slot layouts stay inside the container. */
 @media (max-width: 900px), (max-height: 600px) {
   html, body {
     height: auto;
@@ -94,17 +88,15 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  /* Use dynamic viewport height so it fills screen when bars collapse */
   .menu-root {
     height: auto;
-    min-height: 100dvh; /* dynamic viewport height */
-    align-content: start;
+    min-height: 100dvh;    /* dynamic height for iOS bars */
+    /* keep align-content:center so the title stays “attached” to panel */
     row-gap: var(--space-4);
   }
 
-  /* Allow container to grow to include second row of slots */
   .menu-panel {
-    max-height: none; /* remove height cap so both rows stay inside container */
+    max-height: none;      /* allow container to wrap all slot rows */
     padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
   }
 }
