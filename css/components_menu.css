@@ -74,6 +74,6 @@
 
 @media (max-width: 600px) {
   .menu-header h1 {
-    font-size: clamp(1.8rem, 8vw, 3rem);
+    font-size: clamp(1.2rem, 2vw, 2rem);
   }
 }
