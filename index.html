@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Coin Collecting Cove</title>
 
-  <!-- CSS order matters: variables → base → layout → components → utilities -->
   <link rel="stylesheet" href="css/variables.css">
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
@@ -13,19 +12,15 @@
   <link rel="stylesheet" href="css/utilities.css">
 </head>
 <body class="menu-bg">
-
-  <main class="menu-shell">
+  <main class="menu-root">
     <header class="menu-header">
-      <div class="brand-mark" aria-hidden="true">🌊</div>
       <h1 class="game-title">Coin Collecting Cove</h1>
-      <p class="game-tagline">Jump in. Collect. Watch the numbers rise.</p>
     </header>
 
-    <section class="menu-panel">
-      <h2 class="panel-title">Select a Save Slot</h2>
+    <section class="menu-panel" role="region" aria-labelledby="panel-title">
+      <h2 id="panel-title" class="panel-title">Select a Save Slot</h2>
 
       <div class="slots-grid">
-        <!-- purely visual for now -->
         <button class="slot-card" type="button" aria-label="Save Slot 1">
           <div class="slot-badge">Slot 1</div>
           <div class="slot-title">No save data</div>
@@ -50,10 +45,6 @@
         <button class="btn ghost" type="button">Credits</button>
       </div>
     </section>
-
-    <footer class="menu-footer">
-      <p class="tiny">Tip: CCC is designed for both mobile and desktop. Tap, drag, or mouse—your choice.</p>
-    </footer>
   </main>
 
   <script src="js/app.js"></script>
