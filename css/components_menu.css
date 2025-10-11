@@ -138,4 +138,45 @@
   }
 }
 
+/* ===== Panel header (title + actions) ===== */
+.panel-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
 
+.panel-actions{ display:flex; align-items:center; gap: var(--space-3); }
+
+/* ===== Buttons ===== */
+.btn{
+  --btn-bg: #0f1626;
+  --btn-border: #22314a;
+  --btn-bg-hover: #141d30;
+  --btn-border-hover: #2a3b58;
+
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height: 40px;
+  padding: 0 .9rem;
+  border-radius: 10px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--text-1);
+  font-weight: 600;
+  letter-spacing: .2px;
+  transition: background .15s ease, border-color .15s ease, transform .1s ease;
+}
+.btn:hover{ background: var(--btn-bg-hover); border-color: var(--btn-border-hover); }
+.btn:active{ transform: translateY(1px); }
+
+.btn-ghost{ opacity:.9; }
+.btn-ghost:hover{ opacity:1; }
+
+/* Mobile: stack actions under the title, make button full-width */
+@media (max-width: 900px){
+  .panel-header{ flex-direction: column; align-items: stretch; gap: var(--space-3); }
+  .panel-actions .btn{ width: 100%; }
+}
