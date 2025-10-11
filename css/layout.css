@@ -5,29 +5,34 @@
     linear-gradient(180deg, var(--bg-2), var(--bg-1));
 }
 
-/* Root: fills viewport, centers content, respects notches/toolbars */
+/* Root fills visual viewport and stays centered */
 .menu-root {
   height: 100svh;
-  padding:
-    calc(env(safe-area-inset-top, 0px) + var(--space-4))
-    max(var(--space-6), 3vw)
-    calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
-
   display: grid;
   grid-template-rows: auto 1fr;
   justify-items: center;
-  align-items: center; /* centers the panel vertically */
-  gap: var(--space-5);
+  align-items: center;
+  row-gap: var(--space-5);
+
+  /* use safe areas on all sides */
+  padding-top: calc(env(safe-area-inset-top, 0px) + var(--space-4));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--space-4));
+  padding-left: max(env(safe-area-inset-left, 0px), var(--space-6), 3vw);
+  padding-right:max(env(safe-area-inset-right,0px), var(--space-6), 3vw);
 }
 
-/* Header */
-.menu-header { text-align: center; }
-
-/* Panel stays within viewport without causing scroll */
+/* Panel will never overflow horizontally now */
 .menu-panel {
-  width: min(980px, 96vw);
-  /* Cap height so three cards + title fit; content scales down via media rules */
-  max-height: calc(100svh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 10vh);
+  width: 100%;
+  max-width: 980px;
+  /* cap vertical size so it never pushes past the viewport */
+  max-height: calc(100svh
+    - env(safe-area-inset-top, 0px)
+    - env(safe-area-inset-bottom, 0px)
+    - 2 * var(--space-4)   /* root top/bottom padding */
+    - 3.5rem               /* approx title+gap */
+  );
+
   background: var(--panel);
   border: 1px solid #1e2a3d;
   border-radius: var(--radius-lg);
@@ -37,21 +42,23 @@
   display: grid;
   grid-auto-rows: min-content;
   row-gap: var(--space-4);
-  overflow: hidden; /* no internal panel scrollbars */
+  overflow: clip; /* prevents internal scrollbars and hard clipping edges */
 }
 
-/* Title inside panel */
 .panel-title {
   font-size: var(--h2);
   color: var(--text-2);
-  letter-spacing: .4px;
   text-transform: uppercase;
+  letter-spacing: .4px;
   margin-bottom: var(--space-2);
 }
 
-/* Compact mode for short screens (landscape phones, small windows) */
-@media (max-height: 640px) {
-  .menu-root { gap: var(--space-3); }
-  .menu-panel { padding: var(--space-5); }
+/* Compact for short screens */
+@media (max-height: 700px) {
+  .menu-root { row-gap: var(--space-3); }
+  .menu-panel { padding: var(--space-5); row-gap: var(--space-3); }
+}
+@media (max-height: 600px) {
+  .menu-panel { padding: var(--space-4); }
   .panel-title { font-size: clamp(.95rem, 2.2vw, 1.1rem); }
 }
