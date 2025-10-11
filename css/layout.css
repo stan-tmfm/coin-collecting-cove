@@ -102,14 +102,9 @@
     row-gap: var(--space-4);
   }
 
-  /* Ensure container fills new dynamic height */
+  /* Allow container to grow to include second row of slots */
   .menu-panel {
-    max-height: calc(
-      100dvh
-      - env(safe-area-inset-top, 0px)
-      - env(safe-area-inset-bottom, 0px)
-      - 2 * var(--space-4)
-      - 3.5rem
-    );
+    max-height: none; /* remove height cap so both rows stay inside container */
+    padding-bottom: calc(var(--space-8) + env(safe-area-inset-bottom, 0px));
   }
 }
