@@ -1,0 +1,36 @@
+/* Background gradient for the menu screen (no animation yet) */
+.menu-bg {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #17304f 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg-2), var(--bg-1));
+}
+
+/* Centered shell */
+.menu-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+}
+
+/* Panel stack */
+.menu-header {
+  text-align: center;
+  margin-bottom: var(--space-6);
+}
+
+.menu-panel {
+  width: min(900px, 95vw);
+  background: var(--panel);
+  border: 1px solid #1e2a3d;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-1);
+  padding: var(--space-6);
+}
+
+.menu-footer {
+  text-align: center;
+  margin-top: var(--space-6);
+  color: var(--text-2);
+}
