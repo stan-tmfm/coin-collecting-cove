@@ -1,3 +1,4 @@
+/* ===== Title & Basic ===== */
 .game-title {
   font-size: var(--h1);
   letter-spacing: .5px;
@@ -69,11 +70,6 @@
 .slot-title { font-weight: 600; margin-bottom: var(--space-1); }
 .slot-meta  { color: var(--text-2); font-size: .9rem; }
 
-.game-title {
-  font-size: var(--h1);
-  letter-spacing: .02em;
-}
-
 /* ===== Title & Coin Styling ===== */
 .menu-header h1 {
   font-size: clamp(2rem, 7.5vw, 6.5rem);
@@ -83,24 +79,25 @@
   line-height: 1.2;
 }
 
-/* ===== Coins: perfect on desktop ===== */
+/* ===== Coins: desktop-first, tuned for mobile via breakpoints ===== */
 .coin-o {
-  --coin-size: 0.8em; /* slightly smaller than before */
+  --coin-size: 0.6em;
   display: inline-block;
   width: var(--coin-size);
   height: var(--coin-size);
   background: url("../img/coin.png") center/contain no-repeat;
-  transform: translateY(0.38em); 
+  transform: translateY(0.45em); /* nudge to vertically center with caps */
   vertical-align: baseline;
-  margin-left: -0.08em;
-  margin-right: -0.08em;
+  margin-left: 0em;
+  margin-right: 0em;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,.35));
+  /* add an accessible name if needed via aria, kept purely presentational here */
 }
 
-/* prevent wrapping */
+/* prevent wrapping artifacts near the coin */
 .coin-o::before,
 .coin-o::after {
-  content: "\2060"; /* WORD JOINER */
+  content: "\2060"; /* WORD JOINER prevents awkward breaks */
 }
 
 /* ===== Mobile / Short viewports ===== */
@@ -110,13 +107,13 @@
   .coin-o {
     transform: none;
     vertical-align: -0.31em;
-    --coin-size: 0.8em;
-    margin-left: -0.06em;
-    margin-right: -0.06em;
+    --coin-size: 0.6em;
+    margin-left: 0em;
+    margin-right: 0em;
   }
 }
 
-/* ===== Ultra-narrow portrait ===== */
+/* Ultra-narrow portrait */
 @media (max-width: 414px) {
   .menu-header h1 {
     white-space: nowrap;
@@ -125,16 +122,18 @@
   }
 
   .coin-o {
-    --coin-size: 0.78em;
+    --coin-size: 0.58em;
     vertical-align: -0.26em;
-    margin-left: -0.05em;
-    margin-right: -0.05em;
+    margin-left: 0em;
+    margin-right: 0em;
   }
 }
 
+/* Target mobile landscape with coarse pointer and short height (phones) */
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .menu-header .coin-o {
     vertical-align: -0.25em;
+    --coin-size: 0.58em;
   }
 }
 
@@ -147,7 +146,14 @@
   margin-bottom: var(--space-2);
 }
 
-.panel-actions{ display:flex; align-items:center; gap: var(--space-3); }
+/* small tweak to nudge the manage button up slightly (balances optical centers) */
+.panel-actions{ 
+  display:flex; 
+  align-items:center; 
+  gap: var(--space-3);
+  /* move actions up a tiny bit to better align with the title baseline */
+  transform: translateY(-0.08rem);
+}
 
 /* ===== Buttons ===== */
 .btn{
