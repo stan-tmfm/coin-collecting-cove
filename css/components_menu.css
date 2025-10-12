@@ -199,6 +199,6 @@
   and (min-height: 744px) and (min-width: 744px)
   and (max-height: 1366px) and (max-width: 1366px) {
 	  .menu-header .coin-o {
-    vertical-align: 0.01em;
+    vertical-align: 0.02em;
   }
 }
