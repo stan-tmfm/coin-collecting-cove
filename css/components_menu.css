@@ -188,6 +188,10 @@
 }
 
 /* For iPad */
+@media (hover: none) and (pointer: coarse) {
+  .menu-header .coin-o {
+    transform: translateY(0); /* neutralize the desktop push-down */
+  }
 /* Portrait */
 @media (hover: none) and (pointer: coarse)
   and (min-width: 744px) and (min-height: 744px)
