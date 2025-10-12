@@ -86,7 +86,7 @@
   width: var(--coin-size);
   height: var(--coin-size);
   background: url("../img/coin.png") center/contain no-repeat;
-  transform: translateY(0.45em); /* nudge to vertically center with caps */
+  transform: translateY(0.46em); /* nudge to vertically center with caps */
   vertical-align: baseline;
   margin-left: 0em;
   margin-right: 0em;
