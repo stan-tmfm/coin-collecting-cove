@@ -187,10 +187,10 @@
   .panel-actions .btn{ width: 100%; }
 }
 
-/* For iPads */
+/* For iPad */
 @media (pointer: coarse) and (min-width: 700px) and (max-width: 1024px) {
   .menu-header .coin-o {
     /* Slightly higher than the mobile default (-0.40em) */
-    vertical-align: -0.46em;
+    vertical-align: -0.36em;
   }
 }
