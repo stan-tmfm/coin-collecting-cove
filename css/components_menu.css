@@ -106,7 +106,7 @@
 
   .coin-o {
     transform: none;
-    vertical-align: -0.39em;
+    vertical-align: -0.4em;
     --coin-size: 0.6em;
     margin-left: 0em;
     margin-right: 0em;
@@ -123,7 +123,7 @@
 
   .coin-o {
     --coin-size: 0.58em;
-    vertical-align: -0.34em;
+    vertical-align: -0.35em;
     margin-left: 0em;
     margin-right: 0em;
   }
@@ -132,7 +132,7 @@
 /* Target mobile landscape with coarse pointer and short height (phones) */
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .menu-header .coin-o {
-    vertical-align: -0.33em;
+    vertical-align: -0.34em;
     --coin-size: 0.58em;
   }
 }
