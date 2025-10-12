@@ -200,7 +200,7 @@
   and (max-width: 1366px) and (max-height: 1366px)
   and (orientation: portrait) {
   .menu-header .coin-o {
-    vertical-align: -0.46em; /* adjust to taste ±0.01–0.02 */
+    vertical-align: -0.38em;
   }
 }
 
@@ -210,6 +210,6 @@
   and (max-width: 1366px) and (max-height: 1366px)
   and (orientation: landscape) {
   .menu-header .coin-o {
-    vertical-align: -0.54em; /* now unaffected by desktop transform */
+    vertical-align: -0.46em;
   }
 }
