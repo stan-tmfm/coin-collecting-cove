@@ -248,11 +248,3 @@
   }
 }
 
-/* phone landscape only (should probably stay at the bottom of the file) */
-@media (orientation: landscape) and (max-height: 550px) and (pointer: coarse) {
-  .menu-header .coin-o {
-    vertical-align: -0.33em;
-    --coin-size: 0.58em;
-    transform: translateY(0);
-  }
-}
