@@ -1,15 +1,22 @@
-:root{
+:root {
   /* Colors */
-  --bg-1: #0a0f1a;         /* deep midnight */
-  --bg-2: #0f1b2e;         /* ocean dusk */
-  --panel: #0f1420cc;      /* translucent panel */
-  --card: #141a27;         /* slot card base */
-  --card-hover: #182133;   /* slot hover */
-  --text-1: #e8edf7;       /* high contrast */
-  --text-2: #c2cbe0;       /* secondary */
-  --accent: #58b8ff;       /* soft aqua */
-  --accent-2: #7de4c7;     /* minty secondary */
-  --ring: #6fb6ff55;       /* focus ring */
+  --bg-1: #0a0f1a;
+  --bg-2: #0f1b2e;
+  --panel: #0f1420cc;
+  --card: #141a27;
+  --card-hover: #182133;
+  --text-1: #e8edf7;
+  --text-2: #c2cbe0;
+  --accent: #58b8ff;
+  --accent-2: #7de4c7;
+  --ring: #6fb6ff55;
+
+  /* Animated background base */
+  --bg-3: hsl(188 60% 50%);
+
+  /* Density & speed */
+  --coin-step: clamp(72px, 6.5vw, 120px); /* spacing: bigger = fewer tiles */
+  --coin-speed: 3s;
 
   /* Sizing & spacing */
   --radius-lg: 18px;
