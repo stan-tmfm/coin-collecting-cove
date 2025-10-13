@@ -148,7 +148,7 @@
 /* Target mobile landscape with coarse pointer and short height (phones) */
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .menu-header .coin-o {
-    vertical-align: -0.32em;
+    vertical-align: -0.30em;
     --coin-size: 0.58em;
   }
 }
