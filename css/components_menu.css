@@ -248,3 +248,11 @@
   }
 }
 
+/* phone landscape only (exclude iPads and larger tablets) */
+@media (orientation: landscape) and (max-height: 550px) and (max-width: 812px) and (pointer: coarse) {
+  .menu-header .coin-o {
+    vertical-align: -0.36em;
+    --coin-size: 0.58em;
+    transform: translateY(0);
+  }
+}
