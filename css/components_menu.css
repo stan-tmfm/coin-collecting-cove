@@ -256,7 +256,7 @@
 /* Phone landscape only (exclude iPads & tablets) */
 @media (orientation: landscape) and (max-height: 550px) and (max-width: 812px) and (pointer: coarse) {
   .menu-header .coin-o {
-    vertical-align: -0.33em;
+    vertical-align: -0.1em;
     --coin-size: 0.58em;
     transform: translateY(0);
   }
