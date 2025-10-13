@@ -148,7 +148,7 @@
 /* Target mobile landscape with coarse pointer and short height (phones) */
 @media (orientation: landscape) and (max-height: 480px) and (pointer: coarse) {
   .menu-header .coin-o {
-    vertical-align: -0.30em;
+    vertical-align: -0.34em;
     --coin-size: 0.58em;
   }
 }
@@ -249,6 +249,10 @@
 }
 
 /* iPad/tablet landscape: fixes some issue with some thing */
-@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-aspect-ratio: 4/3) {
-  .menu-header .coin-o { vertical-align: -0.40em; transform: translateY(0); }
+@media (hover: none) and (pointer: coarse) and (orientation: landscape)
+  and (min-width: 820px) and (max-aspect-ratio: 1.6/1) {
+  .menu-header .coin-o {
+    vertical-align: -0.40em;
+    transform: translateY(0);
+  }
 }
