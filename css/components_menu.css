@@ -257,9 +257,9 @@
 }
 
 /* iPhone landscape: fixes some issue with some thing */
-@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (max-height: 430px) and (max-width: 900px) {
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) and (min-aspect-ratio: 1.6/1) and (max-width: 900px) {
   .menu-header .coin-o {
-    vertical-align: -0.32em;
+    vertical-align: -0.33em;
     transform: translateY(0);
   }
 }
