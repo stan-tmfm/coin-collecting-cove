@@ -181,15 +181,16 @@
 /* Portrait */
 @media (pointer: coarse) and (max-aspect-ratio: 1/1) {
   .hud-bottom {
-    /* less vertical real estate */
-    height: min(28svh, 240px);
-    grid-auto-rows: minmax(56px, 1fr);
-    gap: 8px;
-    padding: 8px;
-    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+    height: min(22svh, 180px);
+    grid-auto-rows: minmax(48px, 1fr);
+    gap: 6px;
+    padding: 6px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
   }
+
   .menu-btn {
-    font-size: clamp(16px, 5.2vw, 26px);
+    font-size: clamp(15px, 4.8vw, 24px);
+    line-height: 1.1;
   }
 }
 
