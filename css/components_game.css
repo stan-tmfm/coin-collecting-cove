@@ -179,7 +179,7 @@
 /* Portrait */
 @media (pointer: coarse) and (max-aspect-ratio: 1/1) {
   .hud-bottom {
-    height: min(18svh, 140px);
+    height: min(20svh, 160px);
     grid-auto-rows: minmax(48px, 1fr);
     gap: 6px;
     padding: 6px;
