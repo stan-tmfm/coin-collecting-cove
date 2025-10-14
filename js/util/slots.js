@@ -1,5 +1,4 @@
-// /js/util/slots.js
-// Makes all save slots clickable and notifies the caller which slot was chosen.
+import { setHasOpenedSaveSlot } from './storage.js';
 
 export function initSlots(onSelect) {
   const slots = document.querySelectorAll('.slot-card');
@@ -7,10 +6,9 @@ export function initSlots(onSelect) {
   slots.forEach((btn, idx) => {
     const slotNum = idx + 1;
 
-    // Click works for mouse and touch (modern mobile browsers synthesize it)
     btn.addEventListener('click', (ev) => {
-      // Keep default button behavior minimal and consistent
       ev.preventDefault();
+      setHasOpenedSaveSlot(true);          // ← persist the flag
       if (typeof onSelect === 'function') onSelect(slotNum, ev);
     });
   });
