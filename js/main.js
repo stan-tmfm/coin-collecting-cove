@@ -1,6 +1,14 @@
+// /js/main.js
 import { initSlots } from './util/slots.js';
 
 const STORAGE_KEY = 'hasOpenedSaveSlot';
+
+export const AREAS = {
+  MENU: 0,
+  STARTER_COVE: 1,
+};
+
+let currentArea = AREAS.MENU;
 
 function getHasOpenedSaveSlot() {
   return localStorage.getItem(STORAGE_KEY) === 'true';
@@ -16,15 +24,23 @@ function ensureStorageDefaults() {
   }
 }
 
-// === Area IDs =====================================================
-export const AREAS = {
-  MENU: 0,
-  STARTER_COVE: 1,
-};
+// ----------------- HUD button helpers -----------------
+function setButtonVisible(key, visible) {
+  const el = document.querySelector(`.hud-bottom [data-btn="${key}"]`);
+  if (!el) return;
+  el.hidden = !visible;
+}
 
-let currentArea = AREAS.MENU;
+function initHudButtons() {
+  // For now: show all four buttons (you will change this as game logic unlocks them)
+  setButtonVisible('help',  true);  // visible from the start
+  setButtonVisible('shop',  true);  // currently visible (you can toggle later)
+  setButtonVisible('stats', true);  // visible from the start (stats & settings)
+  setButtonVisible('map',   true);  // currently visible (toggle later)
+}
+// ------------------------------------------------------
 
-// === Area Handling ================================================
+// Area switching / UI show/hide
 function enterArea(areaID) {
   if (currentArea === areaID) return;
   currentArea = areaID;
@@ -32,22 +48,36 @@ function enterArea(areaID) {
   const menuRoot = document.querySelector('.menu-root');
 
   switch (areaID) {
-    case AREAS.STARTER_COVE:
-      // Instantly hide menu (no fade)
+    case AREAS.STARTER_COVE: {
+      // Hide menu
       if (menuRoot) {
         menuRoot.setAttribute('aria-hidden', 'true');
         menuRoot.style.display = 'none';
       }
       document.body.classList.remove('menu-bg');
-      break;
 
-    case AREAS.MENU:
-      // Instantly show menu again
+      // Show the StarterCove area
+      const gameRoot = document.getElementById('game-root');
+      if (gameRoot) {
+        gameRoot.hidden = false;
+        // initialize HUD buttons state for this area
+        initHudButtons();
+      }
+      break;
+    }
+
+    case AREAS.MENU: {
+      // Show menu again, hide game area
       if (menuRoot) {
         menuRoot.style.display = '';
         menuRoot.removeAttribute('aria-hidden');
       }
+      const gameRoot = document.getElementById('game-root');
+      if (gameRoot) {
+        gameRoot.hidden = true;
+      }
       break;
+    }
 
     default:
       break;
@@ -69,13 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (titleEl) titleEl.style.opacity = '1';
   }
 
+  // Initialize save-slot UI and click handler
   initSlots(() => {
     // On first save slot click, persist flag and update UI instantly
     setHasOpenedSaveSlot(true);
     document.body.classList.add('has-opened');
-    // also hide title immediately
     if (titleEl) titleEl.style.opacity = '0';
 
+    // Enter the Starter Cove area (game view)
     enterArea(AREAS.STARTER_COVE);
   });
 });
