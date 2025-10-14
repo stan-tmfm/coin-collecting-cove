@@ -261,3 +261,28 @@
     transform: translateY(0);
   }
 }
+
+/* Default: hide Manage button until has-opened; hide title visually to prevent flash */
+.menu-panel .panel-actions { display: none; }
+.panel-title,
+#panel-title { opacity: 0; }
+
+/* When the persisted flag is present on <html> or <body> */
+:is(html.has-opened, body.has-opened) {
+  /* show Manage button */
+  .menu-panel .panel-actions { display: block; }
+
+  /* remove title from layout and keep it invisible */
+  .panel-title,
+  #panel-title { display: none; opacity: 0; }
+
+  /* left-align header and remove upward nudge on actions */
+  .panel-header { justify-content: flex-start; gap: var(--space-3); }
+  .panel-actions { transform: none; }
+}
+
+/* Mobile adjustments: keep header compact and button auto-sized */
+@media (max-width: 900px) {
+  :is(html.has-opened, body.has-opened) .panel-header { flex-direction: row; align-items: center; }
+  :is(html.has-opened, body.has-opened) .panel-actions .btn { width: auto; }
+}
