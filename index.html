@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components_menu.css">
   <link rel="stylesheet" href="css/utilities.css">
+  <link rel="stylesheet" href="css/components_game.css">
 </head>
 <body class="menu-bg">
   <main class="menu-root">
@@ -64,6 +65,17 @@
       </div>
     </section>
   </main>
+  <main id="game-root" class="area area-cove" hidden>
+    <section class="playfield" aria-label="Starter Cove Sand"></section>
+	<nav class="hud-bottom" id="hud-bottom">
+	  <button class="menu-btn btn-help" data-btn="help"><span>Help</span></button>
+	  <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
+	  <button class="menu-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
+	  <button class="menu-btn btn-map" data-btn="map"><span>Map</span></button>
+	</nav>
+
+  </main>
+
   
   <script type="module" src="js/main.js"></script>
 </body>
