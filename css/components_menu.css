@@ -5,6 +5,7 @@
   color: #ffeb3b; /* your bright yellow */
   -webkit-text-stroke: 2px black; /* crisp desktop outline */
   text-stroke: 2px black;
+  user-select: none;
 }
 
 /* Touch / coarse pointer devices (mobile + tablets like iPads) */
