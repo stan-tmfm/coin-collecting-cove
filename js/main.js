@@ -1,51 +1,81 @@
-// /js/main.js
-// Entry point: initialize the menu's slot clicks and transition to a black screen.
-
 import { initSlots } from './util/slots.js';
 
-function enterArea(area) {
-  const menuRoot = document.querySelector('.menu-root');
+const STORAGE_KEY = 'hasOpenedSaveSlot';
 
-  if (area === 'game') {
-    // 1) Add a full-screen black overlay (only once)
-    let overlay = document.getElementById('ccc-blackout');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'ccc-blackout';
-      Object.assign(overlay.style, {
-        position: 'fixed',
-        inset: '0',
-        background: '#000',
-        zIndex: '1000',   // sits above menu-root and panel (which are z-index: 1)
-        opacity: '0',
-      });
-      document.body.appendChild(overlay);
+function getHasOpenedSaveSlot() {
+  return localStorage.getItem(STORAGE_KEY) === 'true';
+}
 
-      // Fade in smoothly so you can see the transition
-      requestAnimationFrame(() => {
-        overlay.style.transition = 'opacity 200ms ease';
-        overlay.style.opacity = '1';
-      });
-    }
+function setHasOpenedSaveSlot(value) {
+  localStorage.setItem(STORAGE_KEY, value ? 'true' : 'false');
+}
 
-    // 2) Hide the menu area, but keep it in the DOM for future returns
-    if (menuRoot) {
-      menuRoot.setAttribute('aria-hidden', 'true');
-      menuRoot.style.display = 'none';
-    }
-
-    // 3) Optional: remove the animated background class to reduce work
-    //    (Your background and UI are layered: body.menu-bg (z:0) and menu content (z:1).)
-    //    We’re covering everything with z-index 1000 anyway.:contentReference[oaicite:3]{index=3}
-    document.body.classList.remove('menu-bg');
+function ensureStorageDefaults() {
+  if (localStorage.getItem(STORAGE_KEY) === null) {
+    setHasOpenedSaveSlot(false);
   }
 }
 
+// === Area IDs =====================================================
+export const AREAS = {
+  MENU: 0,
+  STARTER_COVE: 1,
+};
+
+let currentArea = AREAS.MENU;
+
+// === Area Handling ================================================
+function enterArea(areaID) {
+  if (currentArea === areaID) return;
+  currentArea = areaID;
+
+  const menuRoot = document.querySelector('.menu-root');
+
+  switch (areaID) {
+    case AREAS.STARTER_COVE:
+      // Instantly hide menu (no fade)
+      if (menuRoot) {
+        menuRoot.setAttribute('aria-hidden', 'true');
+        menuRoot.style.display = 'none';
+      }
+      document.body.classList.remove('menu-bg');
+      break;
+
+    case AREAS.MENU:
+      // Instantly show menu again
+      if (menuRoot) {
+        menuRoot.style.display = '';
+        menuRoot.removeAttribute('aria-hidden');
+      }
+      break;
+
+    default:
+      break;
+  }
+}
+
+// === Initialization ===============================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Treat the menu as the initial "area"
-  // When a slot is selected, switch to the "game" area (black screen for now).
-  initSlots((slotNum) => {
-    // In the future you can route based on slotNum, load save data, etc.
-    enterArea('game');
+  ensureStorageDefaults();
+
+  const titleEl = document.getElementById('panel-title'); // "SELECT A SAVE SLOT"
+
+  if (getHasOpenedSaveSlot()) {
+    // Returning player: set body class and ensure title stays hidden via opacity
+    document.body.classList.add('has-opened');
+    if (titleEl) titleEl.style.opacity = '0';
+  } else {
+    // First-time player: reveal title (CSS default keeps it hidden before JS runs)
+    if (titleEl) titleEl.style.opacity = '1';
+  }
+
+  initSlots(() => {
+    // On first save slot click, persist flag and update UI instantly
+    setHasOpenedSaveSlot(true);
+    document.body.classList.add('has-opened');
+    // also hide title immediately
+    if (titleEl) titleEl.style.opacity = '0';
+
+    enterArea(AREAS.STARTER_COVE);
   });
 });
