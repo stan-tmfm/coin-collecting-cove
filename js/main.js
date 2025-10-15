@@ -1,5 +1,6 @@
-// /js/main.js
+// js/main.js
 import { initSlots } from './util/slots.js';
+import { createSpawner } from './game/spawner.js';
 
 const STORAGE_KEY = 'hasOpenedSaveSlot';
 
@@ -9,104 +10,85 @@ export const AREAS = {
 };
 
 let currentArea = AREAS.MENU;
+let spawner = null;
 
 function getHasOpenedSaveSlot() {
   return localStorage.getItem(STORAGE_KEY) === 'true';
 }
-
 function setHasOpenedSaveSlot(value) {
   localStorage.setItem(STORAGE_KEY, value ? 'true' : 'false');
 }
-
 function ensureStorageDefaults() {
-  if (localStorage.getItem(STORAGE_KEY) === null) {
-    setHasOpenedSaveSlot(false);
-  }
+  if (localStorage.getItem(STORAGE_KEY) === null) setHasOpenedSaveSlot(false);
 }
 
-// ----------------- HUD button helpers -----------------
+// HUD helpers
 function setButtonVisible(key, visible) {
   const el = document.querySelector(`.hud-bottom [data-btn="${key}"]`);
-  if (!el) return;
-  el.hidden = !visible;
+  if (el) el.hidden = !visible;
 }
-
 function initHudButtons() {
-  // For now: show all four buttons (you will change this as game logic unlocks them)
-  setButtonVisible('help',  true);  // visible from the start
-  setButtonVisible('shop',  true);  // currently visible (you can toggle later)
-  setButtonVisible('stats', true);  // visible from the start (stats & settings)
-  setButtonVisible('map',   true);  // currently visible (toggle later)
+  setButtonVisible('help',  true);
+  setButtonVisible('shop',  true);
+  setButtonVisible('stats', true);
+  setButtonVisible('map',   true);
 }
-// ------------------------------------------------------
 
-// Area switching / UI show/hide
+// Area switching
 function enterArea(areaID) {
   if (currentArea === areaID) return;
   currentArea = areaID;
 
   const menuRoot = document.querySelector('.menu-root');
-
   switch (areaID) {
     case AREAS.STARTER_COVE: {
-      // Hide menu
-      if (menuRoot) {
-        menuRoot.setAttribute('aria-hidden', 'true');
-        menuRoot.style.display = 'none';
-      }
+      if (menuRoot) { menuRoot.setAttribute('aria-hidden', 'true'); menuRoot.style.display = 'none'; }
       document.body.classList.remove('menu-bg');
-
-      // Show the StarterCove area
       const gameRoot = document.getElementById('game-root');
-      if (gameRoot) {
-        gameRoot.hidden = false;
-        // initialize HUD buttons state for this area
-        initHudButtons();
+      if (gameRoot) { gameRoot.hidden = false; initHudButtons(); }
+
+      // start spawner (create if not created)
+      if (!spawner) {
+        spawner = createSpawner({
+          coinSrc: 'img/coin.png',
+          coinSize: 40,
+          initialRate: 1,
+          surgeLifetimeMs: 1800,
+          surgeWidthVw: 22
+        });
       }
+      spawner.start();
       break;
     }
 
     case AREAS.MENU: {
-      // Show menu again, hide game area
-      if (menuRoot) {
-        menuRoot.style.display = '';
-        menuRoot.removeAttribute('aria-hidden');
-      }
+      if (menuRoot) { menuRoot.style.display = ''; menuRoot.removeAttribute('aria-hidden'); }
       const gameRoot = document.getElementById('game-root');
-      if (gameRoot) {
-        gameRoot.hidden = true;
-      }
+      if (gameRoot) gameRoot.hidden = true;
+
+      if (spawner) spawner.stop();
       break;
     }
-
-    default:
-      break;
   }
 }
 
-// === Initialization ===============================================
+// Initialization
 document.addEventListener('DOMContentLoaded', () => {
   ensureStorageDefaults();
 
-  const titleEl = document.getElementById('panel-title'); // "SELECT A SAVE SLOT"
-
+  const titleEl = document.getElementById('panel-title');
   if (getHasOpenedSaveSlot()) {
-    // Returning player: set body class and ensure title stays hidden via opacity
     document.body.classList.add('has-opened');
     if (titleEl) titleEl.style.opacity = '0';
   } else {
-    // First-time player: reveal title (CSS default keeps it hidden before JS runs)
     if (titleEl) titleEl.style.opacity = '1';
   }
 
-  // Initialize save-slot UI and click handler
+  // initSlots should call callback when a slot is opened
   initSlots(() => {
-    // On first save slot click, persist flag and update UI instantly
     setHasOpenedSaveSlot(true);
     document.body.classList.add('has-opened');
     if (titleEl) titleEl.style.opacity = '0';
-
-    // Enter the Starter Cove area (game view)
     enterArea(AREAS.STARTER_COVE);
   });
 });
