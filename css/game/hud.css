@@ -151,139 +151,135 @@
 }
 
 /* ===== Top HUD: Coin Counter (coinPlusBase.png + underlapping bar) ===== */
-.hud-top {
-  position: absolute;
-  top: calc(env(safe-area-inset-top) + 12px);
-  left: 50%;
-  /* NEW: allow per-orientation nudges */
-  transform: translateX(calc(-50% + var(--hud-x-nudge, 0px)));
-  z-index: 900; /* above waves, below bottom HUD per your file */
-  width: 100%;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
+.hud-top{
+  position:absolute;
+  top:calc(env(safe-area-inset-top) + 12px);
+  left:50%;
+  transform:translateX(calc(-50% + var(--hud-x-nudge, 0px)));
+  z-index:900;
+  width:100%;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
 }
 
-/* Sizing + geometry */
-:root {
-  /* Bar height (unchanged) */
+/* Defaults (desktop / general) */
+:root{
   --coin-h: clamp(48px, 6svh, 72px);
 
-  /* Your current slightly-larger coin image */
+  /* keep your current image sizing */
   --coin-plus-extra: 20px;
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
-  /* Bar width (desktop / default) */
+  /* desktop-like width */
   --coin-bar-w: clamp(200px, 36vw, 520px);
 
   --coin-outline: 4px;
   --bar-underlap: 0.50;
   --center-nudge: 10px;
-
-  /* NEW: horizontal nudge for the whole HUD (used in landscape on phones) */
-  --hud-x-nudge: 0px;
+  --hud-x-nudge: 0px; /* used in landscape on phones */
 }
 
-.coin-counter {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
-  pointer-events: auto;
+.coin-counter{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  gap:0;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.18));
+  pointer-events:auto;
 }
 
-/* Precomposed coin+base image (sits ON TOP of the bar) */
-.coin-plus {
-  position: relative;
-  z-index: 2;
-  height: var(--coin-plus-size);
-  width:  var(--coin-plus-size);
-  display: block;
-  object-fit: contain;
-  border: none;
-  pointer-events: none;
+.coin-plus{
+  position:relative;
+  z-index:2;
+  height:var(--coin-plus-size);
+  width: var(--coin-plus-size);
+  object-fit:contain;
+  border:none;
+  pointer-events:none;
 }
 
-/* Bar slides under the image; rectangular corners */
-.coin-bar {
-  position: relative;
-  z-index: 1; /* behind .coin-plus */
-  height: var(--coin-h);
-  width:  var(--coin-bar-w);
-  margin-left: calc(var(--coin-plus-size) * -1 * var(--bar-underlap));
-
-  border: var(--coin-outline) solid #000;
-  border-radius: 0;
-  background: linear-gradient(180deg,#ffd34c,#ffb800);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 0 16px;      /* symmetric; spacer handles hidden chunk */
-  box-sizing: border-box;
-  overflow: hidden;
+.coin-bar{
+  position:relative;
+  z-index:1;
+  height:var(--coin-h);
+  width: var(--coin-bar-w);
+  margin-left:calc(var(--coin-plus-size) * -1 * var(--bar-underlap));
+  border:var(--coin-outline) solid #000;
+  border-radius:0;
+  background:linear-gradient(180deg,#ffd34c,#ffb800);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:0 16px;
+  box-sizing:border-box;
+  overflow:hidden;
 }
-
-/* Left spacer = width hidden under the image (minus optical nudge) */
-.coin-bar::before {
-  content: "";
-  display: block;
-  width: calc(var(--coin-plus-size) * var(--bar-underlap) - var(--center-nudge));
-  height: 1px;
-  flex: 0 0 auto;
+.coin-bar::before{
+  content:"";
+  display:block;
+  width:calc(var(--coin-plus-size) * var(--bar-underlap) - var(--center-nudge));
+  height:1px;
+  flex:0 0 auto;
 }
-
-/* Subtle inner gloss so text feels attached to the bar */
-.coin-bar::after {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  border-radius: 0;
+.coin-bar::after{
+  content:"";
+  position:absolute;
+  inset:2px;
+  border-radius:0;
   box-shadow:
     inset 0 6px 10px rgba(255,255,255,.18),
     inset 0 -6px 10px rgba(0,0,0,.15);
-  pointer-events: none;
+  pointer-events:none;
+}
+.coin-amount{
+  position:relative;
+  z-index:1;
+  font-weight:900;
+  font-size:clamp(18px, 3.6vw, 32px);
+  color:#fff;
+  letter-spacing:.5px;
+  -webkit-text-stroke:1px #000; text-stroke:1px #000;
+  text-shadow:0 1px 0 rgba(0,0,0,.35);
+  line-height:1;
+  transform:translateY(0.5px);
 }
 
-/* Number */
-.coin-amount {
-  position: relative;
-  z-index: 1;
-  font-weight: 900;
-  font-size: clamp(18px, 3.6vw, 32px);
-  color: #fff;
-  letter-spacing: .5px;
-  -webkit-text-stroke: 1px #000; text-stroke: 1px #000;
-  text-shadow: 0 1px 0 rgba(0,0,0,.35);
-  line-height: 1;
-  transform: translateY(0.5px);
-}
+/* ---------- Mobile targeting ---------- */
 
-/* ---------- Mobile tweaks ---------- */
-
-/* Phone PORTRAIT: make the bar wider so more digits fit */
-@media (pointer: coarse) and (orientation: portrait) {
-  :root {
-    /* use most of the viewport width, capped to prevent absurdly long bars */
-    --coin-bar-w: min(92vw, 720px);
+/* Phone PORTRAIT: wider but with breathing room on both sides */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  :root{
+    /* gutters on both sides + notch space */
+    --hud-portrait-gutter: max(4vw, 14px);
+    --coin-bar-w: min(
+      calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      640px
+    );
+    --hud-x-nudge: 0px; /* keep dead center */
   }
 }
 
-/* Phone LANDSCAPE: apply a left nudge and keep a generous width */
-@media (pointer: coarse) and (orientation: landscape) {
-  :root {
-    --hud-x-nudge: -10px;          /* shifts the whole HUD 10px left */
-    --coin-bar-w: min(86vw, 960px); /* give more room for digits */
+/* iPad PORTRAIT: slightly shorter bar than phone portrait */
+@media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
+  :root{
+    --coin-bar-w: min(72vw, 720px);  /* a bit less than phone portrait */
+    --hud-x-nudge: 0px;              /* stay centered */
   }
 }
 
-/* Touch / coarse-pointer devices: stroke simulation (unchanged) */
-@media (pointer: coarse) {
-  .coin-amount {
-    -webkit-text-stroke: 0;
-    text-stroke: 0;
+/* Mobile LANDSCAPE (phones & small tablets): use PC-like length, not full width */
+@media (pointer: coarse) and (orientation: landscape){
+  :root{
+    --coin-bar-w: clamp(220px, 38vw, 560px); /* around desktop length */
+    --hud-x-nudge: -10px;                    /* your 10px left shift */
+  }
+}
+
+/* Coarse pointer text-outline fallback */
+@media (pointer: coarse){
+  .coin-amount{
+    -webkit-text-stroke:0; text-stroke:0;
     text-shadow:
       1px 1px 0 #000, -1px 1px 0 #000,
       1px -1px 0 #000, -1px -1px 0 #000,
