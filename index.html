@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
   <link rel="shortcut icon" href="favicon/favicon.ico" type="image/x-icon">
+  <!-- Prevent UI flicker on refresh by reading the flag before CSS paints -->
   <script>
     (function () {
       try {
@@ -17,13 +18,16 @@
       } catch (e) { }
     })();
   </script>
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/base.css">
+  <link rel="stylesheet" href="css/core/layout.css">
+  <link rel="stylesheet" href="css/core/utilities.css">
   <link rel="stylesheet" href="css/components_menu.css">
-  <link rel="stylesheet" href="css/utilities.css">
-  <link rel="stylesheet" href="css/components_game.css">
+  <link rel="stylesheet" href="css/game/background.css">
+  <link rel="stylesheet" href="css/game/hud.css">
+  <link rel="stylesheet" href="css/game/waves.css">
 </head>
+
 <body class="menu-bg">
   <main class="menu-root">
     <header class="menu-header">
@@ -65,16 +69,26 @@
       </div>
     </section>
   </main>
+
+  <!-- Game root (starter cove) -->
   <main id="game-root" class="area area-cove" hidden>
-    <section class="playfield" aria-label="Starter Cove Sand"></section>
-	<nav class="hud-bottom" id="hud-bottom">
-	  <button class="menu-btn btn-help" data-btn="help"><span>Help</span></button>
-	  <button class="menu-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
-	  <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
-	  <button class="menu-btn btn-map" data-btn="map"><span>Map</span></button>
-	</nav>
+    <section class="playfield" aria-label="Starter Cove Sand">
+      <div class="waves" id="waves">
+        <div class="water-base" id="water-base"></div>
+        <div class="surges" id="surges"></div>
+      </div>
+
+      <div class="coins-layer" id="coins-layer"></div>
+    </section>
+
+    <nav class="hud-bottom" id="hud-bottom">
+      <button class="menu-btn btn-help" data-btn="help"><span>Help</span></button>
+      <button class="menu-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
+      <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
+      <button class="menu-btn btn-map" data-btn="map"><span>Map</span></button>
+    </nav>
   </main>
-  
+
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
