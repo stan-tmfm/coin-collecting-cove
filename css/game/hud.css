@@ -150,13 +150,14 @@
   }
 }
 
-/* ===== Top HUD: Coin Counter (coinPlusBase.png + underlapping bar, no rounded corners) ===== */
+/* ===== Top HUD: Coin Counter (coinPlusBase.png + underlapping bar) ===== */
 .hud-top {
   position: absolute;
   top: calc(env(safe-area-inset-top) + 12px);
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 900;
+  /* NEW: allow per-orientation nudges */
+  transform: translateX(calc(-50% + var(--hud-x-nudge, 0px)));
+  z-index: 900; /* above waves, below bottom HUD per your file */
   width: 100%;
   display: grid;
   place-items: center;
@@ -165,17 +166,22 @@
 
 /* Sizing + geometry */
 :root {
-  /* Bar height */
+  /* Bar height (unchanged) */
   --coin-h: clamp(48px, 6svh, 72px);
 
+  /* Your current slightly-larger coin image */
   --coin-plus-extra: 20px;
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
-  /* Bar */
+  /* Bar width (desktop / default) */
   --coin-bar-w: clamp(200px, 36vw, 520px);
+
   --coin-outline: 4px;
   --bar-underlap: 0.50;
   --center-nudge: 10px;
+
+  /* NEW: horizontal nudge for the whole HUD (used in landscape on phones) */
+  --hud-x-nudge: 0px;
 }
 
 .coin-counter {
@@ -199,7 +205,7 @@
   pointer-events: none;
 }
 
-/* Bar slides under the image; now perfectly rectangular (no rounded corners) */
+/* Bar slides under the image; rectangular corners */
 .coin-bar {
   position: relative;
   z-index: 1; /* behind .coin-plus */
@@ -208,20 +214,19 @@
   margin-left: calc(var(--coin-plus-size) * -1 * var(--bar-underlap));
 
   border: var(--coin-outline) solid #000;
-  border-radius: 0; /* no rounded corners */
+  border-radius: 0;
   background: linear-gradient(180deg,#ffd34c,#ffb800);
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  /* symmetric padding; spacer handles hidden left chunk */
-  padding: 0 16px;
+  padding: 0 16px;      /* symmetric; spacer handles hidden chunk */
   box-sizing: border-box;
   overflow: hidden;
 }
 
-/* Left spacer = width hidden under the image (minus small nudge for optics) */
+/* Left spacer = width hidden under the image (minus optical nudge) */
 .coin-bar::before {
   content: "";
   display: block;
@@ -250,13 +255,31 @@
   font-size: clamp(18px, 3.6vw, 32px);
   color: #fff;
   letter-spacing: .5px;
-  -webkit-text-stroke: 1px #000;
-  text-stroke: 1px #000;
+  -webkit-text-stroke: 1px #000; text-stroke: 1px #000;
   text-shadow: 0 1px 0 rgba(0,0,0,.35);
   line-height: 1;
   transform: translateY(0.5px);
 }
 
+/* ---------- Mobile tweaks ---------- */
+
+/* Phone PORTRAIT: make the bar wider so more digits fit */
+@media (pointer: coarse) and (orientation: portrait) {
+  :root {
+    /* use most of the viewport width, capped to prevent absurdly long bars */
+    --coin-bar-w: min(92vw, 720px);
+  }
+}
+
+/* Phone LANDSCAPE: apply a left nudge and keep a generous width */
+@media (pointer: coarse) and (orientation: landscape) {
+  :root {
+    --hud-x-nudge: -10px;          /* shifts the whole HUD 10px left */
+    --coin-bar-w: min(86vw, 960px); /* give more room for digits */
+  }
+}
+
+/* Touch / coarse-pointer devices: stroke simulation (unchanged) */
 @media (pointer: coarse) {
   .coin-amount {
     -webkit-text-stroke: 0;
@@ -264,6 +287,6 @@
     text-shadow:
       1px 1px 0 #000, -1px 1px 0 #000,
       1px -1px 0 #000, -1px -1px 0 #000,
-      0 1px 0 rgba(0,0,0,.22);
+      0 1px 0 rgba(0,0,0,0.22);
   }
 }
