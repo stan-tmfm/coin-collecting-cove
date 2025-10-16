@@ -1,6 +1,7 @@
 // js/main.js
 import { initSlots } from './util/slots.js';
 import { createSpawner } from './game/spawner.js';
+import { initCoinPickup } from './game/coinPickup.js'; 
 
 const STORAGE_KEY = 'hasOpenedSaveSlot';
 
@@ -56,6 +57,7 @@ function enterArea(areaID) {
           surgeLifetimeMs: 1800,
           surgeWidthVw: 22
         });
+		initCoinPickup();
       }
       spawner.start();
       break;
