@@ -176,7 +176,7 @@
   --hud-x-nudge: 0px;
 
   /* NEW: tiny vertical alignment fix so bar goes through coin center */
-  --bar-y-nudge: 2px;                       /* tweak 1–3px if needed */
+  --bar-y-nudge: 9px;
 }
 
 /* Center by BAR (container width = bar width); clicks enabled on the counter */
