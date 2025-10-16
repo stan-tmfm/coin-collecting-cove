@@ -158,29 +158,31 @@
   right: 0;
   z-index: 1000;
   display: flex;
-  justify-content: center;   /* <-- centers the bar container */
+  justify-content: center;   /* centers the bar container perfectly */
   align-items: center;
-  padding-inline: max(env(safe-area-inset-left), 0px) max(env(safe-area-inset-right), 0px);
-  pointer-events: none;      /* let clicks pass through by default */
+  pointer-events: none;
 }
 
 /* ===== Defaults (desktop / general) — your values kept ===== */
 :root{
   --coin-h: clamp(48px, 6svh, 72px);       /* BAR height */
-  --coin-plus-extra: 20px;                  /* keep your default */
+  --coin-plus-extra: 20px;                  /* your default */
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
   --coin-bar-w: clamp(200px, 36vw, 520px);  /* BAR width (desktop / general) */
   --coin-outline: 4px;
 
   --bar-underlap: 0.50;                     /* bar tucks under coin */
-  --hud-x-nudge: 0px;                       /* no global nudge needed now */
+  --hud-x-nudge: 0px;
+
+  /* NEW: tiny vertical alignment fix so bar goes through coin center */
+  --bar-y-nudge: 2px;                       /* tweak 1–3px if needed */
 }
 
 /* Center by BAR (container width = bar width); clicks enabled on the counter */
 .coin-counter{
   position: relative;
-  width: var(--coin-bar-w);                 /* <-- centered by .hud-top flex */
+  width: var(--coin-bar-w);                 /* centered by .hud-top flex */
   height: max(var(--coin-plus-size), var(--coin-h));
   pointer-events: auto;
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
@@ -210,12 +212,15 @@
   border-radius: 0;
   background: linear-gradient(180deg,#ffd34c,#ffb800);
 
-  display:flex;              /* <-- centers the number */
+  display:flex;              /* centers the number */
   align-items:center;
   justify-content:center;
   padding: 0 16px;
   box-sizing: border-box;
   overflow: hidden;
+
+  /* vertical alignment fix */
+  transform: translateY(var(--bar-y-nudge));
 }
 
 /* Optional inner gloss */
@@ -247,22 +252,29 @@
 
 /* ===== Mobile tweaks ===== */
 
-/* Phone PORTRAIT: make the bar smaller and keep coin from clipping */
+/* Phone PORTRAIT:
+   - smaller bar
+   - symmetrical gutters so bar remains truly centered
+   - keep coin from clipping without shifting center */
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
   .hud-top{
-    /* breathing room AND reserve space for coin overhang */
+    /* reserve space equally on both sides:
+       - safe area
+       - a base gutter
+       - coin overhang requirement */
     --pp-gutter: max(7vw, 24px);
-    padding-left: max(
-      env(safe-area-inset-left),
+    --pp-reserve: max(
       var(--pp-gutter),
       calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
     );
-    padding-right: max(env(safe-area-inset-right), var(--pp-gutter));
+    padding-left:  max(env(safe-area-inset-left),  var(--pp-reserve));
+    padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
   }
   :root{
-    --coin-bar-w: clamp(240px, 65vw, 320px);  /* pick a smaller cap if you want (e.g., 300px) */
+    --coin-bar-w: clamp(240px, 65vw, 320px);  /* adjust max to 300/280 if you want it shorter */
     --coin-plus-extra: 4px;                   /* coin just a hair taller than bar on phones */
     --bar-underlap: 0.48;                     /* modest tuck */
+    --bar-y-nudge: 2px;                       /* keep the same vertical alignment */
   }
 }
 
@@ -273,14 +285,14 @@
   }
 }
 
-/* iPad PORTRAIT: slightly shorter bar than phone portrait */
+/* iPad PORTRAIT: slightly shorter bar */
 @media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
   :root{
     --coin-bar-w: min(72vw, 560px);
   }
 }
 
-/* Coarse pointer: stroke fallback via shadow */
+/* Touch devices: stroke fallback via shadow */
 @media (pointer: coarse){
   .coin-amount{
     -webkit-text-stroke:0; text-stroke:0;
