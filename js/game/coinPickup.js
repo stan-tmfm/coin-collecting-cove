@@ -46,7 +46,7 @@ export function initCoinPickup({
   const pool = Array.from({ length: 6 }, () => {
     const a = new Audio(soundSrc);
     a.preload = 'auto';
-    a.volume = 0.35;
+    a.volume = 0.25;
     return a;
   });
   let pIdx = 0;
