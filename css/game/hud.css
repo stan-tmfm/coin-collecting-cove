@@ -326,12 +326,11 @@
   }
 
   :root{
-
     /* comfy side margins + narrower bar cap */
     --hud-portrait-gutter: max(7vw, 24px);
     --coin-bar-w: min(
-      calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
-      300px
+    calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
+    320px
     );
     --center-nudge: 16px;
   }
