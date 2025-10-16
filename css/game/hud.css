@@ -271,10 +271,10 @@
     padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
   }
   :root{
-    --coin-bar-w: clamp(240px, 65vw, 320px);  /* adjust max to 300/280 if you want it shorter */
-    --coin-plus-extra: 4px;                   /* coin just a hair taller than bar on phones */
-    --bar-underlap: 0.48;                     /* modest tuck */
-    --bar-y-nudge: 2px;                       /* keep the same vertical alignment */
+    --coin-bar-w: clamp(240px, 65vw, 320px);
+    --coin-plus-extra: 4px;
+    --bar-underlap: 0.48;
+    --bar-y-nudge: 0px; 
   }
 }
 
