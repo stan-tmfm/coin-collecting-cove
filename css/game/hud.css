@@ -309,19 +309,51 @@
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
-/* Phone PORTRAIT: narrower, with comfortable gutters on both sides */
+/* ===== Mobile visual-centering fixes (put at END of hud.css) ===== */
+
+/* Phone PORTRAIT — biggest left bias needed */
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
   :root{
-    /* more generous side gutters */
-    --hud-portrait-gutter: max(6vw, 20px);
-
-    /* final bar width: centered, leaves space at edges, respects notches */
+    /* bar width with side breathing room (adjust if you want more/less) */
+    --hud-portrait-gutter: max(7vw, 24px);
     --coin-bar-w: min(
       calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
-      540px
+      440px
     );
 
-    /* no horizontal nudge for portrait */
+    /* center the digits visually across the exposed bar */
+    --center-nudge: 18px; /* tweak 16–20px if needed */
+    /* small underlap tweak so the coin doesn’t crowd the edge */
+    --bar-underlap: 0.47;
+
+    --hud-x-nudge: 0px;
+  }
+}
+
+/* Phone LANDSCAPE — moderate bias */
+@media (pointer: coarse) and (orientation: landscape) and (max-width: 820px){
+  :root{
+    --coin-bar-w: clamp(220px, 38vw, 560px); /* PC-like length */
+    --center-nudge: 12px;  /* tweak 10–14px */
+    --hud-x-nudge: -10px;  /* your small left shift */
+  }
+}
+
+/* iPad PORTRAIT — small bias */
+@media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
+  :root{
+    --coin-bar-w: min(72vw, 560px);
+    --center-nudge: 10px;  /* tweak 8–12px */
+    --bar-underlap: 0.48;
+    --hud-x-nudge: 0px;
+  }
+}
+
+/* iPad LANDSCAPE — subtle bias */
+@media (pointer: coarse) and (orientation: landscape) and (min-width: 1024px){
+  :root{
+    --coin-bar-w: clamp(260px, 34vw, 560px);
+    --center-nudge: 8px;   /* tweak 6–10px */
     --hud-x-nudge: 0px;
   }
 }
