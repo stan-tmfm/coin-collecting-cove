@@ -150,7 +150,7 @@
   }
 }
 
-/* ===== Top HUD: Coin Counter (centered by BAR only) ===== */
+/* ===== Top HUD: Coin Counter (simple centered text) ===== */
 .hud-top{
   position:absolute;
   top:calc(env(safe-area-inset-top) + 12px);
@@ -163,36 +163,36 @@
   pointer-events:none;
 }
 
-/* ===== Defaults (desktop / general) — keep your values ===== */
+/* ===== Defaults (desktop / general) — your values kept ===== */
 :root{
-  --coin-h: clamp(48px, 6svh, 72px);            /* BAR height */
-  --coin-plus-extra: 20px;                       /* your default */
+  --coin-h: clamp(48px, 6svh, 72px);   /* BAR height */
+  --coin-plus-extra: 20px;             /* your default "hair bigger" */
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
-  --coin-bar-w: clamp(200px, 36vw, 520px);       /* BAR width */
+  --coin-bar-w: clamp(200px, 36vw, 520px); /* BAR width */
   --coin-outline: 4px;
 
-  --bar-underlap: 0.50;                          /* fraction of coin width bar tucks under */
-  --center-nudge: 6px;                           /* tiny left-bias for optical center */
-  --hud-x-nudge: 0px;                            /* e.g., -10px on mobile landscape below */
+  --bar-underlap: 0.50;                 /* bar tucks under left side of coin */
+  --hud-x-nudge: 0px;                   /* e.g., -10px in mobile landscape */
 }
 
-/* BAR-centered container (center by the BAR, not by bar+coin) */
+/* Center by the BAR (container width = bar width) */
 .coin-counter{
   position: relative;
-  width: var(--coin-bar-w);                       /* center by BAR only */
+  width: var(--coin-bar-w);
   height: max(var(--coin-plus-size), var(--coin-h));
   display: flex;
-  align-items: center;                            /* vertically center bar vs coin */
+  align-items: center;   /* vertically center bar vs coin */
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
   pointer-events: auto;
 }
 
-/* Coin+base image sits ON TOP and overlaps from the left; doesn’t affect centering */
+/* Coin+base image sits on top, overlapping from the left.
+   It does NOT affect centering of the text in the bar. */
 .coin-plus{
   position:absolute;
   top:50%;
-  left: calc((var(--bar-underlap) - 1) * var(--coin-plus-size)); /* = - (1 - underlap) * size */
+  left: calc((var(--bar-underlap) - 1) * var(--coin-plus-size)); /* = -(1 - underlap) * size */
   transform: translateY(-50%);
   z-index:2;
   height: var(--coin-plus-size);
@@ -202,33 +202,26 @@
   pointer-events: none;
 }
 
-/* BAR fills the container width; digits centered across the visible bar only */
+/* The BAR itself: plain centered text, symmetric padding. */
 .coin-bar{
   position:relative;
-  z-index:1;                           /* behind coin image */
+  z-index:1;                  /* behind coin image */
   height: var(--coin-h);
   width:  100%;
   border: var(--coin-outline) solid #000;
-  border-radius: 0;                     /* squared corners */
+  border-radius: 0;           /* squared corners */
   background: linear-gradient(180deg,#ffd34c,#ffb800);
+
+  /* >>> Simple centering — no spacer, no nudges <<< */
   display:flex;
   align-items:center;
   justify-content:center;
-  padding: 0 16px;                      /* symmetric; spacer handles hidden chunk */
+  padding: 0 16px;            /* symmetric */
   box-sizing: border-box;
   overflow:hidden;
 }
 
-/* Spacer = portion hidden under coin, minus tiny optical nudge */
-.coin-bar::before{
-  content:"";
-  display:block;
-  width: calc(var(--coin-plus-size) * var(--bar-underlap) - var(--center-nudge));
-  height:1px;
-  flex:0 0 auto;
-}
-
-/* Subtle inner gloss so numbers feel “on” the bar */
+/* Optional inner gloss; purely cosmetic */
 .coin-bar::after{
   content:"";
   position:absolute;
@@ -240,7 +233,7 @@
   pointer-events:none;
 }
 
-/* Number */
+/* Number: centered by flex above; no transforms, no nudges. */
 .coin-amount{
   position:relative;
   z-index:1;
@@ -253,12 +246,11 @@
   line-height:1;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
-  transform:translateY(0.5px); /* tiny optical vertical nudge */
 }
 
-/* --- Keep your working overrides that were fine --- */
+/* ---- Optional: your existing responsive tweaks (unchanged) ---- */
 
-/* iPad PORTRAIT: slightly shorter than phone portrait (your value) */
+/* iPad PORTRAIT */
 @media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
   :root{
     --coin-bar-w: min(72vw, 720px);
@@ -266,7 +258,7 @@
   }
 }
 
-/* Mobile LANDSCAPE: PC-like length, not full width (+ your left shift) */
+/* Mobile LANDSCAPE (PC-like length + small left shift if you want) */
 @media (pointer: coarse) and (orientation: landscape){
   :root{
     --coin-bar-w: clamp(220px, 38vw, 560px);
@@ -274,7 +266,7 @@
   }
 }
 
-/* Coarse pointer text-outline fallback */
+/* Touch devices: text-stroke fallback via shadow */
 @media (pointer: coarse){
   .coin-amount{
     -webkit-text-stroke:0; text-stroke:0;
@@ -285,39 +277,8 @@
   }
 }
 
-/* Desktop-only optical centering tweak (keep your chosen value) */
-@media (pointer: fine) {
-  :root { --center-nudge: 40px; }
-}
-
-/* ===== PHONE PORTRAIT ONLY — small bar + safe coin overhang ===== */
+/* Phone PORTRAIT (optional sizing only; keep if you want a smaller bar)
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
-
-  /* Reserve space so the coin base never clips off-screen;
-     add side gutters for breathing room; still centered by BAR */
-  .hud-top{
-    --pp-gutter: max(7vw, 24px);
-    padding-left: max(
-      env(safe-area-inset-left),
-      var(--pp-gutter),
-      calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
-    );
-    padding-right: max(env(safe-area-inset-right), var(--pp-gutter));
-    box-sizing: border-box;
-  }
-
-  :root{
-    /* Narrower bar on phones — adjust the max to taste (320 → 300/280) */
-    --coin-bar-w: clamp(240px, 65vw, 320px);
-
-    /* Keep modest tuck under the coin and visually true center */
-    --bar-underlap: 0.48;
-    --center-nudge: 16px;
-
-    /* On phones, make coin just a hair taller than the bar */
-    --coin-plus-extra: 4px;
-
-    /* Portrait stays centered; no global nudge */
-    --hud-x-nudge: 0px;
-  }
+  :root{ --coin-bar-w: clamp(240px, 65vw, 320px); --hud-x-nudge: 0px; }
 }
+*/
