@@ -150,7 +150,7 @@
   }
 }
 
-/* ===== Top HUD: Coin Counter (coinPlusBase.png + underlapping bar) ===== */
+/* ===== Top HUD: Coin Counter (centered by BAR only) ===== */
 .hud-top{
   position:absolute;
   top:calc(env(safe-area-inset-top) + 12px);
@@ -165,63 +165,70 @@
 
 /* Defaults (desktop / general) */
 :root{
-  --coin-h: clamp(48px, 6svh, 72px);
-
-  /* keep your current image sizing */
+  --coin-h: clamp(48px, 6svh, 72px);            /* BAR height */
   --coin-plus-extra: 20px;
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
-  /* desktop-like width */
-  --coin-bar-w: clamp(200px, 36vw, 520px);
-
+  --coin-bar-w: clamp(200px, 36vw, 520px);       /* BAR width */
   --coin-outline: 4px;
-  --bar-underlap: 0.50;
-  --center-nudge: 10px;
-  --hud-x-nudge: 0px; /* used in landscape on phones */
+
+  --bar-underlap: 0.50;                          /* fraction of coin width that overlaps bar */
+  --center-nudge: 6px;                            /* tiny left-bias for optical center */
+  --hud-x-nudge: 0px;                             /* use for landscape left shift if needed */
 }
 
+/* BAR-centered container */
 .coin-counter{
-  position:relative;
-  display:inline-flex;
-  align-items:center;
-  gap:0;
-  filter:drop-shadow(0 6px 10px rgba(0,0,0,.18));
-  pointer-events:auto;
+  position: relative;
+  width: var(--coin-bar-w);
+  height: max(var(--coin-plus-size), var(--coin-h));
+  display: flex;            /* was: block */
+  align-items: center;      /* <-- center bar vertically */
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
+  pointer-events: auto;
 }
 
+/* Coin+base image sits ON TOP and overlaps from the left; does NOT affect centering */
 .coin-plus{
-  position:relative;
+  position:absolute;
+  top:50%;
+  left: calc((var(--bar-underlap) - 1) * var(--coin-plus-size)); /* = - (1 - underlap) * size */
+  transform: translateY(-50%);
   z-index:2;
-  height:var(--coin-plus-size);
-  width: var(--coin-plus-size);
-  object-fit:contain;
-  border:none;
-  pointer-events:none;
+  height: var(--coin-plus-size);
+  width:  var(--coin-plus-size);
+  object-fit: contain;
+  border: none;
+  pointer-events: none;
 }
 
+/* BAR fills the container width; text centered across the visible bar only */
 .coin-bar{
   position:relative;
-  z-index:1;
-  height:var(--coin-h);
-  width: var(--coin-bar-w);
-  margin-left:calc(var(--coin-plus-size) * -1 * var(--bar-underlap));
-  border:var(--coin-outline) solid #000;
-  border-radius:0;
-  background:linear-gradient(180deg,#ffd34c,#ffb800);
+  z-index:1;                           /* behind coin image */
+  height: var(--coin-h);
+  width:  100%;                        /* matches container width */
+  border: var(--coin-outline) solid #000;
+  border-radius: 0;
+  background: linear-gradient(180deg,#ffd34c,#ffb800);
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0 16px;
-  box-sizing:border-box;
+  padding: 0 16px;                     /* symmetric; spacer handles hidden left chunk */
+  box-sizing: border-box;
   overflow:hidden;
 }
+
+/* Spacer equals the hidden portion under the coin, minus small optical nudge */
 .coin-bar::before{
   content:"";
   display:block;
-  width:calc(var(--coin-plus-size) * var(--bar-underlap) - var(--center-nudge));
+  width: calc(var(--coin-plus-size) * var(--bar-underlap) - var(--center-nudge));
   height:1px;
   flex:0 0 auto;
 }
+
+/* Subtle inner gloss so numbers feel “on” the bar */
 .coin-bar::after{
   content:"";
   position:absolute;
@@ -232,6 +239,8 @@
     inset 0 -6px 10px rgba(0,0,0,.15);
   pointer-events:none;
 }
+
+/* Number */
 .coin-amount{
   position:relative;
   z-index:1;
@@ -245,38 +254,37 @@
   transform:translateY(0.5px);
 }
 
-/* ---------- Mobile targeting ---------- */
+/* ---- Mobile tweaks you already wanted (optional keep) ---- */
 
-/* Phone PORTRAIT: wider but with breathing room on both sides */
+/* Phone PORTRAIT: wider with gutters */
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
   :root{
-    /* gutters on both sides + notch space */
     --hud-portrait-gutter: max(4vw, 14px);
     --coin-bar-w: min(
       calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
       640px
     );
-    --hud-x-nudge: 0px; /* keep dead center */
+    --hud-x-nudge: 0px;
   }
 }
 
-/* iPad PORTRAIT: slightly shorter bar than phone portrait */
+/* iPad PORTRAIT: slightly shorter than phone portrait */
 @media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
   :root{
-    --coin-bar-w: min(72vw, 720px);  /* a bit less than phone portrait */
-    --hud-x-nudge: 0px;              /* stay centered */
+    --coin-bar-w: min(72vw, 720px);
+    --hud-x-nudge: 0px;
   }
 }
 
-/* Mobile LANDSCAPE (phones & small tablets): use PC-like length, not full width */
+/* Mobile LANDSCAPE: PC-like length, not full width (+ optional left shift) */
 @media (pointer: coarse) and (orientation: landscape){
   :root{
-    --coin-bar-w: clamp(220px, 38vw, 560px); /* around desktop length */
-    --hud-x-nudge: -10px;                    /* your 10px left shift */
+    --coin-bar-w: clamp(220px, 38vw, 560px);
+    --hud-x-nudge: -10px;
   }
 }
 
-/* Coarse pointer text-outline fallback */
+/* Coarse pointer outline fallback */
 @media (pointer: coarse){
   .coin-amount{
     -webkit-text-stroke:0; text-stroke:0;
@@ -285,4 +293,18 @@
       1px -1px 0 #000, -1px -1px 0 #000,
       0 1px 0 rgba(0,0,0,0.22);
   }
+}
+
+/* Desktop-only optical centering tweak for coin counter */
+@media (pointer: fine) {
+  :root {
+    /* move numbers slightly LEFT across the visible bar */
+    --center-nudge: 40px;
+  }
+}
+
+/* Make digit widths uniform so long numbers stay visually centered */
+.coin-amount {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
 }
