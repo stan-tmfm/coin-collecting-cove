@@ -274,7 +274,7 @@
     --coin-bar-w: clamp(240px, 65vw, 320px);
     --coin-plus-extra: 4px;
     --bar-underlap: 0.48;
-    --bar-y-nudge: 10px; 
+    --bar-y-nudge: 2px; 
   }
 }
 
@@ -302,5 +302,6 @@
       0 1px 0 rgba(0,0,0,0.22);
   }
 }
+
 
 
