@@ -11,7 +11,7 @@ export function createSpawner({
     animationDurationMs = 1500,
     surgeLifetimeMs = 1400,
     surgeWidthVw = 22, // width of wave in vw of playfield
-    coinsPerSecond = 1,
+    coinsPerSecond = 10,
     perFrameBudget = 24, // max spawns committed per RAF
     backlogCap = 600, // queue backpressure
     maxActiveCoins = 1000, // coin capacity before coins are recycled
