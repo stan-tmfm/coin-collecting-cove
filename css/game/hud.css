@@ -311,24 +311,38 @@
 
 /* ===== Mobile visual-centering fixes (put at END of hud.css) ===== */
 
-/* Phone PORTRAIT — biggest left bias needed */
+/* --- PHONE PORTRAIT FIX: keep coin on-screen + narrower bar --- */
 @media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  /* Reserve space on the LEFT for the coin's overhang and add side gutters */
+  .hud-top{
+    /* the coin overhang is (1 - underlap) * coin size */
+    padding-left: max(
+      env(safe-area-inset-left),
+      var(--hud-portrait-gutter, 24px),
+      calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
+    );
+    padding-right: max(env(safe-area-inset-right), var(--hud-portrait-gutter, 24px));
+    box-sizing: border-box;
+  }
+
   :root{
-    /* bar width with side breathing room (adjust if you want more/less) */
+
+    /* comfy side margins + narrower bar cap */
     --hud-portrait-gutter: max(7vw, 24px);
     --coin-bar-w: min(
       calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
-      440px
+      420px
     );
 
-    /* center the digits visually across the exposed bar */
-    --center-nudge: 180px; /* tweak 16–20px if needed */
-    /* small underlap tweak so the coin doesn’t crowd the edge */
-    --bar-underlap: 0.47;
+    /* slight overlap + visual centering */
+    --bar-underlap: 0.48;
+    --center-nudge: 16px;
 
+    /* keep centered horizontally in portrait */
     --hud-x-nudge: 0px;
   }
 }
+
 
 /* Phone LANDSCAPE — moderate bias */
 @media (pointer: coarse) and (orientation: landscape) and (max-width: 1000px){
