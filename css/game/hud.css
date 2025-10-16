@@ -326,7 +326,7 @@
     /* --coin-bar-w: min(calc(100vw - (var(--phone-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)), 300px); */
 
     /* Small optical bias so the number sits dead center */
-    --center-nudge: 16px;
+    --center-nudge: 60px;
   }
 }
 
@@ -334,7 +334,7 @@
 /* Phone LANDSCAPE — moderate bias */
 @media (pointer: coarse) and (orientation: landscape) and (max-width: 1000px){
   :root{
-    --center-nudge: 5px;
+    --center-nudge: 25px;
   }
 }
 
@@ -348,7 +348,7 @@
 /* iPad LANDSCAPE */
 @media (pointer: coarse) and (orientation: landscape) and (min-width: 1024px){
   :root{
-    --center-nudge: 30px;
+    --center-nudge: 0px;
   }
 }
 
