@@ -1,4 +1,4 @@
-/* css/game/collect.css */
+/* css/game/collect_anim.css */
 @keyframes cccCoinCollect {
   0%   { transform: var(--ccc-start, translate3d(0,0,0)) scale(1);   opacity: 1;    filter: brightness(1); }
   70%  { transform: var(--ccc-start, translate3d(0,0,0)) scale(1.35) translateY(-12px); opacity: .35; }
