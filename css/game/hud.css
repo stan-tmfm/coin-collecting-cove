@@ -355,6 +355,6 @@
 /* iPad LANDSCAPE */
 @media (pointer: coarse) and (orientation: landscape) and (min-width: 1024px){
   :root{
-    --center-nudge: 50px;
+    --center-nudge: 30px;
   }
 }
