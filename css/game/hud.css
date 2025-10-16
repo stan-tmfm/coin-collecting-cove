@@ -150,45 +150,43 @@
   }
 }
 
-/* ===== Top HUD: Coin Counter (simple centered text) ===== */
+/* ===== Top HUD: Coin Counter ===== */
 .hud-top{
-  position:absolute;
-  top:calc(env(safe-area-inset-top) + 12px);
-  left:50%;
-  transform:translateX(calc(-50% + var(--hud-x-nudge, 0px)));
-  z-index:1000; /* above waves */
-  width:100%;
-  display:grid;
-  place-items:center;
-  pointer-events:none;
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;   /* <-- centers the bar container */
+  align-items: center;
+  padding-inline: max(env(safe-area-inset-left), 0px) max(env(safe-area-inset-right), 0px);
+  pointer-events: none;      /* let clicks pass through by default */
 }
 
 /* ===== Defaults (desktop / general) — your values kept ===== */
 :root{
-  --coin-h: clamp(48px, 6svh, 72px);   /* BAR height */
-  --coin-plus-extra: 20px;             /* your default "hair bigger" */
+  --coin-h: clamp(48px, 6svh, 72px);       /* BAR height */
+  --coin-plus-extra: 20px;                  /* keep your default */
   --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
 
-  --coin-bar-w: clamp(200px, 36vw, 520px); /* BAR width */
+  --coin-bar-w: clamp(200px, 36vw, 520px);  /* BAR width (desktop / general) */
   --coin-outline: 4px;
 
-  --bar-underlap: 0.50;                 /* bar tucks under left side of coin */
-  --hud-x-nudge: 0px;                   /* e.g., -10px in mobile landscape */
+  --bar-underlap: 0.50;                     /* bar tucks under coin */
+  --hud-x-nudge: 0px;                       /* no global nudge needed now */
 }
 
-/* Center by the BAR (container width = bar width) */
+/* Center by BAR (container width = bar width); clicks enabled on the counter */
 .coin-counter{
   position: relative;
-  width: var(--coin-bar-w);
+  width: var(--coin-bar-w);                 /* <-- centered by .hud-top flex */
   height: max(var(--coin-plus-size), var(--coin-h));
-  display: flex;
-  align-items: center;   /* vertically center bar vs coin */
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
   pointer-events: auto;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
 
-/* Coin+base image sits on top, overlapping from the left.
-   It does NOT affect centering of the text in the bar. */
+/* Coin+base image overlaps from the left; doesn’t affect centering */
 .coin-plus{
   position:absolute;
   top:50%;
@@ -202,26 +200,25 @@
   pointer-events: none;
 }
 
-/* The BAR itself: plain centered text, symmetric padding. */
+/* The BAR: simple centered text, symmetric padding */
 .coin-bar{
   position:relative;
-  z-index:1;                  /* behind coin image */
+  z-index:1;                 /* behind coin image */
   height: var(--coin-h);
-  width:  100%;
+  width: 100%;
   border: var(--coin-outline) solid #000;
-  border-radius: 0;           /* squared corners */
+  border-radius: 0;
   background: linear-gradient(180deg,#ffd34c,#ffb800);
 
-  /* >>> Simple centering — no spacer, no nudges <<< */
-  display:flex;
+  display:flex;              /* <-- centers the number */
   align-items:center;
   justify-content:center;
-  padding: 0 16px;            /* symmetric */
+  padding: 0 16px;
   box-sizing: border-box;
-  overflow:hidden;
+  overflow: hidden;
 }
 
-/* Optional inner gloss; purely cosmetic */
+/* Optional inner gloss */
 .coin-bar::after{
   content:"";
   position:absolute;
@@ -233,40 +230,57 @@
   pointer-events:none;
 }
 
-/* Number: centered by flex above; no transforms, no nudges. */
+/* Number (centered by flex above) */
 .coin-amount{
-  position:relative;
-  z-index:1;
-  font-weight:900;
-  font-size:clamp(18px, 3.6vw, 32px);
-  color:#fff;
-  letter-spacing:.5px;
-  -webkit-text-stroke:1px #000; text-stroke:1px #000;
-  text-shadow:0 1px 0 rgba(0,0,0,.35);
-  line-height:1;
+  position: relative;
+  z-index: 1;
+  font-weight: 900;
+  font-size: clamp(18px, 3.6vw, 32px);
+  color: #fff;
+  letter-spacing: .5px;
+  -webkit-text-stroke: 1px #000; text-stroke: 1px #000;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  line-height: 1;
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
-/* ---- Optional: your existing responsive tweaks (unchanged) ---- */
+/* ===== Mobile tweaks ===== */
 
-/* iPad PORTRAIT */
-@media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
+/* Phone PORTRAIT: make the bar smaller and keep coin from clipping */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  .hud-top{
+    /* breathing room AND reserve space for coin overhang */
+    --pp-gutter: max(7vw, 24px);
+    padding-left: max(
+      env(safe-area-inset-left),
+      var(--pp-gutter),
+      calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
+    );
+    padding-right: max(env(safe-area-inset-right), var(--pp-gutter));
+  }
   :root{
-    --coin-bar-w: min(72vw, 720px);
-    --hud-x-nudge: 0px;
+    --coin-bar-w: clamp(240px, 65vw, 320px);  /* pick a smaller cap if you want (e.g., 300px) */
+    --coin-plus-extra: 4px;                   /* coin just a hair taller than bar on phones */
+    --bar-underlap: 0.48;                     /* modest tuck */
   }
 }
 
-/* Mobile LANDSCAPE (PC-like length + small left shift if you want) */
+/* Mobile LANDSCAPE: PC-like length (not full width) */
 @media (pointer: coarse) and (orientation: landscape){
   :root{
     --coin-bar-w: clamp(220px, 38vw, 560px);
-    --hud-x-nudge: -10px;
   }
 }
 
-/* Touch devices: text-stroke fallback via shadow */
+/* iPad PORTRAIT: slightly shorter bar than phone portrait */
+@media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
+  :root{
+    --coin-bar-w: min(72vw, 560px);
+  }
+}
+
+/* Coarse pointer: stroke fallback via shadow */
 @media (pointer: coarse){
   .coin-amount{
     -webkit-text-stroke:0; text-stroke:0;
@@ -276,9 +290,3 @@
       0 1px 0 rgba(0,0,0,0.22);
   }
 }
-
-/* Phone PORTRAIT (optional sizing only; keep if you want a smaller bar)
-@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
-  :root{ --coin-bar-w: clamp(240px, 65vw, 320px); --hud-x-nudge: 0px; }
-}
-*/
