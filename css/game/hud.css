@@ -254,20 +254,6 @@
   transform:translateY(0.5px);
 }
 
-/* ---- Mobile tweaks you already wanted (optional keep) ---- */
-
-/* Phone PORTRAIT: wider with gutters */
-@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
-  :root{
-    --hud-portrait-gutter: max(4vw, 14px);
-    --coin-bar-w: min(
-      calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
-      640px
-    );
-    --hud-x-nudge: 0px;
-  }
-}
-
 /* iPad PORTRAIT: slightly shorter than phone portrait */
 @media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
   :root{
@@ -363,5 +349,30 @@
 @media (pointer: coarse) and (orientation: landscape) and (min-width: 1024px){
   :root{
     --center-nudge: 30px;
+  }
+}
+
+/* === FINAL: Phone PORTRAIT — small bar + safe coin overhang === */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  /* reserve left space for the coin’s overhang + side gutters */
+  .hud-top{
+    --pp-gutter: max(7vw, 24px);
+    padding-left: max(
+      env(safe-area-inset-left),
+      var(--pp-gutter),
+      calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
+    );
+    padding-right: max(env(safe-area-inset-right), var(--pp-gutter));
+    box-sizing: border-box;
+  }
+
+  /* narrow, centered bar (pick a cap you like) */
+  .coin-counter{ width: clamp(240px, 65vw, 320px); }
+
+  :root{
+    --bar-underlap: 0.48;   /* slight tuck under coin */
+    --center-nudge: 16px;   /* small left bias for optical center */
+    --hud-x-nudge: 0px;
+    --coin-plus-extra: 4px; /* make coin just a hair taller than bar */
   }
 }
