@@ -308,3 +308,20 @@
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: "tnum" 1, "lnum" 1;
 }
+
+/* Phone PORTRAIT: narrower, with comfortable gutters on both sides */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  :root{
+    /* more generous side gutters */
+    --hud-portrait-gutter: max(6vw, 20px);
+
+    /* final bar width: centered, leaves space at edges, respects notches */
+    --coin-bar-w: min(
+      calc(100vw - (var(--hud-portrait-gutter) * 2) - env(safe-area-inset-left) - env(safe-area-inset-right)),
+      540px
+    );
+
+    /* no horizontal nudge for portrait */
+    --hud-x-nudge: 0px;
+  }
+}
