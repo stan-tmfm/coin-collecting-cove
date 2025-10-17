@@ -51,7 +51,7 @@ function enterArea(areaID) {
       // start spawner (create if not created)
       if (!spawner) {
         spawner = createSpawner({
-          coinSrc: 'img/coin.png',
+          coinSrc: 'img/coin/coin.png',
           coinSize: 40,
           initialRate: 1,
           surgeLifetimeMs: 1800,
