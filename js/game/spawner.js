@@ -14,7 +14,7 @@ export function createSpawner({
     coinsPerSecond = 10,
     perFrameBudget = 24, // max spawns committed per RAF
     backlogCap = 600, // queue backpressure
-    maxActiveCoins = 1000, // coin capacity before coins are recycled
+    maxActiveCoins = 1250, // coin capacity before coins are recycled
     initialBurst = 1, // the amount of coins that spawn on room enter
     enableDropShadow = false,
 } = {}) {
