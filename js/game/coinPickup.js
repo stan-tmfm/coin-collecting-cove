@@ -1,13 +1,11 @@
 // js/game/coinPickup.js
 //
-// Mobile + desktop collection that feels like PC:
-// - Mobile: each coin plays its own sound (WebAudio), no clumping, no pitch shift
-// - rAF-throttled swipe + small "brush" so swipes aren't finicky
-// - Batches HUD/localStorage (1 write per frame), reduces jank
-// - Restores CSS collect animation (uses --ccc-start baseline)
-// - Desktop: hover/click still work
+// Mobile feels like PC, without lag:
+// - Mobile: cheap compositor-only transition on collect (no reflow), WebAudio per-coin sound
+// - Desktop: keep CSS keyframe collect animation (coin--collected)
+// - rAF-throttled swipe brush + batched HUD/storage
 //
-// Safe to init multiple times; internal guard prevents duplicates.
+// Safe to init multiple times; guarded.
 
 let initialized = false;
 
@@ -30,17 +28,17 @@ export function initCoinPickup({
     return;
   }
 
-  // Smooth touch pointer stream (prevents scroll/zoom hijacking)
+  // Smooth touch pointer stream on mobile
   pf.style.touchAction = 'none';
 
-  // ----- state -----
+  // ----- state / HUD -----
   let coins = Number(localStorage.getItem(storageKey) || 0);
-  function fmt(n) { return n.toLocaleString(undefined, { maximumFractionDigits: 0 }); }
-  function updateHud() { amt.textContent = fmt(coins); }
-  function save() { localStorage.setItem(storageKey, String(coins)); }
+  const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const updateHud = () => { amt.textContent = fmt(coins); };
+  const save = () => { localStorage.setItem(storageKey, String(coins)); };
   updateHud();
 
-  // Batch HUD/storage to once per frame
+  // Batch HUD/storage once per frame
   let pendingHudDelta = 0;
   let hudFlushScheduled = false;
   function addCoins(n) {
@@ -63,12 +61,12 @@ export function initCoinPickup({
   // ----- audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const VOL_DESKTOP = 0.25;
-  const VOL_MOBILE  = 0.01;
+  const VOL_MOBILE  = 0.08;  // your preferred mobile volume
   const COIN_VOLUME = IS_MOBILE ? VOL_MOBILE : VOL_DESKTOP;
 
-  // WebAudio (mobile overlap with no pitch change)
+  // WebAudio (mobile) for perfect overlap (one sound per coin, no clumping)
   let ac = null, gain = null, buffer = null, bufferPromise = null;
-  const START_JITTER_MAX = 0.008; // up to ~8ms random start to avoid phasey clumps
+  const START_JITTER_MAX = 0.008; // ~8ms random start to avoid phasey stacks
 
   async function initWebAudioOnce() {
     if (ac) return;
@@ -82,9 +80,7 @@ export function initCoinPickup({
       return await ac.decodeAudioData(arr);
     })();
     buffer = await bufferPromise;
-    if (ac.state === 'suspended') {
-      try { await ac.resume(); } catch {}
-    }
+    if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
   }
 
   function playCoinWebAudio() {
@@ -92,19 +88,16 @@ export function initCoinPickup({
     try {
       const src = ac.createBufferSource();
       src.buffer = buffer;
-      // No pitch change (fix for “high-pitched” cluster); just tiny start jitter
-      src.playbackRate.value = 1.0;
+      src.playbackRate.value = 1.0; // no pitch shift
       src.detune = 0;
       src.connect(gain);
       const t = ac.currentTime + Math.random() * START_JITTER_MAX;
       src.start(t);
       return true;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   }
 
-  // HTMLAudio fallback (desktop or WA fail)
+  // HTMLAudio fallback (desktop / WA fail)
   const pool = Array.from({ length: 8 }, () => {
     const a = new Audio(soundSrc);
     a.preload = 'auto';
@@ -112,7 +105,6 @@ export function initCoinPickup({
     return a;
   });
   let pIdx = 0;
-
   function playCoinHtmlAudio() {
     const a = pool[pIdx++ % pool.length];
     try { a.currentTime = 0; a.play(); } catch {}
@@ -132,26 +124,37 @@ export function initCoinPickup({
     playCoinHtmlAudio(); // desktop
   }
 
-  // ----- collect animation + removal (restore CSS animation) -----
+  // ----- collect animation + removal -----
+  // Desktop: keep CSS keyframe `.coin--collected` (nice pop/float/fade)
+  // Mobile: use a cheap compositor-only transition (no reflow/getComputedStyle)
   function animateAndRemove(el) {
-    // Capture live transform so keyframes start from the coin’s current pose
-    const cs = getComputedStyle(el);
-    const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
-    el.style.setProperty('--ccc-start', start);
-
-    // Clear any inline anim/transition from spawn; force reflow; then run CSS animation
-    el.style.animation = 'none';
-    el.style.transition = 'none';
-    // Force reflow to commit 'none'
-    // eslint-disable-next-line no-unused-expressions
-    el.offsetWidth;
-    el.style.animation = '';
-    el.style.transition = '';
-    el.classList.add('coin--collected');
-
-    const done = () => { el.removeEventListener('animationend', done); el.remove(); };
-    el.addEventListener('animationend', done);
-    setTimeout(done, 600); // safety
+    if (IS_MOBILE) {
+      // CHEAP MOBILE PATH (no layout reads, no animationend listeners)
+      // Prepare transition then change props next frame.
+      el.style.willChange = 'transform,opacity';
+      el.style.transition = 'transform 160ms cubic-bezier(.2,.9,.35,1), opacity 160ms linear';
+      requestAnimationFrame(() => {
+        // Append a small lift+scale on top of whatever transform it has
+        // (If transform is empty, the += still works as a concat string op.)
+        el.style.transform = (el.style.transform || '') + ' translateY(-10px) scale(1.22)';
+        el.style.opacity = '0';
+        setTimeout(() => { el.remove(); }, 200);
+      });
+    } else {
+      // DESKTOP CSS KEYFRAME PATH
+      // Start keyframes from current pose without forcing reflow:
+      // cancel any running CSS animation cleanly
+      try { el.getAnimations?.().forEach(a => a.cancel()); } catch {}
+      // Capture current computed transform for --ccc-start (one style read on desktop only)
+      const cs = getComputedStyle(el);
+      const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
+      el.style.setProperty('--ccc-start', start);
+      // Kick the CSS animation
+      el.classList.add('coin--collected');
+      const done = () => { el.removeEventListener('animationend', done); el.remove(); };
+      el.addEventListener('animationend', done);
+      setTimeout(done, 600); // safety
+    }
   }
 
   // Queue + flush per frame (sound plays per coin)
@@ -170,7 +173,7 @@ export function initCoinPickup({
             playSound();          // one sound per coin (like PC)
             animateAndRemove(coin);
           }
-          addCoins(toCollect.size);
+          addCoins(toCollect.size); // HUD/storage once per frame
           toCollect.clear();
         }
         flushScheduled = false;
@@ -178,13 +181,14 @@ export function initCoinPickup({
     }
   }
 
-  // ----- make newly spawned coins interactive -----
+  // ----- Make newly spawned coins interactive -----
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
       r.addedNodes.forEach(node => {
         if (!(node instanceof HTMLElement)) return;
         if (!node.classList.contains('coin')) return;
         node.style.pointerEvents = 'auto';
+        // Desktop UX: hover/click to collect
         node.addEventListener('mouseenter', () => queueCollect(node), { passive: true });
         node.addEventListener('pointerdown', () => queueCollect(node), { passive: true });
       });
@@ -192,8 +196,8 @@ export function initCoinPickup({
   });
   mo.observe(cl, { childList: true });
 
-  // ----- mobile swipe: rAF-throttled brush -----
-  const BRUSH_R = 24;
+  // ----- Mobile swipe: rAF-throttled brush (forgiving) -----
+  const BRUSH_R = 24; // tweak 24–30 if needed
   const OFF = [
     [0,0], [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
   ];
@@ -255,4 +259,3 @@ export function initCoinPickup({
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
-
