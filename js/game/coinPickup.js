@@ -61,7 +61,7 @@ export function initCoinPickup({
 
   // Volumes
   const DESKTOP_VOLUME = 0.25; // HTMLAudio
-  const MOBILE_VOLUME  = 0.01; // baked into buffer on mobile (change to taste)
+  const MOBILE_VOLUME  = 0.04; // baked into buffer on mobile (change to taste)
 
   // --- WebAudio (mobile only) ---
   let ac = null;
@@ -305,4 +305,5 @@ export function initCoinPickup({
     }
   };
 }
+
 
