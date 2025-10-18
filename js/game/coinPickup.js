@@ -1,10 +1,12 @@
 // js/game/coinPickup.js
 //
-// Mobile: WebAudio ONLY + baked-in attenuation (buffer rescaled to MOBILE_VOLUME)
-//  -> guarantees single-coin loudness is actually reduced.
-// Desktop: HTMLAudio pool at DESKTOP_VOLUME; CSS keyframe animation.
-// Mobile: animation disabled by default for silky pickup.
-// Smooth: rAF-throttled swipe "brush"; HUD/storage batched once per frame.
+// Mobile: WebAudio ONLY with a master GainNode (MOBILE_VOLUME controls loudness).
+// Desktop: HTMLAudio pool at DESKTOP_VOLUME.
+// Mobile animation is OFF by default for silky pickups; desktop uses CSS keyframe
+// ('.coin--collected') starting from --ccc-start baseline.
+// Smooth swipe: rAF-throttled "brush"; HUD/storage batched once per frame.
+//
+// Safe to init multiple times; guarded by `initialized`.
 
 let initialized = false;
 
@@ -14,13 +16,13 @@ export function initCoinPickup({
   hudAmountSelector  = '.hud-top .coin-amount',
   soundSrc           = 'sounds/coin_pickup.mp3',
   storageKey         = 'ccc:coins:v1',
-  // Mobile animation OFF by default (settings-ready later)
+  // Mobile animation OFF by default (you can expose this later in a settings menu)
   disableAnimation   = ((window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window)),
 } = {}) {
   if (initialized) return;
   initialized = true;
 
-  // ---- DOM ----
+  // ----- DOM -----
   const pf  = document.querySelector(playfieldSelector);
   const cl  = document.querySelector(coinsLayerSelector);
   const amt = document.querySelector(hudAmountSelector);
@@ -28,9 +30,10 @@ export function initCoinPickup({
     console.warn('[coinPickup] missing required nodes', { pf: !!pf, cl: !!cl, amt: !!amt });
     return;
   }
+  // Keep touch pointer stream continuous (prevents browser gestures from stealing events)
   pf.style.touchAction = 'none';
 
-  // ---- HUD / storage (batched) ----
+  // ----- HUD / storage (batched once per frame) -----
   let coins = Number(localStorage.getItem(storageKey) || 0);
   const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
   const updateHud = () => { amt.textContent = fmt(coins); };
@@ -56,33 +59,16 @@ export function initCoinPickup({
     }
   }
 
-  // ---- Audio ----
+  // ----- Audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 
-  // Volumes
-  const DESKTOP_VOLUME = 0.25; // HTMLAudio
-  const MOBILE_VOLUME  = 0.06; // baked into buffer on mobile (change to taste)
+  // Desktop HTMLAudio volume; Mobile WebAudio master GainNode volume
+  const DESKTOP_VOLUME = 0.25;
+  const MOBILE_VOLUME  = 0.06; // <- your preferred mobile loudness; now respected
 
-  // --- WebAudio (mobile only) ---
-  let ac = null;
-  let bufferOriginal = null;  // decoded at native loudness
-  let bufferScaled   = null;  // pre-attenuated copy used for playback
-  let webAudioReady  = false;
-  let webAudioLoading = false;
-  let queuedPlays = 0;
-
-  function scaleBuffer(ctx, srcBuf, scale) {
-    const chs = srcBuf.numberOfChannels;
-    const out = ctx.createBuffer(chs, srcBuf.length, srcBuf.sampleRate);
-    for (let ch = 0; ch < chs; ch++) {
-      const inData  = srcBuf.getChannelData(ch);
-      const outData = out.getChannelData(ch);
-      for (let i = 0; i < inData.length; i++) {
-        outData[i] = inData[i] * scale; // pre-attenuate
-      }
-    }
-    return out;
-  }
+  // Mobile WebAudio (forced): BufferSource -> masterGain(MOBILE_VOLUME) -> destination
+  let ac = null, masterGain = null, buffer = null;
+  let webAudioReady = false, webAudioLoading = false, queuedPlays = 0;
 
   async function initWebAudioOnce() {
     if (webAudioReady || webAudioLoading) return;
@@ -91,17 +77,14 @@ export function initCoinPickup({
     webAudioLoading = true;
     ac = new (window.AudioContext || window.webkitAudioContext)();
 
+    masterGain = ac.createGain();
+    masterGain.gain.value = MOBILE_VOLUME;   // authoritative mobile volume
+    masterGain.connect(ac.destination);
+
     try {
       const res = await fetch(soundSrc, { cache: 'force-cache' });
       const arr = await res.arrayBuffer();
-      bufferOriginal = await new Promise((resolve, reject) =>
-        ac.decodeAudioData(arr, resolve, reject)
-      );
-
-      // Bake in the desired mobile volume directly into the buffer.
-      // (No reliance on GainNode—this WILL be quieter.)
-      bufferScaled = scaleBuffer(ac, bufferOriginal, Math.max(0, Math.min(1, MOBILE_VOLUME)));
-
+      buffer = await new Promise((resolve, reject) => ac.decodeAudioData(arr, resolve, reject));
       if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
       webAudioReady = true;
     } catch (err) {
@@ -110,7 +93,7 @@ export function initCoinPickup({
       webAudioLoading = false;
     }
 
-    // Flush any queued plays
+    // Flush queued plays (coins collected before decode completed)
     if (webAudioReady && queuedPlays > 0) {
       const n = Math.min(queuedPlays, 64);
       queuedPlays = 0;
@@ -118,22 +101,23 @@ export function initCoinPickup({
     }
   }
 
-  // Warm context on first touch (iOS)
+  // Warm the context on first user gesture for iOS autoplay policy
   pf.addEventListener('pointerdown', () => { if (IS_MOBILE) initWebAudioOnce(); }, { once: true, passive: true });
 
   function playCoinWebAudio() {
-    if (!webAudioReady || !ac || !bufferScaled) {
+    if (!webAudioReady || !ac || !buffer || !masterGain) {
       queuedPlays++;
       if (!webAudioLoading) initWebAudioOnce();
-      return true; // will play shortly after decode
+      return true; // will play after decode
     }
     try {
       const src = ac.createBufferSource();
-      src.buffer = bufferScaled;       // <- already attenuated; no extra nodes needed
-      src.playbackRate.value = 1.0;    // no pitch change
-      // tiny jitter to avoid phasey feel without affecting loudness expectation
+      src.buffer = buffer;
+      src.playbackRate.value = 1.0; // no pitch change
+      src.detune = 0;
+      src.connect(masterGain);
+      // tiny start jitter to avoid phasey feel; doesn't affect loudness
       const t = ac.currentTime + Math.random() * 0.006; // up to ~6ms
-      src.connect(ac.destination);
       src.start(t);
       return true;
     } catch (e) {
@@ -142,7 +126,7 @@ export function initCoinPickup({
     }
   }
 
-  // --- Desktop HTMLAudio pool (desktop only) ---
+  // Desktop HTMLAudio pool (desktop only)
   let pool = null, pIdx = 0, lastSoundAt = 0;
   if (!IS_MOBILE) {
     pool = Array.from({ length: 8 }, () => {
@@ -152,30 +136,31 @@ export function initCoinPickup({
       return a;
     });
   }
-
   function playCoinHtmlAudio() {
     const now = performance.now();
-    if ((now - lastSoundAt) < 40) return; // tiny de-thrash
+    if ((now - lastSoundAt) < 40) return; // tiny de-thrash that matched your PC feel
     lastSoundAt = now;
     const a = pool[pIdx++ % pool.length];
     try { a.currentTime = 0; a.play(); } catch {}
   }
 
+  // One sound per coin: MOBILE -> WebAudio only; DESKTOP -> HTMLAudio
   function playSound() {
     if (IS_MOBILE) {
-      playCoinWebAudio();           // WebAudio ONLY on mobile
+      playCoinWebAudio();
     } else {
       playCoinHtmlAudio();
     }
   }
 
-  // ---- Collect animation + removal ----
+  // ----- Collect animation + removal -----
   function animateAndRemove(el) {
-    if (disableAnimation) { el.remove(); return; }
+    if (disableAnimation) { el.remove(); return; } // mobile default: no animation
     // Desktop/or when enabled: original CSS keyframes ('.coin--collected')
     const cs = getComputedStyle(el);
     const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
     el.style.setProperty('--ccc-start', start);
+
     el.style.animation = 'none';
     el.style.transition = 'none';
     // force reflow
@@ -184,12 +169,13 @@ export function initCoinPickup({
     el.style.animation = '';
     el.style.transition = '';
     el.classList.add('coin--collected');
+
     const done = () => { el.removeEventListener('animationend', done); el.remove(); };
     el.addEventListener('animationend', done);
-    setTimeout(done, 600);
+    setTimeout(done, 600); // safety
   }
 
-  // ---- Collect queue (flush per frame) ----
+  // ----- Collect queue (flush per frame) -----
   const toCollect = new Set();
   let flushScheduled = false;
 
@@ -202,10 +188,10 @@ export function initCoinPickup({
         if (toCollect.size) {
           for (const coin of toCollect) {
             coin.dataset.collected = '1';
-            playSound();
+            playSound();          // one sound per coin
             animateAndRemove(coin);
           }
-          addCoins(toCollect.size);
+          addCoins(toCollect.size); // HUD/storage once per frame
           toCollect.clear();
         }
         flushScheduled = false;
@@ -213,13 +199,14 @@ export function initCoinPickup({
     }
   }
 
-  // ---- Newly spawned coins interactive ----
+  // ----- Newly spawned coins become interactive -----
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
       r.addedNodes.forEach(node => {
         if (!(node instanceof HTMLElement)) return;
         if (!node.classList.contains('coin')) return;
         node.style.pointerEvents = 'auto';
+        // Desktop UX
         node.addEventListener('mouseenter', () => queueCollect(node), { passive: true });
         node.addEventListener('pointerdown', () => queueCollect(node), { passive: true });
       });
@@ -227,8 +214,8 @@ export function initCoinPickup({
   });
   mo.observe(cl, { childList: true });
 
-  // ---- Mobile swipe: rAF-throttled brush ----
-  const BRUSH_R = 24;
+  // ----- Mobile swipe: rAF-throttled brush (forgiving + efficient) -----
+  const BRUSH_R = 24; // tweak 24–30 for bigger footprint if desired
   const OFF = [
     [0,0], [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
   ];
@@ -284,27 +271,14 @@ export function initCoinPickup({
     scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
 
-  // Public helper to tweak mobile volume later (re-bakes the buffer)
+  // Public helper (for your future settings UI)
   return {
     get count() { return coins; },
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); },
-    async setMobileVolume(v) {
-      if (!IS_MOBILE) return;
+    setMobileVolume(v) {
+      if (!masterGain || !ac) return;
       const vol = Math.max(0, Math.min(1, Number(v) || 0));
-      if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)();
-      if (!bufferOriginal) {
-        // decode first if needed
-        const res = await fetch(soundSrc, { cache: 'force-cache' });
-        const arr = await res.arrayBuffer();
-        bufferOriginal = await new Promise((resolve, reject) =>
-          ac.decodeAudioData(arr, resolve, reject)
-        );
-      }
-      bufferScaled = scaleBuffer(ac, bufferOriginal, vol);
-      webAudioReady = true;
+      masterGain.gain.setValueAtTime(vol, ac.currentTime);
     }
   };
 }
-
-
-
