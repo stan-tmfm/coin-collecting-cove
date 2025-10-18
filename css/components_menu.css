@@ -102,7 +102,7 @@
   display: inline-block;
   width: var(--coin-size);
   height: var(--coin-size);
-  background: url("../img/coin.png") center/contain no-repeat;
+  background: url("/img/coin/coin.png") center/contain no-repeat;
   transform: translateY(0.46em);
   vertical-align: baseline;
   margin-left: 0em;
