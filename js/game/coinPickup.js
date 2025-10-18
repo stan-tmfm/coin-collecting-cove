@@ -1,4 +1,12 @@
 // js/game/coinPickup.js
+//
+// Mobile-optimized coin collection that feels like PC:
+// - Each coin plays its own sound on mobile (WebAudio), no clumping
+// - rAF-throttled swipe + small "brush" so swipes aren't finicky
+// - Batches HUD/localStorage (1 write per frame), reduces jank
+// - Desktop: hover/click still work as before
+//
+// Safe to init multiple times; internal guard prevents duplicates.
 
 let initialized = false;
 
@@ -21,8 +29,7 @@ export function initCoinPickup({
     return;
   }
 
-  // Make touch move silky (prevents browser scroll/zoom interfering with pointer stream)
-  // You can move this to CSS (.playfield { touch-action:none; }) if you prefer.
+  // Ensure pointer stream is smooth on touch (prevents scroll/zoom hijacking)
   pf.style.touchAction = 'none';
 
   // ----- state -----
@@ -32,15 +39,16 @@ export function initCoinPickup({
   function save() { localStorage.setItem(storageKey, String(coins)); }
   updateHud();
 
-  // Batch HUD/localStorage to once per frame
+  // Batch HUD/storage to once per frame
   let pendingHudDelta = 0;
   let hudFlushScheduled = false;
   function addCoins(n) {
+    if (n <= 0) return;
     pendingHudDelta += n;
     if (!hudFlushScheduled) {
       hudFlushScheduled = true;
       requestAnimationFrame(() => {
-        if (pendingHudDelta !== 0) {
+        if (pendingHudDelta) {
           coins += pendingHudDelta;
           pendingHudDelta = 0;
           updateHud();
@@ -51,84 +59,126 @@ export function initCoinPickup({
     }
   }
 
-  // ----- audio (mobile quieter) -----
+  // ----- audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
-  const COIN_VOL_DESKTOP = 0.25;
-  const COIN_VOL_MOBILE  = 0.05;
-  const COIN_VOLUME = IS_MOBILE ? COIN_VOL_MOBILE : COIN_VOL_DESKTOP;
+  const VOL_DESKTOP = 0.25;
+  const VOL_MOBILE  = 0.12;
+  const COIN_VOLUME = IS_MOBILE ? VOL_MOBILE : VOL_DESKTOP;
 
-  const pool = Array.from({ length: 6 }, () => {
+  // WebAudio (for perfect overlap on mobile)
+  let ac = null, gain = null, buffer = null, bufferPromise = null;
+
+  async function initWebAudioOnce() {
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    gain = ac.createGain();
+    gain.gain.value = COIN_VOLUME;
+    gain.connect(ac.destination);
+    // Decode once
+    bufferPromise = bufferPromise || (async () => {
+      const res = await fetch(soundSrc);
+      const arr = await res.arrayBuffer();
+      return await ac.decodeAudioData(arr);
+    })();
+    buffer = await bufferPromise;
+    if (ac.state === 'suspended') {
+      // Will resume on first user input automatically; we also try:
+      try { await ac.resume(); } catch {}
+    }
+  }
+
+  function playCoinWebAudio() {
+    if (!ac || !buffer) return false;
+    try {
+      const src = ac.createBufferSource();
+      src.buffer = buffer;
+      // small random pitch for variety
+      src.playbackRate.value = 0.98 + Math.random() * 0.06;
+      src.connect(gain);
+      src.start();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  // HTMLAudio fallback pool (desktop or if WA fails)
+  const pool = Array.from({ length: 8 }, () => {
     const a = new Audio(soundSrc);
     a.preload = 'auto';
     a.volume = COIN_VOLUME;
     return a;
   });
   let pIdx = 0;
-  let lastSoundAt = 0;
-  function playSound() {
-    const now = performance.now();
-    if (now - lastSoundAt < 40) return; // soft rate-limit
-    lastSoundAt = now;
+
+  function playCoinHtmlAudio() {
     const a = pool[pIdx++ % pool.length];
     try { a.currentTime = 0; a.play(); } catch {}
   }
 
+  function playSound() {
+    // On first collect (user gesture), warm WebAudio for mobile
+    if (IS_MOBILE && !ac) {
+      initWebAudioOnce().then(() => {
+        if (!playCoinWebAudio()) playCoinHtmlAudio();
+      }).catch(() => playCoinHtmlAudio());
+      return;
+    }
+    // Prefer WebAudio on mobile (no rate limit -> every coin audible)
+    if (IS_MOBILE && ac && buffer) {
+      if (!playCoinWebAudio()) playCoinHtmlAudio();
+      return;
+    }
+    // Desktop: HTMLAudio is fine (no strict rate limit to allow fast rolls)
+    playCoinHtmlAudio();
+  }
+
   // ----- collect animation + removal -----
   function animateAndRemove(el) {
-    const cs = getComputedStyle(el);
-    const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
-    el.style.setProperty('--ccc-start', start);
+    // Avoid heavy getComputedStyle; start from identity if needed
+    // You can uncomment below if you want the exact live transform baseline:
+    // const cs = getComputedStyle(el);
+    // const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
+    // el.style.setProperty('--ccc-start', start);
 
-    // Clear inline anim so CSS rule takes over; sequence via rAF avoids per-coin forced reflow
     el.style.animation = 'none';
     el.style.transition = 'none';
-
     requestAnimationFrame(() => {
       el.style.animation = '';
       el.style.transition = '';
       el.classList.add('coin--collected');
-
       const done = () => { el.removeEventListener('animationend', done); el.remove(); };
       el.addEventListener('animationend', done);
-      setTimeout(done, 600); // safety
+      setTimeout(done, 600);
     });
   }
 
-  // Batch collect (avoid doing full work inside touch event)
+  // Queue + flush per frame (but play one sound **per coin**)
   const toCollect = new Set();
-  let sweepFlushScheduled = false;
+  let flushScheduled = false;
+
   function queueCollect(el) {
     if (!el || el.dataset.collected === '1') return;
     toCollect.add(el);
-    if (!sweepFlushScheduled) {
-      sweepFlushScheduled = true;
+    if (!flushScheduled) {
+      flushScheduled = true;
       requestAnimationFrame(() => {
-        // Flush all queued coins this frame
         if (toCollect.size) {
-          // HUD & storage once per frame (batched)
-          addCoins(toCollect.size);
-
-          // Do per-coin side effects
+          // Play a sound for each coin (like PC) — WebAudio handles overlap well
           for (const coin of toCollect) {
             coin.dataset.collected = '1';
+            playSound();
             animateAndRemove(coin);
           }
-
-          // Play one sound (rate-limited) — this still sounds great during swipes
-          playSound();
-
-          // Mobile haptic (optional)
-          if (IS_MOBILE && navigator.vibrate) navigator.vibrate(10);
-
+          addCoins(toCollect.size);
           toCollect.clear();
         }
-        sweepFlushScheduled = false;
+        flushScheduled = false;
       });
     }
   }
 
-  // ----- Ensure newly spawned coins are interactive (desktop) -----
-  // (Spawner creates .coin with pointer-events: none; we flip to auto)
+  // ----- Make newly spawned coins interactive -----
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
       r.addedNodes.forEach(node => {
@@ -143,23 +193,17 @@ export function initCoinPickup({
   });
   mo.observe(cl, { childList: true });
 
-  // ----- Mobile swipe hit-testing (rAF-throttled "brush") -----
-  // Sample pattern: center + ring (8 points) around the finger.
-  const BRUSH_R = 28; // px radius around finger (tweak 22–34 if needed)
+  // ----- Mobile swipe: rAF-throttled "brush" so it’s not finicky -----
+  const BRUSH_R = 24; // 24–30px works well
   const OFF = [
-    [ 0,  0],
-    [ BRUSH_R, 0], [-BRUSH_R, 0], [0,  BRUSH_R], [0, -BRUSH_R],
-    [ 0.7071*BRUSH_R,  0.7071*BRUSH_R],
-    [ 0.7071*BRUSH_R, -0.7071*BRUSH_R],
-    [-0.7071*BRUSH_R,  0.7071*BRUSH_R],
-    [-0.7071*BRUSH_R, -0.7071*BRUSH_R],
+    [0,0],
+    [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
   ];
 
   let pendingPoint = null;
   let brushScheduled = false;
 
   function brushAt(x, y) {
-    // Hit-test a handful of points; dedupe and queue coins
     for (let i = 0; i < OFF.length; i++) {
       const px = x + OFF[i][0];
       const py = y + OFF[i][1];
@@ -187,38 +231,35 @@ export function initCoinPickup({
     }
   }
 
-  // Use unified pointer events for mobile swipe; keep passive listeners for responsiveness
+  // Unified pointer events for touch/pen
   pf.addEventListener('pointerdown', (e) => {
     if (e.pointerType === 'touch' || e.pointerType === 'pen') {
       scheduleBrush(e.clientX, e.clientY);
     }
   }, { passive: true });
-
   pf.addEventListener('pointermove', (e) => {
     if (e.pointerType === 'touch' || e.pointerType === 'pen') {
       scheduleBrush(e.clientX, e.clientY);
     }
   }, { passive: true });
-
-  // Also collect on generic tap/click anywhere inside playfield
   pf.addEventListener('pointerup', (e) => {
-    scheduleBrush(e.clientX, e.clientY);
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      scheduleBrush(e.clientX, e.clientY);
+    }
   }, { passive: true });
 
-  // Desktop "paint" with mouse (cheaply throttled)
+  // Desktop mouse "paint" (light throttle)
   let lastX = -1, lastY = -1;
   pf.addEventListener('mousemove', (e) => {
-    const dx = e.clientX - lastX;
-    const dy = e.clientY - lastY;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
     if ((dx*dx + dy*dy) < 9) return;
     lastX = e.clientX; lastY = e.clientY;
     scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
 
-  // Exposed helper (optional)
+  // Public helper
   return {
     get count() { return coins; },
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
-
