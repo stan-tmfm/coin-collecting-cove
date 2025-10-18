@@ -1,10 +1,11 @@
 // js/game/coinPickup.js
 //
-// Mobile-optimized coin collection that feels like PC:
-// - Each coin plays its own sound on mobile (WebAudio), no clumping
+// Mobile + desktop collection that feels like PC:
+// - Mobile: each coin plays its own sound (WebAudio), no clumping, no pitch shift
 // - rAF-throttled swipe + small "brush" so swipes aren't finicky
 // - Batches HUD/localStorage (1 write per frame), reduces jank
-// - Desktop: hover/click still work as before
+// - Restores CSS collect animation (uses --ccc-start baseline)
+// - Desktop: hover/click still work
 //
 // Safe to init multiple times; internal guard prevents duplicates.
 
@@ -29,7 +30,7 @@ export function initCoinPickup({
     return;
   }
 
-  // Ensure pointer stream is smooth on touch (prevents scroll/zoom hijacking)
+  // Smooth touch pointer stream (prevents scroll/zoom hijacking)
   pf.style.touchAction = 'none';
 
   // ----- state -----
@@ -62,11 +63,12 @@ export function initCoinPickup({
   // ----- audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const VOL_DESKTOP = 0.25;
-  const VOL_MOBILE  = 0.08;
+  const VOL_MOBILE  = 0.08;   // as requested
   const COIN_VOLUME = IS_MOBILE ? VOL_MOBILE : VOL_DESKTOP;
 
-  // WebAudio (for perfect overlap on mobile)
+  // WebAudio (mobile overlap with no pitch change)
   let ac = null, gain = null, buffer = null, bufferPromise = null;
+  const START_JITTER_MAX = 0.008; // up to ~8ms random start to avoid phasey clumps
 
   async function initWebAudioOnce() {
     if (ac) return;
@@ -74,7 +76,6 @@ export function initCoinPickup({
     gain = ac.createGain();
     gain.gain.value = COIN_VOLUME;
     gain.connect(ac.destination);
-    // Decode once
     bufferPromise = bufferPromise || (async () => {
       const res = await fetch(soundSrc);
       const arr = await res.arrayBuffer();
@@ -82,7 +83,6 @@ export function initCoinPickup({
     })();
     buffer = await bufferPromise;
     if (ac.state === 'suspended') {
-      // Will resume on first user input automatically; we also try:
       try { await ac.resume(); } catch {}
     }
   }
@@ -92,17 +92,19 @@ export function initCoinPickup({
     try {
       const src = ac.createBufferSource();
       src.buffer = buffer;
-      // small random pitch for variety
-      src.playbackRate.value = 0.98 + Math.random() * 0.06;
+      // No pitch change (fix for “high-pitched” cluster); just tiny start jitter
+      src.playbackRate.value = 1.0;
+      src.detune = 0;
       src.connect(gain);
-      src.start();
+      const t = ac.currentTime + Math.random() * START_JITTER_MAX;
+      src.start(t);
       return true;
     } catch {
       return false;
     }
   }
 
-  // HTMLAudio fallback pool (desktop or if WA fails)
+  // HTMLAudio fallback (desktop or WA fail)
   const pool = Array.from({ length: 8 }, () => {
     const a = new Audio(soundSrc);
     a.preload = 'auto';
@@ -117,43 +119,42 @@ export function initCoinPickup({
   }
 
   function playSound() {
-    // On first collect (user gesture), warm WebAudio for mobile
     if (IS_MOBILE && !ac) {
       initWebAudioOnce().then(() => {
         if (!playCoinWebAudio()) playCoinHtmlAudio();
       }).catch(() => playCoinHtmlAudio());
       return;
     }
-    // Prefer WebAudio on mobile (no rate limit -> every coin audible)
     if (IS_MOBILE && ac && buffer) {
       if (!playCoinWebAudio()) playCoinHtmlAudio();
       return;
     }
-    // Desktop: HTMLAudio is fine (no strict rate limit to allow fast rolls)
-    playCoinHtmlAudio();
+    playCoinHtmlAudio(); // desktop
   }
 
-  // ----- collect animation + removal -----
+  // ----- collect animation + removal (restore CSS animation) -----
   function animateAndRemove(el) {
-    // Avoid heavy getComputedStyle; start from identity if needed
-    // You can uncomment below if you want the exact live transform baseline:
-    // const cs = getComputedStyle(el);
-    // const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
-    // el.style.setProperty('--ccc-start', start);
+    // Capture live transform so keyframes start from the coin’s current pose
+    const cs = getComputedStyle(el);
+    const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
+    el.style.setProperty('--ccc-start', start);
 
+    // Clear any inline anim/transition from spawn; force reflow; then run CSS animation
     el.style.animation = 'none';
     el.style.transition = 'none';
-    requestAnimationFrame(() => {
-      el.style.animation = '';
-      el.style.transition = '';
-      el.classList.add('coin--collected');
-      const done = () => { el.removeEventListener('animationend', done); el.remove(); };
-      el.addEventListener('animationend', done);
-      setTimeout(done, 600);
-    });
+    // Force reflow to commit 'none'
+    // eslint-disable-next-line no-unused-expressions
+    el.offsetWidth;
+    el.style.animation = '';
+    el.style.transition = '';
+    el.classList.add('coin--collected');
+
+    const done = () => { el.removeEventListener('animationend', done); el.remove(); };
+    el.addEventListener('animationend', done);
+    setTimeout(done, 600); // safety
   }
 
-  // Queue + flush per frame (but play one sound **per coin**)
+  // Queue + flush per frame (sound plays per coin)
   const toCollect = new Set();
   let flushScheduled = false;
 
@@ -164,10 +165,9 @@ export function initCoinPickup({
       flushScheduled = true;
       requestAnimationFrame(() => {
         if (toCollect.size) {
-          // Play a sound for each coin (like PC) — WebAudio handles overlap well
           for (const coin of toCollect) {
             coin.dataset.collected = '1';
-            playSound();
+            playSound();          // one sound per coin (like PC)
             animateAndRemove(coin);
           }
           addCoins(toCollect.size);
@@ -178,14 +178,13 @@ export function initCoinPickup({
     }
   }
 
-  // ----- Make newly spawned coins interactive -----
+  // ----- make newly spawned coins interactive -----
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
       r.addedNodes.forEach(node => {
         if (!(node instanceof HTMLElement)) return;
         if (!node.classList.contains('coin')) return;
         node.style.pointerEvents = 'auto';
-        // Desktop UX: hover/click to collect
         node.addEventListener('mouseenter', () => queueCollect(node), { passive: true });
         node.addEventListener('pointerdown', () => queueCollect(node), { passive: true });
       });
@@ -193,11 +192,10 @@ export function initCoinPickup({
   });
   mo.observe(cl, { childList: true });
 
-  // ----- Mobile swipe: rAF-throttled "brush" so it’s not finicky -----
-  const BRUSH_R = 24; // 24–30px works well
+  // ----- mobile swipe: rAF-throttled brush -----
+  const BRUSH_R = 24;
   const OFF = [
-    [0,0],
-    [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
+    [0,0], [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
   ];
 
   let pendingPoint = null;
@@ -233,19 +231,13 @@ export function initCoinPickup({
 
   // Unified pointer events for touch/pen
   pf.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-      scheduleBrush(e.clientX, e.clientY);
-    }
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
   pf.addEventListener('pointermove', (e) => {
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-      scheduleBrush(e.clientX, e.clientY);
-    }
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
   pf.addEventListener('pointerup', (e) => {
-    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
-      scheduleBrush(e.clientX, e.clientY);
-    }
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
 
   // Desktop mouse "paint" (light throttle)
@@ -263,4 +255,3 @@ export function initCoinPickup({
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
-
