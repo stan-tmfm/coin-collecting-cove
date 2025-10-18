@@ -64,7 +64,7 @@ export function initCoinPickup({
 
   // Desktop HTMLAudio volume; Mobile WebAudio master GainNode volume
   const DESKTOP_VOLUME = 0.25;
-  const MOBILE_VOLUME  = 0.06; // <- your preferred mobile loudness; now respected
+  const MOBILE_VOLUME  = 0.08; // <- your preferred mobile loudness; now respected
 
   // Mobile WebAudio (forced): BufferSource -> masterGain(MOBILE_VOLUME) -> destination
   let ac = null, masterGain = null, buffer = null;
@@ -282,3 +282,4 @@ export function initCoinPickup({
     }
   };
 }
+
