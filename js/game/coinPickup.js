@@ -61,7 +61,7 @@ export function initCoinPickup({
   // ----- audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const VOL_DESKTOP = 0.25;
-  const VOL_MOBILE  = 0.01;  // your preferred mobile volume
+  const VOL_MOBILE  = 0.01;
   const COIN_VOLUME = IS_MOBILE ? VOL_MOBILE : VOL_DESKTOP;
 
   // WebAudio (mobile) for perfect overlap (one sound per coin, no clumping)
@@ -128,34 +128,17 @@ export function initCoinPickup({
   // Desktop: keep CSS keyframe `.coin--collected` (nice pop/float/fade)
   // Mobile: use a cheap compositor-only transition (no reflow/getComputedStyle)
   function animateAndRemove(el) {
-    if (IS_MOBILE) {
-      // CHEAP MOBILE PATH (no layout reads, no animationend listeners)
-      // Prepare transition then change props next frame.
-      el.style.willChange = 'transform,opacity';
-      el.style.transition = 'transform 160ms cubic-bezier(.2,.9,.35,1), opacity 160ms linear';
-      requestAnimationFrame(() => {
-        // Append a small lift+scale on top of whatever transform it has
-        // (If transform is empty, the += still works as a concat string op.)
-        el.style.transform = (el.style.transform || '') + ' translateY(-10px) scale(1.22)';
-        el.style.opacity = '0';
-        setTimeout(() => { el.remove(); }, 200);
-      });
-    } else {
-      // DESKTOP CSS KEYFRAME PATH
-      // Start keyframes from current pose without forcing reflow:
-      // cancel any running CSS animation cleanly
-      try { el.getAnimations?.().forEach(a => a.cancel()); } catch {}
-      // Capture current computed transform for --ccc-start (one style read on desktop only)
-      const cs = getComputedStyle(el);
-      const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
-      el.style.setProperty('--ccc-start', start);
-      // Kick the CSS animation
-      el.classList.add('coin--collected');
-      const done = () => { el.removeEventListener('animationend', done); el.remove(); };
-      el.addEventListener('animationend', done);
-      setTimeout(done, 600); // safety
-    }
-  }
+  // Start from the element’s *inline* transform (no layout read)
+  const start = el.style.transform && el.style.transform !== '' ? el.style.transform : 'translate3d(0,0,0)';
+  el.style.setProperty('--ccc-start', start);
+
+  // Don’t touch inline animation/transition; the CSS class (with !important) will override
+  el.classList.add('coin--collected');
+
+  // No per-coin animationend listeners: just remove after the keyframe duration (+ buffer)
+  setTimeout(() => { el.remove(); }, 260);
+}
+
 
   // Queue + flush per frame (sound plays per coin)
   const toCollect = new Set();
@@ -259,4 +242,3 @@ export function initCoinPickup({
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
-
