@@ -21,17 +21,37 @@ export function initCoinPickup({
     return;
   }
 
+  // Make touch move silky (prevents browser scroll/zoom interfering with pointer stream)
+  // You can move this to CSS (.playfield { touch-action:none; }) if you prefer.
+  pf.style.touchAction = 'none';
+
   // ----- state -----
   let coins = Number(localStorage.getItem(storageKey) || 0);
-  let lastSoundAt = 0;
-
   function fmt(n) { return n.toLocaleString(undefined, { maximumFractionDigits: 0 }); }
-  function save() { localStorage.setItem(storageKey, String(coins)); }
   function updateHud() { amt.textContent = fmt(coins); }
-
+  function save() { localStorage.setItem(storageKey, String(coins)); }
   updateHud();
 
-  // ----- Audio: different volume for mobile vs desktop -----
+  // Batch HUD/localStorage to once per frame
+  let pendingHudDelta = 0;
+  let hudFlushScheduled = false;
+  function addCoins(n) {
+    pendingHudDelta += n;
+    if (!hudFlushScheduled) {
+      hudFlushScheduled = true;
+      requestAnimationFrame(() => {
+        if (pendingHudDelta !== 0) {
+          coins += pendingHudDelta;
+          pendingHudDelta = 0;
+          updateHud();
+          save();
+        }
+        hudFlushScheduled = false;
+      });
+    }
+  }
+
+  // ----- audio (mobile quieter) -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const COIN_VOL_DESKTOP = 0.25;
   const COIN_VOL_MOBILE  = 0.1;
@@ -44,10 +64,10 @@ export function initCoinPickup({
     return a;
   });
   let pIdx = 0;
-
+  let lastSoundAt = 0;
   function playSound() {
     const now = performance.now();
-    if (now - lastSoundAt < 40) return;
+    if (now - lastSoundAt < 40) return; // soft rate-limit
     lastSoundAt = now;
     const a = pool[pIdx++ % pool.length];
     try { a.currentTime = 0; a.play(); } catch {}
@@ -59,77 +79,143 @@ export function initCoinPickup({
     const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
     el.style.setProperty('--ccc-start', start);
 
-    // clear inline anims so CSS rule applies
+    // Clear inline anim so CSS rule takes over; sequence via rAF avoids per-coin forced reflow
     el.style.animation = 'none';
     el.style.transition = 'none';
-    el.offsetWidth; // reflow
-    el.style.animation = '';
-    el.style.transition = '';
-    el.classList.add('coin--collected');
 
-    const done = () => { el.removeEventListener('animationend', done); el.remove(); };
-    el.addEventListener('animationend', done);
-    setTimeout(done, 600);
+    requestAnimationFrame(() => {
+      el.style.animation = '';
+      el.style.transition = '';
+      el.classList.add('coin--collected');
+
+      const done = () => { el.removeEventListener('animationend', done); el.remove(); };
+      el.addEventListener('animationend', done);
+      setTimeout(done, 600); // safety
+    });
   }
 
-  function collect(el) {
+  // Batch collect (avoid doing full work inside touch event)
+  const toCollect = new Set();
+  let sweepFlushScheduled = false;
+  function queueCollect(el) {
     if (!el || el.dataset.collected === '1') return;
-    el.dataset.collected = '1';
-    coins += 1;
-    updateHud();
-    save();
-    playSound();
+    toCollect.add(el);
+    if (!sweepFlushScheduled) {
+      sweepFlushScheduled = true;
+      requestAnimationFrame(() => {
+        // Flush all queued coins this frame
+        if (toCollect.size) {
+          // HUD & storage once per frame (batched)
+          addCoins(toCollect.size);
 
-    // optional: gentle haptic feedback on mobile
-    if (IS_MOBILE && navigator.vibrate) navigator.vibrate(10);
+          // Do per-coin side effects
+          for (const coin of toCollect) {
+            coin.dataset.collected = '1';
+            animateAndRemove(coin);
+          }
 
-    animateAndRemove(el);
+          // Play one sound (rate-limited) — this still sounds great during swipes
+          playSound();
+
+          // Mobile haptic (optional)
+          if (IS_MOBILE && navigator.vibrate) navigator.vibrate(10);
+
+          toCollect.clear();
+        }
+        sweepFlushScheduled = false;
+      });
+    }
   }
 
-  // ----- Ensure newly spawned coins can be hit-tested -----
+  // ----- Ensure newly spawned coins are interactive (desktop) -----
+  // (Spawner creates .coin with pointer-events: none; we flip to auto)
   const mo = new MutationObserver((recs) => {
     for (const r of recs) {
       r.addedNodes.forEach(node => {
         if (!(node instanceof HTMLElement)) return;
         if (!node.classList.contains('coin')) return;
         node.style.pointerEvents = 'auto';
-        node.addEventListener('mouseenter', () => collect(node), { passive: true });
-        node.addEventListener('pointerdown', () => collect(node), { passive: true });
+        // Desktop UX: hover/click to collect
+        node.addEventListener('mouseenter', () => queueCollect(node), { passive: true });
+        node.addEventListener('pointerdown', () => queueCollect(node), { passive: true });
       });
     }
   });
   mo.observe(cl, { childList: true });
 
-  // ----- Mobile swipe hit-testing -----
-  function collectAt(x, y) {
-    const under = document.elementsFromPoint(x, y);
-    const coin = under.find(el => el instanceof HTMLElement && el.classList.contains('coin'));
-    if (coin) collect(coin);
-  }
+  // ----- Mobile swipe hit-testing (rAF-throttled "brush") -----
+  // Sample pattern: center + ring (8 points) around the finger.
+  const BRUSH_R = 28; // px radius around finger (tweak 22–34 if needed)
+  const OFF = [
+    [ 0,  0],
+    [ BRUSH_R, 0], [-BRUSH_R, 0], [0,  BRUSH_R], [0, -BRUSH_R],
+    [ 0.7071*BRUSH_R,  0.7071*BRUSH_R],
+    [ 0.7071*BRUSH_R, -0.7071*BRUSH_R],
+    [-0.7071*BRUSH_R,  0.7071*BRUSH_R],
+    [-0.7071*BRUSH_R, -0.7071*BRUSH_R],
+  ];
 
-  function handleTouch(ev) {
-    for (let i = 0; i < ev.touches.length; i++) {
-      const t = ev.touches[i];
-      collectAt(t.clientX, t.clientY);
+  let pendingPoint = null;
+  let brushScheduled = false;
+
+  function brushAt(x, y) {
+    // Hit-test a handful of points; dedupe and queue coins
+    for (let i = 0; i < OFF.length; i++) {
+      const px = x + OFF[i][0];
+      const py = y + OFF[i][1];
+      const stack = document.elementsFromPoint(px, py);
+      for (let j = 0; j < stack.length; j++) {
+        const el = stack[j];
+        if (el instanceof HTMLElement && el.classList.contains('coin') && el.dataset.collected !== '1') {
+          queueCollect(el);
+        }
+      }
     }
   }
-  pf.addEventListener('touchstart', handleTouch, { passive: true });
-  pf.addEventListener('touchmove',  handleTouch, { passive: true });
 
-  // Desktop hover paint
+  function scheduleBrush(x, y) {
+    pendingPoint = { x, y };
+    if (!brushScheduled) {
+      brushScheduled = true;
+      requestAnimationFrame(() => {
+        if (pendingPoint) {
+          brushAt(pendingPoint.x, pendingPoint.y);
+          pendingPoint = null;
+        }
+        brushScheduled = false;
+      });
+    }
+  }
+
+  // Use unified pointer events for mobile swipe; keep passive listeners for responsiveness
+  pf.addEventListener('pointerdown', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      scheduleBrush(e.clientX, e.clientY);
+    }
+  }, { passive: true });
+
+  pf.addEventListener('pointermove', (e) => {
+    if (e.pointerType === 'touch' || e.pointerType === 'pen') {
+      scheduleBrush(e.clientX, e.clientY);
+    }
+  }, { passive: true });
+
+  // Also collect on generic tap/click anywhere inside playfield
+  pf.addEventListener('pointerup', (e) => {
+    scheduleBrush(e.clientX, e.clientY);
+  }, { passive: true });
+
+  // Desktop "paint" with mouse (cheaply throttled)
   let lastX = -1, lastY = -1;
   pf.addEventListener('mousemove', (e) => {
     const dx = e.clientX - lastX;
     const dy = e.clientY - lastY;
     if ((dx*dx + dy*dy) < 9) return;
     lastX = e.clientX; lastY = e.clientY;
-    collectAt(e.clientX, e.clientY);
+    scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
 
-  // Pointer down fallback
-  pf.addEventListener('pointerdown', (e) => collectAt(e.clientX, e.clientY), { passive: true });
-
-  // Exposed helper
+  // Exposed helper (optional)
   return {
     get count() { return coins; },
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
