@@ -54,7 +54,7 @@ export function initCoinPickup({
   // ----- audio (mobile quieter) -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const COIN_VOL_DESKTOP = 0.25;
-  const COIN_VOL_MOBILE  = 0.1;
+  const COIN_VOL_MOBILE  = 0.05;
   const COIN_VOLUME = IS_MOBILE ? COIN_VOL_MOBILE : COIN_VOL_DESKTOP;
 
   const pool = Array.from({ length: 6 }, () => {
@@ -221,3 +221,4 @@ export function initCoinPickup({
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
+
