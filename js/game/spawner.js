@@ -16,7 +16,8 @@ export function createSpawner({
     backlogCap = 600, // queue backpressure
     maxActiveCoins = 1250, // coin capacity before coins are recycled
     initialBurst = 1, // the amount of coins that spawn on room enter
-    enableDropShadow = false,
+	coinTtlMs = 60000, // auto-despawn each coin after 60s
+    enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
     // ---------- resolve and keep DOM references ----------
     const refs = {
@@ -100,15 +101,19 @@ export function createSpawner({
         return el;
     }
     const getCoin = () => (coinPool.length ? coinPool.pop() : makeCoin());
-    function releaseCoin(el) {
-        el.style.animation = 'none';
-        el.style.transform = '';
-        el.style.opacity = '1';
-        if (el.parentNode)
-            el.remove();
-        if (coinPool.length < COIN_POOL_MAX)
-            coinPool.push(el);
-    }
+     function releaseCoin(el) {
+   el.style.animation = 'none';
+   el.style.transform = '';
+   el.style.opacity = '1';
+    delete el.dataset.dieAt;
+    delete el.dataset.jitter;
+    delete el.dataset.collected;
+
+   if (el.parentNode)
+     el.remove();
+   if (coinPool.length < COIN_POOL_MAX)
+     coinPool.push(el);
+ }
 
     function makeSurge() {
         const el = document.createElement('div');
@@ -216,6 +221,7 @@ export function createSpawner({
             // baseline so it's visible even if animation doesn't kick this frame
             el.style.transform = `translate3d(${coin.x0}px, ${coin.y0}px, 0)`;
             el.dataset.jitter = String(coin.jitterMs);
+			el.dataset.dieAt = String(performance.now() + coinTtlMs);
 
             coinsFrag.appendChild(el);
             newCoins.push(el);
@@ -272,6 +278,8 @@ export function createSpawner({
     let last = performance.now();
     let carry = 0; // fractional coins
     let queued = 0; // whole coins awaiting spawn
+	let ttlCursor = null;
+	const ttlChecksPerFrame = 200;
 
     function loop(now) {
         if (!M.pfRect || !M.wRect)
@@ -279,8 +287,24 @@ export function createSpawner({
 
         const dt = (now - last) / 1000;
         last = now;
+		
+  {
+      let checked = 0;
+      let node = ttlCursor || (refs.c && refs.c.firstElementChild);
+      while (node && checked < ttlChecksPerFrame) {
+          const next = node.nextElementSibling;
+          const dieAt = Number(node.dataset && node.dataset.dieAt || 0);
+          if (dieAt && now >= dieAt) {
+              // release (returns to pool and removes from DOM)
+              releaseCoin(node);
+          }
+          node = next;
+          checked++;
+      }
+      ttlCursor = node || null;
+  }
 
-        carry += rate * dt;
+		carry += rate * dt;
         const due = carry | 0;
         if (due > 0) {
             queued = Math.min(backlogCap, queued + due); // clamp backlog
