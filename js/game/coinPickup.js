@@ -1,10 +1,12 @@
 // js/game/coinPickup.js
 //
-// Best of both:
-// - Mobile: WebAudio per-coin @ 0.08 through GainNode (no pitch shift), animation disabled by default
-// - Desktop: original CSS keyframe collect animation ('.coin--collected')
-// - Smooth: rAF-throttled swipe "brush" + batched HUD/storage (1 write per frame)
-// - One sound per coin on both platforms
+// Best of both worlds + mobile volume that actually stays quiet:
+// - Mobile: WebAudio (GainNode @ MOBILE_VOLUME) -> DynamicsCompressor -> destination
+//           + voice-aware gain so big overlaps don't get loud
+//           + one sound per coin, no pitch change, tiny start jitter to avoid phasing
+//           + collect animation disabled by default (fast removal, silky)
+// - Desktop: HTMLAudio pool at DESKTOP_VOLUME, original CSS keyframe collect animation
+// - Smooth: rAF-throttled swipe "brush" + batched HUD/localStorage once per frame
 //
 // Safe to init multiple times; guarded by `initialized`.
 
@@ -16,7 +18,7 @@ export function initCoinPickup({
   hudAmountSelector    = '.hud-top .coin-amount',
   soundSrc             = 'sounds/coin_pickup.mp3',
   storageKey           = 'ccc:coins:v1',
-  // Animation: OFF by default on mobile, ON on desktop (we can expose this later in settings)
+  // Animation OFF by default on mobile, ON on desktop (settings-ready later)
   disableAnimation     = ((window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window)),
 } = {}) {
   if (initialized) return;
@@ -31,7 +33,7 @@ export function initCoinPickup({
     return;
   }
 
-  // Mobile pointer stream stays continuous (prevents browser gestures stealing events)
+  // Keep touch pointer stream continuous (prevents scroll/zoom hijacking)
   pf.style.touchAction = 'none';
 
   // ----- HUD / storage (batched) -----
@@ -63,32 +65,68 @@ export function initCoinPickup({
   // ----- Audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 
-  // Desktop HTMLAudio volume; Mobile WebAudio GainNode volume
+  // Volumes
   const DESKTOP_VOLUME = 0.25;
-  const MOBILE_VOLUME  = 0.08;
+  const MOBILE_VOLUME  = 0.08; // change this freely; it *will* take effect now
 
-  // WebAudio (mobile) for exact volume + overlap
-  let ac = null, gain = null, buffer = null, bufferPromise = null, webAudioReady = false;
-  const START_JITTER_MAX = 0.008; // ~8ms start offset to avoid phasing when many start together
+  // WebAudio graph for mobile:
+  // [BufferSource x N] -> Gain (master) -> Compressor -> Destination
+  let ac = null, gain = null, comp = null, buffer = null, bufferPromise = null, webAudioReady = false;
+
+  // tiny start-time jitter to avoid phasey stacks
+  const START_JITTER_MAX = 0.008; // ~8ms
+
+  // active voices for gentle gain scaling when many coins overlap
+  let activeVoices = 0;
+
+  function recomputeMobileGain() {
+    // Soft scaling: the more sources, the lower the per-coin mix
+    // Tweak factor (0.18) to taste; lower = less attenuation.
+    const factor = 0.18;
+    const scale = 1 / (1 + factor * Math.max(0, activeVoices - 1));
+    const target = MOBILE_VOLUME * scale;
+    try {
+      gain.gain.setTargetAtTime(target, ac.currentTime, 0.01);
+    } catch {
+      if (gain) gain.gain.value = target;
+    }
+  }
 
   async function initWebAudioOnce() {
     if (webAudioReady) return;
     if (!('AudioContext' in window || 'webkitAudioContext' in window)) return;
+
     ac = new (window.AudioContext || window.webkitAudioContext)();
+
     gain = ac.createGain();
-    gain.gain.value = MOBILE_VOLUME;   // << mobile loudness lives here and WILL work
-    gain.connect(ac.destination);
+    gain.gain.value = MOBILE_VOLUME;
+
+    // DynamicsCompressor to tame big overlaps (prevents “gets loud” effect)
+    comp = ac.createDynamicsCompressor();
+    try {
+      comp.threshold.value = -24; // start compressing around -24 dB
+      comp.knee.value = 20;
+      comp.ratio.value = 12;      // strong limiting when many stack
+      comp.attack.value = 0.003;  // fast attack
+      comp.release.value = 0.1;   // quick release
+    } catch {}
+
+    gain.connect(comp);
+    comp.connect(ac.destination);
+
     bufferPromise = bufferPromise || (async () => {
       const res = await fetch(soundSrc, { cache: 'force-cache' });
       const arr = await res.arrayBuffer();
       return await new Promise((resolve, reject) => ac.decodeAudioData(arr, resolve, reject));
     })();
     buffer = await bufferPromise;
+
     if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
     webAudioReady = true;
+    recomputeMobileGain();
   }
 
-  // Warm the context on first user touch so first pickup uses correct volume
+  // Warm the context on first user touch so first pickup uses correct volume/mix
   pf.addEventListener('pointerdown', () => { if (IS_MOBILE) initWebAudioOnce(); }, { once: true, passive: true });
 
   function playCoinWebAudio() {
@@ -96,13 +134,24 @@ export function initCoinPickup({
     try {
       const src = ac.createBufferSource();
       src.buffer = buffer;
-      src.playbackRate.value = 1.0; // no pitch randomization (prevents “high” clusters)
+      src.playbackRate.value = 1.0; // no pitch randomization (fixes “high-pitched” feel)
       src.detune = 0;
       src.connect(gain);
-      const t = ac.currentTime + Math.random() * START_JITTER_MAX; // tiny timing jitter only
+
+      // track active voices so we can adjust gain softly
+      activeVoices++;
+      recomputeMobileGain();
+      src.onended = () => {
+        activeVoices = Math.max(0, activeVoices - 1);
+        recomputeMobileGain();
+      };
+
+      const t = ac.currentTime + Math.random() * START_JITTER_MAX;
       src.start(t);
       return true;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
   // Desktop / fallback HTMLAudio pool
@@ -114,9 +163,10 @@ export function initCoinPickup({
   });
   let pIdx = 0;
   let lastSoundAt = 0;
+
   function playCoinHtmlAudio() {
     const now = performance.now();
-    if ((now - lastSoundAt) < 40) return; // tiny de-thrash, desktop felt good with this
+    if ((now - lastSoundAt) < 40) return; // tiny de-thrash that matched your PC feel
     lastSoundAt = now;
     const a = pool[pIdx++ % pool.length];
     try { a.currentTime = 0; a.play(); } catch {}
@@ -125,41 +175,40 @@ export function initCoinPickup({
   function playSound() {
     if (IS_MOBILE) {
       if (!webAudioReady) {
-        initWebAudioOnce().then(() => playCoinWebAudio());
+        // initialize, then play
+        initWebAudioOnce().then(() => { playCoinWebAudio(); });
         return;
       }
-      if (!playCoinWebAudio()) playCoinHtmlAudio(); // rare fallback
+      if (!playCoinWebAudio()) playCoinHtmlAudio(); // extreme fallback
       return;
     }
     playCoinHtmlAudio(); // desktop
   }
 
   // ----- Collect animation + removal -----
-  // Mobile: animation disabled => instant remove (keeps pickups silky)
-  // Desktop: original keyframe animation from your CSS ('.coin--collected')
   function animateAndRemove(el) {
-    if (disableAnimation) { el.remove(); return; }
-
-    // (Desktop path) Start keyframes from live pose for correct look
+    if (disableAnimation) {
+      el.remove(); // mobile default: no animation for silky performance
+      return;
+    }
+    // Desktop/or when enabled: run your original keyframes ('.coin--collected')
     const cs = getComputedStyle(el);
     const start = cs.transform && cs.transform !== 'none' ? cs.transform : 'translate3d(0,0,0)';
     el.style.setProperty('--ccc-start', start);
-
     el.style.animation = 'none';
     el.style.transition = 'none';
-    // force reflow to commit 'none'
+    // force reflow
     // eslint-disable-next-line no-unused-expressions
     el.offsetWidth;
     el.style.animation = '';
     el.style.transition = '';
     el.classList.add('coin--collected');
-
     const done = () => { el.removeEventListener('animationend', done); el.remove(); };
     el.addEventListener('animationend', done);
-    setTimeout(done, 600); // safety
+    setTimeout(done, 600);
   }
 
-  // ----- Collect queue (per-frame flush) -----
+  // ----- Collect queue (flush per frame) -----
   const toCollect = new Set();
   let flushScheduled = false;
 
@@ -175,7 +224,7 @@ export function initCoinPickup({
             playSound();          // one sound per coin
             animateAndRemove(coin);
           }
-          addCoins(toCollect.size);
+          addCoins(toCollect.size); // HUD/storage once per frame
           toCollect.clear();
         }
         flushScheduled = false;
@@ -199,7 +248,7 @@ export function initCoinPickup({
   mo.observe(cl, { childList: true });
 
   // ----- Mobile swipe: rAF-throttled “brush” (forgiving + efficient) -----
-  const BRUSH_R = 24; // tweak 24–30 if you want bigger footprint
+  const BRUSH_R = 24; // tweak 24–30 if you want a bigger footprint
   const OFF = [
     [0,0], [ BRUSH_R, 0], [-BRUSH_R, 0], [0, BRUSH_R], [0, -BRUSH_R]
   ];
@@ -255,9 +304,16 @@ export function initCoinPickup({
     scheduleBrush(e.clientX, e.clientY);
   }, { passive: true });
 
-  // Public helper
+  // Public helper: if you want to tweak mobile volume at runtime later
   return {
     get count() { return coins; },
-    set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
+    set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); },
+    setMobileVolume(v) {
+      if (!gain || !ac) return;
+      const vol = Math.max(0, Math.min(1, Number(v) || 0));
+      // reset base and recompute with current voice scaling
+      gain.gain.setValueAtTime(vol, ac.currentTime);
+      recomputeMobileGain();
+    }
   };
 }
