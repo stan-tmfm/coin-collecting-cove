@@ -63,7 +63,7 @@ export function initCoinPickup({
   // ----- audio -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const VOL_DESKTOP = 0.25;
-  const VOL_MOBILE  = 0.08;   // as requested
+  const VOL_MOBILE  = 0.01;
   const COIN_VOLUME = IS_MOBILE ? VOL_MOBILE : VOL_DESKTOP;
 
   // WebAudio (mobile overlap with no pitch change)
@@ -255,3 +255,4 @@ export function initCoinPickup({
     set count(v) { coins = Math.max(0, Number(v) || 0); updateHud(); save(); }
   };
 }
+
