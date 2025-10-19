@@ -1,5 +1,9 @@
 // js/ui/hudButtons.js
 // Controls visibility (unlock/lock) and layout of HUD buttons across desktop & mobile.
+// Updated for new DOM order: Help → Shop → Stats & Settings → Map
+// Special mobile portrait (2×2) rule: when 3 buttons are visible (help, shop, stats),
+// place Help & Stats on the top row, and force Shop to a full-width row beneath them
+// (even though Shop appears before Stats in the DOM).
 
 const UNLOCK_KEYS = {
   SHOP: 'ccc:unlock:shop',
@@ -35,7 +39,12 @@ export function applyHudLayout() {
 
   // Reset any previous layout hints
   hud.classList.remove('is-2','is-3','is-4');
-  visible.forEach(el => { el.style.gridColumn = ''; el.classList.remove('span-2'); });
+  visible.forEach(el => {
+    el.style.gridColumn = '';
+    el.style.gridRow = '';
+    el.classList.remove('span-2');
+    el.style.order = '';
+  });
   hud.style.gridTemplateColumns = '';
 
   hud.classList.add(`is-${visible.length}`);
@@ -49,7 +58,7 @@ export function applyHudLayout() {
       visible[1].style.gridColumn = '3';
       return;
     }
-    // If exactly 3 buttons, keep them centered (Map hidden, e.g.)
+    // If exactly 3 buttons, keep them centered across the middle three columns
     if (visible.length === 3) {
       hud.style.gridTemplateColumns = '1fr minmax(180px, 22vw) minmax(180px, 22vw) minmax(180px, 22vw) 1fr';
       visible[0].style.gridColumn = '2';
@@ -57,13 +66,31 @@ export function applyHudLayout() {
       visible[2].style.gridColumn = '4';
       return;
     }
+    // 4 buttons → whatever your default CSS defines (no inline override)
   }
 
-  // --- Mobile portrait 2x2 special case ---
-  // If 3 visible (Help, Settings, Shop), make Shop full width under them
+  // --- Mobile portrait (2×2) special case: 3 visible buttons ---
+  // With new DOM order (help, shop, stats), we want:
+  //   Row 1: Help (col 1), Stats (col 2)
+  //   Row 2: Shop spanning both columns
   if (phonePortrait() && visible.length === 3) {
-    const shop = hud.querySelector('[data-btn="shop"]');
-    if (shop && !shop.hidden) shop.classList.add('span-2'); // CSS makes it span both columns
+    const help = hud.querySelector('[data-btn="help"]:not([hidden])');
+    const shop = hud.querySelector('[data-btn="shop"]:not([hidden])');
+    const stats = hud.querySelector('[data-btn="stats"]:not([hidden])');
+
+    if (help && stats && shop) {
+      // Top row
+      help.style.gridColumn = '1';
+      help.style.gridRow = '1';
+
+      stats.style.gridColumn = '2';
+      stats.style.gridRow = '1';
+
+      // Bottom, full-width
+      shop.style.gridColumn = '1 / -1';
+      shop.style.gridRow = '2';
+      // (No need for .span-2 class if we pin both grid edges explicitly)
+    }
   }
 }
 
@@ -72,7 +99,7 @@ export function initHudButtons() {
 
   // Always-on buttons
   setButtonVisible('help',  true);
-  setButtonVisible('stats', true); // your Settings button uses data-btn="stats"
+  setButtonVisible('stats', true); // Settings button uses data-btn="stats"
 
   // Default-locked buttons
   setButtonVisible('shop', isUnlocked(UNLOCK_KEYS.SHOP));
