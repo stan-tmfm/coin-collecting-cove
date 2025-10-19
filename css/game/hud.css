@@ -1,121 +1,316 @@
-// js/ui/hudButtons.js
-// Controls visibility (unlock/lock) and layout of HUD buttons across desktop & mobile.
-// Updated for new DOM order: Help → Shop → Stats & Settings → Map
-// Special mobile portrait (2×2) rule: when 3 buttons are visible (help, shop, stats),
-// place Help & Stats on the top row, and force Shop to a full-width row beneath them
-// (even though Shop appears before Stats in the DOM).
+/* css/game/hud.css */
 
-const UNLOCK_KEYS = {
-  SHOP: 'ccc:unlock:shop',
-  MAP:  'ccc:unlock:map',
-};
-
-function isUnlocked(key) { return localStorage.getItem(key) === '1'; }
-function setUnlocked(key, v) { localStorage.setItem(key, v ? '1' : '0'); }
-function ensureUnlockDefaults() {
-  if (localStorage.getItem(UNLOCK_KEYS.SHOP) === null) setUnlocked(UNLOCK_KEYS.SHOP, false);
-  if (localStorage.getItem(UNLOCK_KEYS.MAP)  === null) setUnlocked(UNLOCK_KEYS.MAP,  false);
+/* Bottom HUD */
+.hud-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: clamp(64px, 10svh, 110px);
+  align-items: end;
+  align-content: end;
+  background: linear-gradient(to top, rgba(0,0,0,0.03), rgba(0,0,0,0));
 }
 
-function setButtonVisible(key, visible) {
-  const el = document.querySelector(`.hud-bottom [data-btn="${key}"]`);
-  if (el) el.hidden = !visible;
+/* Base button appearance: rectangular w/ black outline, slight rounding */
+.menu-btn {
+  -webkit-tap-highlight-color: transparent;
+  appearance: none;
+  border: 4px solid #000;       /* black outline */
+  border-radius: 8px;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  outline: none;
+
+  /* large bold label */
+  font-weight: 900;
+  font-size: clamp(18px, 3.5vw, 32px);
+  color: #fff;
+
+  /* subtle drop shadow for depth */
+  box-shadow: 0 6px 10px rgba(0,0,0,0.18);
+  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
 }
 
-function phonePortrait() {
-  const isCoarse = window.matchMedia('(pointer: coarse)').matches;
-  const isPortrait = window.innerHeight >= window.innerWidth;
-  return isCoarse && isPortrait;
+/* Pressed state */
+.menu-btn:active {
+  transform: translateY(1px) scale(0.997);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16);
 }
 
-let listenersBound = false;
+/* Hide via attribute */
+.menu-btn[hidden] { display: none !important; }
 
-export function applyHudLayout() {
-  const hud = document.querySelector('.hud-bottom');
-  if (!hud) return;
+/* Theme colors (vertical-ish gradient per button) */
+.btn-help  { background: linear-gradient(180deg,#f7d64b,#e8b800); }  /* yellow */
+.btn-shop  { background: linear-gradient(180deg,#62b447,#2a8a2b); }  /* green  */
+.btn-stats { background: linear-gradient(180deg,#e04a3f,#b92b20); }  /* red    */
+.btn-map   { background: linear-gradient(180deg,#39e6df,#00aabb); }  /* cyan   */
 
-  const all = [...hud.querySelectorAll('.menu-btn')];
-  const visible = all.filter(el => !el.hidden);
+/* Desktop: crisp 1px stroke for text (where supported), plus light shadow */
+.menu-btn {
+  -webkit-text-stroke: 1px #000; /* desktop outline */
+  text-stroke: 1px #000;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.35); /* small helper shadow for browsers without stroke */
+}
 
-  // Reset any previous layout hints
-  hud.classList.remove('is-2','is-3','is-4');
-  visible.forEach(el => {
-    el.style.gridColumn = '';
-    el.style.gridRow = '';
-    el.classList.remove('span-2');
-    el.style.order = '';
-  });
-  hud.style.gridTemplateColumns = '';
-
-  hud.classList.add(`is-${visible.length}`);
-
-  // --- Desktop (PC) custom centering ---
-  if (!phonePortrait()) {
-    // If exactly 2 buttons, center them as a pair
-    if (visible.length === 2) {
-      hud.style.gridTemplateColumns = '1fr minmax(180px, 22vw) minmax(180px, 22vw) 1fr';
-      visible[0].style.gridColumn = '2';
-      visible[1].style.gridColumn = '3';
-      return;
-    }
-    // If exactly 3 buttons, keep them centered across the middle three columns
-    if (visible.length === 3) {
-      hud.style.gridTemplateColumns = '1fr minmax(180px, 22vw) minmax(180px, 22vw) minmax(180px, 22vw) 1fr';
-      visible[0].style.gridColumn = '2';
-      visible[1].style.gridColumn = '3';
-      visible[2].style.gridColumn = '4';
-      return;
-    }
-    // 4 buttons → whatever your default CSS defines (no inline override)
-  }
-
-  // --- Mobile portrait (2×2) special case: 3 visible buttons ---
-  // With new DOM order (help, shop, stats), we want:
-  //   Row 1: Help (col 1), Stats (col 2)
-  //   Row 2: Shop spanning both columns
-  if (phonePortrait() && visible.length === 3) {
-    const help = hud.querySelector('[data-btn="help"]:not([hidden])');
-    const shop = hud.querySelector('[data-btn="shop"]:not([hidden])');
-    const stats = hud.querySelector('[data-btn="stats"]:not([hidden])');
-
-    if (help && stats && shop) {
-      // Top row
-      help.style.gridColumn = '1';
-      help.style.gridRow = '1';
-
-      stats.style.gridColumn = '2';
-      stats.style.gridRow = '1';
-
-      // Bottom, full-width
-      shop.style.gridColumn = '1 / -1';
-      shop.style.gridRow = '2';
-      // (No need for .span-2 class if we pin both grid edges explicitly)
-    }
+/* Touch / coarse-pointer devices: remove browser stroke and simulate with 1px multi-directional text-shadow */
+@media (pointer: coarse) {
+  .menu-btn {
+    -webkit-text-stroke: 0;
+    text-stroke: 0;
+    /* multi-directional shadow to mimic a 1px outline cleanly on mobile */
+    text-shadow:
+      1px 1px 0 #000,
+      -1px 1px 0 #000,
+      1px -1px 0 #000,
+      -1px -1px 0 #000,
+      0 1px 0 rgba(0,0,0,0.22);
   }
 }
 
-export function initHudButtons() {
-  ensureUnlockDefaults();
-
-  // Always-on buttons
-  setButtonVisible('help',  true);
-  setButtonVisible('stats', true); // Settings button uses data-btn="stats"
-
-  // Default-locked buttons
-  setButtonVisible('shop', isUnlocked(UNLOCK_KEYS.SHOP));
-  setButtonVisible('map',  isUnlocked(UNLOCK_KEYS.MAP));
-
-  applyHudLayout();
-
-  if (!listenersBound) {
-    listenersBound = true;
-    window.addEventListener('resize', applyHudLayout);
-    window.addEventListener('orientationchange', applyHudLayout);
+/* Portrait / phone: 2x2 layout, keep gaps, adjust sizes */
+@media (max-aspect-ratio: 1/1) {
+  .hud-bottom {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(72px, 1fr);
+    gap: 8px;
+    padding: 8px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 8px);
+    height: min(40svh, 360px);
+  }
+  .menu-btn {
+    font-size: clamp(16px, 6.4vw, 30px);
   }
 }
 
-// Convenience helpers you can call from gameplay code
-export function unlockShop() { setUnlocked(UNLOCK_KEYS.SHOP, true); setButtonVisible('shop', true); applyHudLayout(); }
-export function unlockMap()  { setUnlocked(UNLOCK_KEYS.MAP,  true); setButtonVisible('map',  true); applyHudLayout(); }
-export function lockShop()   { setUnlocked(UNLOCK_KEYS.SHOP, false); setButtonVisible('shop', false); applyHudLayout(); }
-export function lockMap()    { setUnlocked(UNLOCK_KEYS.MAP,  false); setButtonVisible('map',  false); applyHudLayout(); }
+/* Corner rounding: keep outermost corners rounded, inner seams remain sharp */
+.hud-bottom > .menu-btn:first-child  { border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.hud-bottom > .menu-btn:last-child   { border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
+
+@media (max-aspect-ratio: 1/1) {
+  /* 2x2 layout corners */
+  .hud-bottom > .menu-btn:nth-child(1) { border-top-left-radius: 10px; }
+  .hud-bottom > .menu-btn:nth-child(2) { border-top-right-radius: 10px; }
+  .hud-bottom > .menu-btn:nth-child(3) { border-bottom-left-radius: 10px; }
+  .hud-bottom > .menu-btn:nth-child(4) { border-bottom-right-radius: 10px; }
+}
+
+/* Portrait fine-tuning */
+@media (pointer: coarse) and (max-aspect-ratio: 1/1) {
+  .hud-bottom {
+    height: min(20svh, 160px);
+    grid-auto-rows: minmax(48px, 1fr);
+    gap: 6px;
+    padding: 6px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
+  }
+
+  .menu-btn {
+    font-size: clamp(15px, 4.8vw, 24px);
+    line-height: 1.1;
+  }
+}
+
+/* ===== Layout helpers driven by JS ===== */
+
+/* Mobile portrait 2x2: when 3 buttons (Help, Settings, Shop), let Shop span full width */
+@media (max-aspect-ratio: 1/1) {
+  .hud-bottom .menu-btn[data-btn="shop"].span-2 {
+    grid-column: 1 / -1; /* takes both columns */
+  }
+}
+
+/* (No extra CSS needed for the desktop 2-button centering;
+   JS sets grid-template-columns inline and positions the two items.) */
+
+/* Landscape fine-tuning for small-height devices */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
+  .hud-bottom {
+    height: auto;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: clamp(44px, 12vh, 60px);
+    gap: 8px;
+    padding: 8px;
+    padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
+  }
+  .menu-btn {
+    font-size: clamp(14px, 2.2vw, 22px);
+    white-space: nowrap;
+    -webkit-text-stroke: 0;
+    text-stroke: 0;
+    text-shadow:
+      1px 0   0 #000,
+     -1px 0   0 #000,
+      0   1px 0 #000,
+      0  -1px 0 #000,
+      0   0.5px 0 rgba(0,0,0,0.2);
+  }
+  .hud-bottom [data-btn="stats"] {
+    font-size: clamp(13px, 2.0vw, 20px);
+  }
+}
+
+/* ===== Top HUD: Coin Counter ===== */
+.hud-top{
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;   /* centers the bar container perfectly */
+  align-items: center;
+  pointer-events: none;
+}
+
+/* ===== Defaults (desktop / general) — your values kept ===== */
+:root{
+  --coin-h: clamp(48px, 6svh, 72px);       /* BAR height */
+  --coin-plus-extra: 20px;                  /* your default */
+  --coin-plus-size: calc(var(--coin-h) + var(--coin-plus-extra));
+
+  --coin-bar-w: clamp(200px, 36vw, 520px);  /* BAR width (desktop / general) */
+  --coin-outline: 4px;
+
+  --bar-underlap: 0.50;                     /* bar tucks under coin */
+  --hud-x-nudge: 0px;
+
+  /* NEW: tiny vertical alignment fix so bar goes through coin center */
+  --bar-y-nudge: 9px;
+}
+
+/* Center by BAR (container width = bar width); clicks enabled on the counter */
+.coin-counter{
+  position: relative;
+  width: var(--coin-bar-w);                 /* centered by .hud-top flex */
+  height: max(var(--coin-plus-size), var(--coin-h));
+  pointer-events: auto;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
+}
+
+/* Coin+base image overlaps from the left; doesn’t affect centering */
+.coin-plus{
+  position:absolute;
+  top:50%;
+  left: calc((var(--bar-underlap) - 1) * var(--coin-plus-size)); /* = -(1 - underlap) * size */
+  transform: translateY(-50%);
+  z-index:2;
+  height: var(--coin-plus-size);
+  width:  var(--coin-plus-size);
+  object-fit: contain;
+  border: none;
+  pointer-events: none;
+}
+
+/* The BAR: simple centered text, symmetric padding */
+.coin-bar{
+  position:relative;
+  z-index:1;                 /* behind coin image */
+  height: var(--coin-h);
+  width: 100%;
+  border: var(--coin-outline) solid #000;
+  border-radius: 0;
+  background: linear-gradient(180deg,#ffd34c,#ffb800);
+
+  display:flex;              /* centers the number */
+  align-items:center;
+  justify-content:center;
+  padding: 0 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+
+  /* vertical alignment fix */
+  transform: translateY(var(--bar-y-nudge));
+}
+
+/* Optional inner gloss */
+.coin-bar::after{
+  content:"";
+  position:absolute;
+  inset:2px;
+  border-radius:0;
+  box-shadow:
+    inset 0 6px 10px rgba(255,255,255,.18),
+    inset 0 -6px 10px rgba(0,0,0,.15);
+  pointer-events:none;
+}
+
+/* Number (centered by flex above) */
+.coin-amount{
+  position: relative;
+  z-index: 1;
+  font-weight: 900;
+  font-size: clamp(18px, 3.6vw, 32px);
+  color: #fff;
+  letter-spacing: .5px;
+  -webkit-text-stroke: 1px #000; text-stroke: 1px #000;
+  text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* ===== Mobile tweaks ===== */
+
+/* Phone PORTRAIT:
+   - smaller bar
+   - symmetrical gutters so bar remains truly centered
+   - keep coin from clipping without shifting center */
+@media (pointer: coarse) and (orientation: portrait) and (max-width: 600px){
+  .hud-top{
+    /* reserve space equally on both sides:
+       - safe area
+       - a base gutter
+       - coin overhang requirement */
+    --pp-gutter: max(7vw, 24px);
+    --pp-reserve: max(
+      var(--pp-gutter),
+      calc((1 - var(--bar-underlap)) * var(--coin-plus-size) + 10px)
+    );
+    padding-left:  max(env(safe-area-inset-left),  var(--pp-reserve));
+    padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
+  }
+  :root{
+    --coin-bar-w: clamp(240px, 65vw, 320px);
+    --coin-plus-extra: 4px;
+    --bar-underlap: 0.48;
+    --bar-y-nudge: 2px; 
+  }
+}
+
+/* Mobile LANDSCAPE: PC-like length (not full width) */
+@media (pointer: coarse) and (orientation: landscape){
+  :root{
+    --coin-bar-w: clamp(220px, 38vw, 560px);
+  }
+}
+
+/* iPad PORTRAIT: slightly shorter bar */
+@media (pointer: coarse) and (orientation: portrait) and (min-width: 768px) and (max-width: 1024px){
+  :root{
+    --coin-bar-w: min(72vw, 560px);
+  }
+}
+
+/* Touch devices: stroke fallback via shadow */
+@media (pointer: coarse){
+  .coin-amount{
+    -webkit-text-stroke:0; text-stroke:0;
+    text-shadow:
+      1px 1px 0 #000, -1px 1px 0 #000,
+      1px -1px 0 #000, -1px -1px 0 #000,
+      0 1px 0 rgba(0,0,0,0.22);
+  }
+}
