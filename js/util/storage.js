@@ -1,5 +1,9 @@
+// js/util/storage.js
+
+const PREFIX = 'ccc:';  // short for Coin Collecting Cove
+
 const KEYS = {
-  HAS_OPENED_SAVE_SLOT: 'hasOpenedSaveSlot'
+  HAS_OPENED_SAVE_SLOT: `${PREFIX}hasOpenedSaveSlot`,
 };
 
 export function getHasOpenedSaveSlot() {
