@@ -34,7 +34,7 @@ export function applyHudLayout() {
   const hud = document.querySelector('.hud-bottom');
   if (!hud) return;
 
-  const all = [...hud.querySelectorAll('.menu-btn')];
+  const all = [...hud.querySelectorAll('.btn')];
   const visible = all.filter(el => !el.hidden);
 
   // Reset any previous layout hints
