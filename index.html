@@ -12,7 +12,7 @@
   <script>
     (function () {
       try {
-        if (localStorage.getItem('hasOpenedSaveSlot') === 'true') {
+        if (localStorage.getItem('ccc:hasOpenedSaveSlot') === 'true') {
           document.documentElement.classList.add('has-opened');
         }
       } catch (e) { }
@@ -94,8 +94,8 @@
 
     <nav class="hud-bottom" id="hud-bottom">
       <button class="menu-btn btn-help" data-btn="help"><span>Help</span></button>
+	  <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
       <button class="menu-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
-      <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
       <button class="menu-btn btn-map" data-btn="map"><span>Map</span></button>
     </nav>
 	<!-- DEV: temp unlock button (remove later) -->
