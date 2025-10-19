@@ -123,6 +123,18 @@
   }
 }
 
+/* ===== Layout helpers driven by JS ===== */
+
+/* Mobile portrait 2x2: when 3 buttons (Help, Settings, Shop), let Shop span full width */
+@media (max-aspect-ratio: 1/1) {
+  .hud-bottom .menu-btn[data-btn="shop"].span-2 {
+    grid-column: 1 / -1; /* takes both columns */
+  }
+}
+
+/* (No extra CSS needed for the desktop 2-button centering;
+   JS sets grid-template-columns inline and positions the two items.) */
+
 /* Landscape fine-tuning for small-height devices */
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 480px) {
   .hud-bottom {
