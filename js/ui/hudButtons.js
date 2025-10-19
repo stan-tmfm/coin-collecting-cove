@@ -32,8 +32,8 @@ export function applyHudLayout() {
   const hud = document.querySelector('.hud-bottom');
   if (!hud) return;
 
-  // Matches your HTML: <button class="menu-btn ...">
-  const all = [...hud.querySelectorAll('.menu-btn')];
+  // Matches your HTML: <button class="game-btn ...">
+  const all = [...hud.querySelectorAll('.game-btn')];
   const visible = all.filter(el => !el.hidden);
 
   // Reset previous hints
