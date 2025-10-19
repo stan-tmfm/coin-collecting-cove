@@ -1,9 +1,16 @@
 // js/main.js
 import { initSlots } from './util/slots.js';
 import { createSpawner } from './game/spawner.js';
-import { initCoinPickup } from './game/coinPickup.js'; 
-
-const STORAGE_KEY = 'hasOpenedSaveSlot';
+import { initCoinPickup } from './game/coinPickup.js';
+import {
+  initHudButtons,
+  unlockShop, unlockMap, lockShop, lockMap,
+} from './ui/hudButtons.js';
+import {
+  getHasOpenedSaveSlot,
+  setHasOpenedSaveSlot,
+  ensureStorageDefaults,
+} from './util/storage.js'; // <-- now we import instead of redeclaring
 
 export const AREAS = {
   MENU: 0,
@@ -13,29 +20,6 @@ export const AREAS = {
 let currentArea = AREAS.MENU;
 let spawner = null;
 
-function getHasOpenedSaveSlot() {
-  return localStorage.getItem(STORAGE_KEY) === 'true';
-}
-function setHasOpenedSaveSlot(value) {
-  localStorage.setItem(STORAGE_KEY, value ? 'true' : 'false');
-}
-function ensureStorageDefaults() {
-  if (localStorage.getItem(STORAGE_KEY) === null) setHasOpenedSaveSlot(false);
-}
-
-// HUD helpers
-function setButtonVisible(key, visible) {
-  const el = document.querySelector(`.hud-bottom [data-btn="${key}"]`);
-  if (el) el.hidden = !visible;
-}
-function initHudButtons() {
-  setButtonVisible('help',  true);
-  setButtonVisible('shop',  true);
-  setButtonVisible('stats', true);
-  setButtonVisible('map',   true);
-}
-
-// Area switching
 function enterArea(areaID) {
   if (currentArea === areaID) return;
   currentArea = areaID;
@@ -43,28 +27,36 @@ function enterArea(areaID) {
   const menuRoot = document.querySelector('.menu-root');
   switch (areaID) {
     case AREAS.STARTER_COVE: {
-      if (menuRoot) { menuRoot.setAttribute('aria-hidden', 'true'); menuRoot.style.display = 'none'; }
+      if (menuRoot) {
+        menuRoot.setAttribute('aria-hidden', 'true');
+        menuRoot.style.display = 'none';
+      }
       document.body.classList.remove('menu-bg');
       const gameRoot = document.getElementById('game-root');
-      if (gameRoot) { gameRoot.hidden = false; initHudButtons(); }
+      if (gameRoot) {
+        gameRoot.hidden = false;
+        initHudButtons();
+      }
 
-      // start spawner (create if not created)
       if (!spawner) {
         spawner = createSpawner({
           coinSrc: 'img/coin/coin.png',
           coinSize: 40,
           initialRate: 1,
           surgeLifetimeMs: 1800,
-          surgeWidthVw: 22
+          surgeWidthVw: 22,
         });
-		initCoinPickup();
+        initCoinPickup();
       }
       spawner.start();
       break;
     }
 
     case AREAS.MENU: {
-      if (menuRoot) { menuRoot.style.display = ''; menuRoot.removeAttribute('aria-hidden'); }
+      if (menuRoot) {
+        menuRoot.style.display = '';
+        menuRoot.removeAttribute('aria-hidden');
+      }
       const gameRoot = document.getElementById('game-root');
       if (gameRoot) gameRoot.hidden = true;
 
@@ -74,7 +66,6 @@ function enterArea(areaID) {
   }
 }
 
-// Initialization
 document.addEventListener('DOMContentLoaded', () => {
   ensureStorageDefaults();
 
@@ -86,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (titleEl) titleEl.style.opacity = '1';
   }
 
-  // initSlots should call callback when a slot is opened
   initSlots(() => {
     setHasOpenedSaveSlot(true);
     document.body.classList.add('has-opened');
