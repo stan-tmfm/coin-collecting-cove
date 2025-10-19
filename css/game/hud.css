@@ -67,7 +67,7 @@
 
 /* Touch devices: smoother fake stroke for the coin counter only */
 @media (pointer: coarse){
-  .hud-top .coin-amount{
+  .coin-amount, .menu-btn {
     -webkit-text-stroke: 0 !important;
     text-stroke: 0 !important;
     -webkit-text-fill-color: #fff;
