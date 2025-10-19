@@ -10,7 +10,9 @@ import {
   getHasOpenedSaveSlot,
   setHasOpenedSaveSlot,
   ensureStorageDefaults,
-} from './util/storage.js'; // <-- now we import instead of redeclaring
+} from './util/storage.js';
+import { BigNum } from './util/bigNum.js';
+import { formatCoin } from './util/numFormat.js';
 
 export const AREAS = {
   MENU: 0,
