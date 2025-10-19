@@ -98,8 +98,56 @@
       <button class="menu-btn btn-shop" data-btn="shop"><span>Shop</span></button>
       <button class="menu-btn btn-map" data-btn="map"><span>Map</span></button>
     </nav>
+	<!-- DEV: temp unlock button (remove later) -->
+<button id="dev-unlock"
+  style="position:fixed; left:12px; bottom:112px; z-index:9999; padding:8px 10px;">
+  Unlock SHOP → MAP
+</button>
+
   </main>
+<script type="module">
+  import { unlockShop, unlockMap } from './js/ui/hudButtons.js';
+
+  const btn = document.getElementById('dev-unlock');
+
+  function shopHidden() {
+    const el = document.querySelector('.hud-bottom [data-btn="shop"]');
+    return !el || el.hidden;
+  }
+  function mapHidden() {
+    const el = document.querySelector('.hud-bottom [data-btn="map"]');
+    return !el || el.hidden;
+  }
+  function updateLabel() {
+    if (shopHidden()) {
+      btn.textContent = 'Unlock SHOP';
+      btn.disabled = false;
+      return;
+    }
+    if (mapHidden()) {
+      btn.textContent = 'Unlock MAP';
+      btn.disabled = false;
+      return;
+    }
+    btn.textContent = 'Unlocked ✓';
+    btn.disabled = true;
+  }
+
+  // Click → unlock Shop first, then Map
+  btn.addEventListener('click', () => {
+    if (shopHidden()) {
+      unlockShop();
+    } else if (mapHidden()) {
+      unlockMap();
+    }
+    updateLabel();
+  });
+
+  // Update the label after the game UI appears
+  window.addEventListener('load', () => setTimeout(updateLabel, 0));
+  window.addEventListener('resize', () => setTimeout(updateLabel, 0));
+</script>
 
   <script type="module" src="js/main.js"></script>
-</body>
+  </body>
 </html>
