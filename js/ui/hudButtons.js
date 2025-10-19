@@ -3,6 +3,8 @@
 // DOM order: Help → Shop → Stats & Settings → Map
 // Mobile portrait (2×2): if 3 visible, put Help & Stats on row 1, Shop full width on row 2.
 
+import { openShop } from './shopOverlay.js';
+
 const UNLOCK_KEYS = {
   SHOP: 'ccc:unlock:shop',
   MAP:  'ccc:unlock:map',
@@ -27,12 +29,15 @@ function phonePortrait() {
 }
 
 let listenersBound = false;
+let actionsBound = false;
 
+// ===============================
+// HUD layout
+// ===============================
 export function applyHudLayout() {
   const hud = document.querySelector('.hud-bottom');
   if (!hud) return;
 
-  // Matches your HTML: <button class="game-btn ...">
   const all = [...hud.querySelectorAll('.game-btn')];
   const visible = all.filter(el => !el.hidden);
 
@@ -47,12 +52,12 @@ export function applyHudLayout() {
   hud.style.gridTemplateColumns = '';
   hud.classList.add(`is-${visible.length}`);
 
-  // --- Desktop centering (avoid vw so iPad landscape matches 4-button width) ---
+  // Desktop centering
   if (!phonePortrait()) {
     const cs  = getComputedStyle(hud);
-    const gap = parseFloat(cs.columnGap || cs.gap || '0') || 0; // px
-    const cw  = hud.clientWidth;                                // px
-    const per = Math.max(180, Math.floor((cw - 3 * gap) / 4));  // width per button in 4-col layout
+    const gap = parseFloat(cs.columnGap || cs.gap || '0') || 0;
+    const cw  = hud.clientWidth;
+    const per = Math.max(180, Math.floor((cw - 3 * gap) / 4));
 
     if (visible.length === 2) {
       hud.style.gridTemplateColumns = `1fr ${per}px ${per}px 1fr`;
@@ -67,10 +72,9 @@ export function applyHudLayout() {
       visible[2].style.gridColumn = '4';
       return;
     }
-    // 4 buttons → let CSS handle it
   }
 
-  // --- Mobile portrait (2×2): Help & Stats top; Shop full width bottom ---
+  // Mobile portrait (2×2): Help & Stats top; Shop full width bottom
   if (phonePortrait() && visible.length === 3) {
     const help  = hud.querySelector('[data-btn="help"]:not([hidden])');
     const stats = hud.querySelector('[data-btn="stats"]:not([hidden])');
@@ -101,6 +105,23 @@ export function initHudButtons() {
     listenersBound = true;
     window.addEventListener('resize', applyHudLayout);
     window.addEventListener('orientationchange', applyHudLayout);
+  }
+
+  // Bind actions once (click → open shop)
+  if (!actionsBound) {
+    actionsBound = true;
+    const hud = document.querySelector('.hud-bottom');
+    if (hud) {
+      hud.addEventListener('click', (e) => {
+        const btn = e.target.closest('.game-btn');
+        if (!btn) return;
+        const key = btn.getAttribute('data-btn');
+        if (key === 'shop') {
+          openShop();
+        }
+        // future: help/settings/map can import their own modules, too
+      }, { passive: true });
+    }
   }
 }
 
