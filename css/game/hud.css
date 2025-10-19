@@ -65,18 +65,12 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.35); /* small helper shadow for browsers without stroke */
 }
 
-/* Touch / coarse-pointer devices: remove browser stroke and simulate with 1px multi-directional text-shadow */
-@media (pointer: coarse) {
-  .menu-btn {
-    -webkit-text-stroke: 0;
-    text-stroke: 0;
-    /* multi-directional shadow to mimic a 1px outline cleanly on mobile */
-    text-shadow:
-      1px 1px 0 #000,
-      -1px 1px 0 #000,
-      1px -1px 0 #000,
-      -1px -1px 0 #000,
-      0 1px 0 rgba(0,0,0,0.22);
+/* Touch devices: use same stroke + subtle PC shadow (for testing) */
+@media (pointer: coarse){
+  .coin-amount{
+    -webkit-text-stroke: 1px #000;
+    text-stroke: 1px #000;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.35);
   }
 }
 
