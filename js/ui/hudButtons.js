@@ -50,24 +50,29 @@ export function applyHudLayout() {
   hud.classList.add(`is-${visible.length}`);
 
   // --- Desktop (PC) custom centering ---
-  if (!phonePortrait()) {
-    // If exactly 2 buttons, center them as a pair
-    if (visible.length === 2) {
-      hud.style.gridTemplateColumns = '1fr minmax(180px, 22vw) minmax(180px, 22vw) 1fr';
-      visible[0].style.gridColumn = '2';
-      visible[1].style.gridColumn = '3';
-      return;
-    }
-    // If exactly 3 buttons, keep them centered across the middle three columns
-    if (visible.length === 3) {
-      hud.style.gridTemplateColumns = '1fr minmax(180px, 22vw) minmax(180px, 22vw) minmax(180px, 22vw) 1fr';
-      visible[0].style.gridColumn = '2';
-      visible[1].style.gridColumn = '3';
-      visible[2].style.gridColumn = '4';
-      return;
-    }
-    // 4 buttons → whatever your default CSS defines (no inline override)
+if (!phonePortrait()) {
+  // Compute the per-button width as if there were 4 buttons across
+  const cs  = getComputedStyle(hud);
+  const gap = parseFloat(cs.columnGap || cs.gap || '0') || 0; // px
+  const cw  = hud.clientWidth;                                // px (includes padding)
+  const per = Math.max(180, Math.floor((cw - 3 * gap) / 4));  // same width as 4-button layout
+
+  if (visible.length === 2) {
+    hud.style.gridTemplateColumns = `1fr ${per}px ${per}px 1fr`;
+    visible[0].style.gridColumn = '2';
+    visible[1].style.gridColumn = '3';
+    return;
   }
+  if (visible.length === 3) {
+    hud.style.gridTemplateColumns = `1fr ${per}px ${per}px ${per}px 1fr`;
+    visible[0].style.gridColumn = '2';
+    visible[1].style.gridColumn = '3';
+    visible[2].style.gridColumn = '4';
+    return;
+  }
+  // 4 buttons → let CSS handle it (no override)
+}
+
 
   // --- Mobile portrait (2×2) special case: 3 visible buttons ---
   // With new DOM order (help, shop, stats), we want:
