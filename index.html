@@ -1,105 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>CCC</title>
-<link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
-<link rel="shortcut icon" href="favicon/favicon.ico" type="image/x-icon">
-<!-- Prevent UI flicker on refresh by reading the flag before CSS paints -->
-<script>
-(function () {
-try {
-if (localStorage.getItem('ccc:hasOpenedSaveSlot') === 'true') {
-document.documentElement.classList.add('has-opened');
-}
-} catch (e) { }
-})();
-</script>
-<link rel="stylesheet" href="css/core/variables.css">
-<link rel="stylesheet" href="css/core/base.css">
-<link rel="stylesheet" href="css/core/layout.css">
-<link rel="stylesheet" href="css/core/utilities.css">
-<link rel="stylesheet" href="css/components_menu.css">
-<link rel="stylesheet" href="css/game/background.css">
-<link rel="stylesheet" href="css/game/hud.css">
-<link rel="stylesheet" href="css/game/waves.css">
-<link rel="stylesheet" href="css/game/coin.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>CCC</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon/favicon-16x16.png">
+  <link rel="shortcut icon" href="favicon/favicon.ico" type="image/x-icon">
+  <!-- Prevent UI flicker on refresh by reading the flag before CSS paints -->
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem('ccc:hasOpenedSaveSlot') === 'true') {
+          document.documentElement.classList.add('has-opened');
+        }
+      } catch (e) { }
+    })();
+  </script>
+  <link rel="stylesheet" href="css/core/variables.css">
+  <link rel="stylesheet" href="css/core/base.css">
+  <link rel="stylesheet" href="css/core/layout.css">
+  <link rel="stylesheet" href="css/core/utilities.css">
+  <link rel="stylesheet" href="css/components_menu.css">
+  <link rel="stylesheet" href="css/game/background.css">
+  <link rel="stylesheet" href="css/game/hud.css">
+  <link rel="stylesheet" href="css/game/waves.css">
+  <link rel="stylesheet" href="css/game/coin.css">
 </head>
 
 <body class="menu-bg">
-<main class="menu-root">
-<header class="menu-header">
-<h1 class="game-title">
-C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>in
-C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>llecting
-C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>ve
-</h1>
-</header>
+  <main class="menu-root">
+    <header class="menu-header">
+      <h1 class="game-title">
+        C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>in
+        C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>llecting
+        C<span class="sr-only"></span><span class="coin-o" aria-hidden="true"></span>ve
+      </h1>
+    </header>
 
-<section class="menu-panel" role="region" aria-labelledby="panel-title">
-<div class="panel-header">
-<h2 id="panel-title" class="panel-title">Select a Save Slot</h2>
-<div class="panel-actions">
-<button class="btn btn-ghost" type="button" id="manage-saves">
-Manage save slots
-</button>
-</div>
-</div>
+    <section class="menu-panel" role="region" aria-labelledby="panel-title">
+      <div class="panel-header">
+        <h2 id="panel-title" class="panel-title">Select a Save Slot</h2>
+        <div class="panel-actions">
+          <button class="btn btn-ghost" type="button" id="manage-saves">
+            Manage save slots
+          </button>
+        </div>
+      </div>
 
-<div class="slots-grid">
-<button class="slot-card" type="button" aria-label="Save Slot 1">
-<div class="slot-badge">Slot 1</div>
-<div class="slot-title">No save data</div>
-<div class="slot-meta">—</div>
-</button>
+      <div class="slots-grid">
+        <button class="slot-card" type="button" aria-label="Save Slot 1">
+          <div class="slot-badge">Slot 1</div>
+          <div class="slot-title">No save data</div>
+          <div class="slot-meta">—</div>
+        </button>
 
-<button class="slot-card" type="button" aria-label="Save Slot 2">
-<div class="slot-badge">Slot 2</div>
-<div class="slot-title">No save data</div>
-<div class="slot-meta">—</div>
-</button>
+        <button class="slot-card" type="button" aria-label="Save Slot 2">
+          <div class="slot-badge">Slot 2</div>
+          <div class="slot-title">No save data</div>
+          <div class="slot-meta">—</div>
+        </button>
 
-<button class="slot-card" type="button" aria-label="Save Slot 3">
-<div class="slot-badge">Slot 3</div>
-<div class="slot-title">No save data</div>
-<div class="slot-meta">—</div>
-</button>
-</div>
-</section>
-</main>
+        <button class="slot-card" type="button" aria-label="Save Slot 3">
+          <div class="slot-badge">Slot 3</div>
+          <div class="slot-title">No save data</div>
+          <div class="slot-meta">—</div>
+        </button>
+      </div>
+    </section>
+  </main>
 
-<!-- Game root (starter cove) -->
-<main id="game-root" class="area area-cove" hidden>
-<!-- Coin Counter HUD -->
-<div class="hud-top">
-<div class="coin-counter">
-<img src="img/coin/coinPlusBase.png" alt="" class="coin-plus">
-<div class="coin-bar">
-        <span class="coin-amount">e</span>
+  <!-- Game root (starter cove) -->
+  <main id="game-root" class="area area-cove" hidden>
+	<!-- Coin Counter HUD -->
+	<div class="hud-top">
+	  <div class="coin-counter">
+        <img src="img/coin/coinPlusBase.png" alt="" class="coin-plus">
+	    <div class="coin-bar">
         <span class="coin-amount">0</span>
-</div>
-</div>
-</div>
+        </div>
+	  </div>
+	</div>
 
-<section class="playfield" aria-label="Starter Cove Sand">
-<div class="waves" id="waves">
-<div class="water-base" id="water-base"></div>
-<div class="surges" id="surges"></div>
-</div>
+    <section class="playfield" aria-label="Starter Cove Sand">
+      <div class="waves" id="waves">
+        <div class="water-base" id="water-base"></div>
+        <div class="surges" id="surges"></div>
+      </div>
 
-<div class="coins-layer" id="coins-layer"></div>
-</section>
+      <div class="coins-layer" id="coins-layer"></div>
+    </section>
 
-<nav class="hud-bottom" id="hud-bottom">
-<button class="game-btn btn-help" data-btn="help"><span>Help</span></button>
-<button class="game-btn btn-shop" data-btn="shop"><span>Shop</span></button>
-<button class="game-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
-<button class="game-btn btn-map" data-btn="map"><span>Map</span></button>
-</nav>
-</main>
-<script type="module" src="js/main.js"></script>
-</body>
+    <nav class="hud-bottom" id="hud-bottom">
+      <button class="game-btn btn-help" data-btn="help"><span>Help</span></button>
+	  <button class="game-btn btn-shop" data-btn="shop"><span>Shop</span></button>
+      <button class="game-btn btn-stats" data-btn="stats"><span>Stats &amp; Settings</span></button>
+      <button class="game-btn btn-map" data-btn="map"><span>Map</span></button>
+    </nav>
+  </main>
+  <script type="module" src="js/main.js"></script>
+  </body>
 </html>
