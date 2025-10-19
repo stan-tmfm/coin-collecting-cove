@@ -79,3 +79,24 @@
   -webkit-user-drag: none;
   }
 }
+
+/* iOS: absolutely kill selection/callouts inside the game area */
+.area-cove,
+.area-cove * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent;
+  caret-color: transparent;
+}
+
+/* HUDs specifically (labels can still trigger the loupe without this) */
+.hud-top, .hud-top *,
+.hud-bottom, .hud-bottom * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* you already have this, but just to be sure */
+.area-cove .playfield { touch-action: none; }
