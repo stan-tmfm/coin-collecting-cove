@@ -1,9 +1,7 @@
 // js/ui/hudButtons.js
 // Controls visibility (unlock/lock) and layout of HUD buttons across desktop & mobile.
-// Updated for new DOM order: Help → Shop → Stats & Settings → Map
-// Special mobile portrait (2×2) rule: when 3 buttons are visible (help, shop, stats),
-// place Help & Stats on the top row, and force Shop to a full-width row beneath them
-// (even though Shop appears before Stats in the DOM).
+// DOM order: Help → Shop → Stats & Settings → Map
+// Mobile portrait (2×2): if 3 visible, put Help & Stats on row 1, Shop full width on row 2.
 
 const UNLOCK_KEYS = {
   SHOP: 'ccc:unlock:shop',
@@ -34,11 +32,11 @@ export function applyHudLayout() {
   const hud = document.querySelector('.hud-bottom');
   if (!hud) return;
 
-  // changed selector to .game-btn to match updated HTML classes
-  const all = [...hud.querySelectorAll('.game-btn')];
+  // Matches your HTML: <button class="menu-btn ...">
+  const all = [...hud.querySelectorAll('.menu-btn')];
   const visible = all.filter(el => !el.hidden);
 
-  // Reset any previous layout hints
+  // Reset previous hints
   hud.classList.remove('is-2','is-3','is-4');
   visible.forEach(el => {
     el.style.gridColumn = '';
@@ -47,16 +45,14 @@ export function applyHudLayout() {
     el.style.order = '';
   });
   hud.style.gridTemplateColumns = '';
-
   hud.classList.add(`is-${visible.length}`);
 
-  // --- Desktop (PC) custom centering ---
+  // --- Desktop centering (avoid vw so iPad landscape matches 4-button width) ---
   if (!phonePortrait()) {
-    // Compute the per-button width as if there were 4 buttons across
     const cs  = getComputedStyle(hud);
     const gap = parseFloat(cs.columnGap || cs.gap || '0') || 0; // px
-    const cw  = hud.clientWidth;                                // px (includes padding)
-    const per = Math.max(180, Math.floor((cw - 3 * gap) / 4));  // same width as 4-button layout
+    const cw  = hud.clientWidth;                                // px
+    const per = Math.max(180, Math.floor((cw - 3 * gap) / 4));  // width per button in 4-col layout
 
     if (visible.length === 2) {
       hud.style.gridTemplateColumns = `1fr ${per}px ${per}px 1fr`;
@@ -71,30 +67,19 @@ export function applyHudLayout() {
       visible[2].style.gridColumn = '4';
       return;
     }
-    // 4 buttons → let CSS handle it (no override)
+    // 4 buttons → let CSS handle it
   }
 
-  // --- Mobile portrait (2×2) special case: 3 visible buttons ---
-  // With new DOM order (help, shop, stats), we want:
-  //   Row 1: Help (col 1), Stats (col 2)
-  //   Row 2: Shop spanning both columns
+  // --- Mobile portrait (2×2): Help & Stats top; Shop full width bottom ---
   if (phonePortrait() && visible.length === 3) {
-    const help = hud.querySelector('[data-btn="help"]:not([hidden])');
-    const shop = hud.querySelector('[data-btn="shop"]:not([hidden])');
+    const help  = hud.querySelector('[data-btn="help"]:not([hidden])');
     const stats = hud.querySelector('[data-btn="stats"]:not([hidden])');
+    const shop  = hud.querySelector('[data-btn="shop"]:not([hidden])');
 
     if (help && stats && shop) {
-      // Top row
-      help.style.gridColumn = '1';
-      help.style.gridRow = '1';
-
-      stats.style.gridColumn = '2';
-      stats.style.gridRow = '1';
-
-      // Bottom, full-width
-      shop.style.gridColumn = '1 / -1';
-      shop.style.gridRow = '2';
-      // (No need for .span-2 class if we pin both grid edges explicitly)
+      help.style.gridColumn  = '1'; help.style.gridRow  = '1';
+      stats.style.gridColumn = '2'; stats.style.gridRow = '1';
+      shop.style.gridColumn  = '1 / -1'; shop.style.gridRow = '2';
     }
   }
 }
@@ -104,7 +89,7 @@ export function initHudButtons() {
 
   // Always-on buttons
   setButtonVisible('help',  true);
-  setButtonVisible('stats', true); // Settings button uses data-btn="stats"
+  setButtonVisible('stats', true);
 
   // Default-locked buttons
   setButtonVisible('shop', isUnlocked(UNLOCK_KEYS.SHOP));
@@ -119,7 +104,7 @@ export function initHudButtons() {
   }
 }
 
-// Convenience helpers you can call from gameplay code
+// Convenience helpers
 export function unlockShop() { setUnlocked(UNLOCK_KEYS.SHOP, true); setButtonVisible('shop', true); applyHudLayout(); }
 export function unlockMap()  { setUnlocked(UNLOCK_KEYS.MAP,  true); setButtonVisible('map',  true); applyHudLayout(); }
 export function lockShop()   { setUnlocked(UNLOCK_KEYS.SHOP, false); setButtonVisible('shop', false); applyHudLayout(); }
