@@ -65,14 +65,22 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.35); /* small helper shadow for browsers without stroke */
 }
 
-/* Touch devices: use same stroke + subtle PC shadow (for testing) */
+/* Touch devices: smoother fake stroke for the coin counter only */
 @media (pointer: coarse){
-  .coin-amount{
-    -webkit-text-stroke: 1px #000;
-    text-stroke: 1px #000;
-    text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+  .hud-top .coin-amount{
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
+    -webkit-text-fill-color: #fff;
+    /* 8-direction, sub-pixel offsets for cleaner edge on Retina */
+    text-shadow:
+      0   0.5px 0 #000,  0  -0.5px 0 #000,
+      0.5px 0   0 #000, -0.5px 0   0 #000,
+      0.5px 0.5px 0 #000,  0.5px -0.5px 0 #000,
+     -0.5px 0.5px 0 #000, -0.5px -0.5px 0 #000,
+      0 1px 0 rgba(0,0,0,0.28); /* soft drop for depth */
   }
 }
+
 
 /* Portrait / phone: 2x2 layout, keep gaps, adjust sizes */
 @media (max-aspect-ratio: 1/1) {
