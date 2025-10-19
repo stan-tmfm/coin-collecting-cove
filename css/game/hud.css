@@ -305,3 +305,31 @@ padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
 --coin-bar-w: min(72vw, 560px);
 }
 }
+
+/* Mobile/tablet only: smoother outline for the coin counter (WebKit stroke off) */
+@media (pointer: coarse){
+  .hud-top .coin-amount{
+    -webkit-text-stroke: 0 !important;
+    text-stroke: 0 !important;
+    -webkit-text-fill-color: #fff;
+    /* 8-direction “fake stroke” with sub-pixel offsets for Retina */
+    text-shadow:
+      0   0.5px 0 #000,  0  -0.5px 0 #000,
+      0.5px 0   0 #000, -0.5px 0   0 #000,
+      0.5px 0.5px 0 #000,  0.5px -0.5px 0 #000,
+     -0.5px 0.5px 0 #000, -0.5px -0.5px 0 #000,
+      0 1px 0 rgba(0,0,0,0.28) !important;
+  }
+}
+
+/* Non-Retina fallback (rare): use whole-pixel offsets */
+@media (pointer: coarse) and (max-resolution: 1.5dppx){
+  .hud-top .coin-amount{
+    text-shadow:
+      1px  1px  0 #000,  1px -1px 0 #000,
+     -1px  1px  0 #000, -1px -1px 0 #000,
+      1px  0    0 #000, -1px 0    0 #000,
+      0    1px  0 #000,  0   -1px 0 #000,
+      0 1px 0 rgba(0,0,0,0.28) !important;
+  }
+}
