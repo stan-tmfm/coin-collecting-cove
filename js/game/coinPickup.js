@@ -170,7 +170,7 @@ export function initCoinPickup({
 
   function collect(el){
     if (!isCoin(el)) return false;
-    el.dataset.collected = '1';
+    el.dataset.collected = '1e308';
     playSound();
     animateAndRemove(el);
     // BigNum-safe increment
