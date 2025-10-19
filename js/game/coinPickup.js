@@ -4,7 +4,10 @@
 // Picking coins works via: (a) brush sweep using elementsFromPoint, (b) direct coin pointerdown/mouseenter.
 // No reliance on CSS animations for pickup on mobile; desktop animation class is optional.
 
-let __coinPickup = null; // to allow re-inits without double listeners
+import { BigNum } from '../util/bigNum.js';
+import { formatCoin } from '../util/numFormat.js';
+
+let coinPickup = null; // to allow re-inits without double listeners
 
 export function initCoinPickup({
   playfieldSelector   = '.area-cove .playfield',
@@ -17,8 +20,8 @@ export function initCoinPickup({
   disableAnimation    = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window),
 } = {}) {
   // Clean up previous init if any
-  if (__coinPickup?.destroy) {
-    __coinPickup.destroy();
+  if (coinPickup?.destroy) {
+    coinPickup.destroy();
   }
 
   // ----- DOM -----
@@ -33,11 +36,10 @@ export function initCoinPickup({
   // Avoid browser gestures hijacking touch while keeping pointer events flowing
   pf.style.touchAction = 'none';
 
-  // ----- HUD / storage (batched) -----
-  let coins = Number(localStorage.getItem(storageKey) || 0);
-  const fmt = (n) => n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  function updateHud(){ amt.textContent = fmt(coins); }
-  const save = () => { try { localStorage.setItem(storageKey, String(coins)); } catch {} };
+  // ----- HUD / storage -----
+  let coins = BigNum.fromStorage(localStorage.getItem(storageKey)) || BigNum.zero();
+  const updateHud = () => { amt.textContent = formatCoin(coins); };
+  const save      = () => { localStorage.setItem(storageKey, coins.toStorage()); };
   updateHud();
 
   // ----- Helpers -----
@@ -171,9 +173,13 @@ export function initCoinPickup({
     el.dataset.collected = '1';
     playSound();
     animateAndRemove(el);
-    coins += 1; updateHud(); save();
+    // BigNum-safe increment
+    coins = coins.add(BigNum.fromInt(1));
+    updateHud();
+    save();
     return true;
   }
+
 
   // direct coin events as a safety net (helps if elementsFromPoint misses due to CSS)
   function bindCoinDirect(coin){
@@ -231,7 +237,7 @@ export function initCoinPickup({
     // We don’t tear down window warm handlers; they’re once:true so harmless.
   };
 
-  __coinPickup = { destroy };
+  coinPickup = { destroy };
 
   return {
     get count(){ return coins; },
