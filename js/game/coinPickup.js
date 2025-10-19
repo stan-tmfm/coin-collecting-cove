@@ -13,7 +13,7 @@ export function initCoinPickup({
   // A tolerant default: supports class, data-attr, or prior sprite class names.
   coinSelector        = '.coin, [data-coin], .coin-sprite',
   soundSrc            = 'sounds/coin_pickup.mp3',
-  storageKey          = 'ccc:coins:v1',
+  storageKey          = 'ccc:coins',
   disableAnimation    = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window),
 } = {}) {
   // Clean up previous init if any
