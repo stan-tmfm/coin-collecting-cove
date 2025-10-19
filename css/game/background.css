@@ -100,3 +100,13 @@
 
 /* you already have this, but just to be sure */
 .area-cove .playfield { touch-action: none; }
+
+/* When <html> has .no-loupe, absolutely disable text selection/callouts everywhere */
+html.no-loupe, 
+html.no-loupe * {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent;
+  caret-color: transparent;
+}
