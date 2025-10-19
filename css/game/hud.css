@@ -321,15 +321,3 @@ padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
       0 1px 0 rgba(0,0,0,0.28) !important;
   }
 }
-
-/* Non-Retina fallback (rare): use whole-pixel offsets */
-@media (pointer: coarse) and (max-resolution: 1.5dppx){
-  .hud-top .coin-amount{
-    text-shadow:
-      1px  1px  0 #000,  1px -1px 0 #000,
-     -1px  1px  0 #000, -1px -1px 0 #000,
-      1px  0    0 #000, -1px 0    0 #000,
-      0    1px  0 #000,  0   -1px 0 #000,
-      0 1px 0 rgba(0,0,0,0.28) !important;
-  }
-}
