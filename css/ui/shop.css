@@ -150,6 +150,7 @@
   height: 100%;
   object-fit: contain;
   pointer-events: none;
+  z-index: 1;
 }
 
 .shop-tile img.icon {
@@ -161,10 +162,11 @@
   height: 68%;
   object-fit: contain;
   pointer-events: none;
+  z-index: 2;
 }
 
-/* Placeholder upgrade level text */
-.shop-tile .shop-level {
+/* Placeholder upgrade level badge (bottom center) */
+.shop-tile .level-badge {
   position: absolute;
   left: 50%;
   bottom: 6%;
@@ -173,16 +175,21 @@
   height: 22px;
   padding: 0 6px;
   border-radius: 999px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   font-size: 12px;
   line-height: 1;
   font-weight: 700;
   color: #fff;
+
   background: rgba(0, 0, 0, 0.55);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+
   pointer-events: none;
+  z-index: 3; /* ensures visible above both coin and icon */
 }
 
 /* === Mobile-specific tweaks === */
@@ -209,7 +216,7 @@
   }
 
   .shop-content {
-    overflow-x: clip; /* prevents micro horizontal scroll */
+    overflow-x: clip;
   }
 }
 
