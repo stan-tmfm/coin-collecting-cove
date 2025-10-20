@@ -107,23 +107,36 @@
   .shop-sheet { transition: none; }
 }
 
-/* === Shop grid === */
-
-/* Responsive tile size & spacing (inherits to all descendants) */
+/* Mobile-first: responsive tile size */
 .shop-sheet {
-  --shop-tile: clamp(84px, 24vw, 128px);   /* phone → desktop */
-  --shop-gap:  clamp(8px, 2.5vw, 16px);
+  --shop-tile: clamp(84px, 24vw, 128px);
 }
+
+/* Desktop: fixed tile width so viewport width controls how many fit */
+@media (hover: hover) and (pointer: fine) {
+  .shop-sheet { --shop-tile: 128px; }
+}
+
+
+/* === Shop grid (icon gallery) === */
+
+/* Override the earlier centering so content can scroll */
+.shop-content {
+  display: block;
+  overflow: auto;             /* scroll when the grid overflows */
+  padding: 16px;
+}
+
+/* Responsive tile size */
+:root { --shop-tile: clamp(72px, 13vw, 128px); }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--shop-tile), 1fr));
-  gap: var(--shop-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--shop-tile), 1fr));
+  gap: clamp(8px, 2vw, 16px);
   width: min(1200px, 100%);
   margin-inline: auto;
   padding: 4px;
-  justify-items: center;   /* centers fixed-size tiles in wider columns */
-  align-content: start;
 }
 
 .shop-upgrade {
@@ -131,15 +144,15 @@
   border: 0;
   padding: 0;
   cursor: pointer;
-  outline-offset: 4px;     /* visible keyboard focus */
+  outline-offset: 4px; /* visible keyboard focus */
 }
 
 .shop-tile {
   position: relative;
-  width: var(--shop-tile);   /* fixed visual size per device */
-  height: var(--shop-tile);  /* square */
+  width: 128px;          /* fixed size for consistent icon dimensions */
+  height: 128px;         /* same height to keep them square */
   display: block;
-  margin: 0 auto;
+  margin: 0 auto;        /* keeps it centered within its grid cell */
 }
 
 /* Base coin plate fills tile */
@@ -152,7 +165,8 @@
   pointer-events: none;
 }
 
-/* Upgrade icon centered inside base (slightly smaller so rim is visible) */
+/* Upgrade icon centered perfectly inside base.
+   Slightly smaller than the base so the rim is visible. */
 .shop-tile img.icon {
   position: absolute;
   inset: 50% auto auto 50%;
@@ -161,6 +175,24 @@
   height: 68%;
   object-fit: contain;
   pointer-events: none;
+}
+
+/* Level badge on the lower portion of the icon/base */
+.level-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  min-width: 24px;
+  padding: 2px 8px;
+  font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,.5);
+  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+  border: 1px solid hsl(210 16% 20% / 0.8);
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 /* === Shop header === */
