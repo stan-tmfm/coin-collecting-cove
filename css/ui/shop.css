@@ -250,8 +250,7 @@
 .shop-header {
   position: sticky;
   top: 0;
-  z-index: 3;
-  /* ⬇️ NEW: occlude everything above the line; transparent at the line */
+  z-index: 10;
   background: linear-gradient(
     to bottom,
     var(--shop-bg) 0,
