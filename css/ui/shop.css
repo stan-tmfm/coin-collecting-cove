@@ -308,3 +308,17 @@
 /* nice cursors when dragging */
 .shop-scrollbar__thumb { cursor: grab; }
 .shop-scrollbar__thumb.dragging { cursor: grabbing; }
+
+/* Mobile: hide custom scrollbar until actively scrolling or dragging */
+@media (hover: none) and (pointer: coarse) {
+  .shop-scrollbar {
+    opacity: 0;
+    pointer-events: none;              /* don’t steal touches when hidden */
+    transition: opacity .25s ease;
+  }
+  .shop-sheet.is-scrolling .shop-scrollbar,
+  .shop-scrollbar__thumb.dragging {
+    opacity: 1;
+    pointer-events: auto;              /* interactive when visible */
+  }
+}
