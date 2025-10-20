@@ -121,7 +121,7 @@ function ensureCustomScrollbar() {
       clearTimeout(scroller.__fadeTimer);
       scroller.__fadeTimer = setTimeout(() => {
         shopSheetEl.classList.remove('is-scrolling');
-      }, 600);
+      }, 200);
     }
     try { thumb.releasePointerCapture(e.pointerId); } catch {}
   };
