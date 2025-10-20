@@ -16,7 +16,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Dynamic count of upgrades (editable later via setUpgradeCount)
-let UPGRADE_COUNT = 50;
+let UPGRADE_COUNT = 1;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -35,8 +35,8 @@ function ensureCustomScrollbar() {
   scroller.__customScroll = { bar, thumb };
 
   const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-  const FADE_SCROLL_MS = 150;
-  const FADE_DRAG_MS   = 120;
+  const FADE_SCROLL_MS = 150;  // was 900 → snappier
+  const FADE_DRAG_MS   = 120;  // was 600
   const supportsScrollEnd = 'onscrollend' in window;
 
   const updateBounds = () => {
@@ -428,4 +428,3 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
-
