@@ -121,7 +121,7 @@
 
 /* Mobile-first: responsive tile size */
 .shop-sheet {
-  --shop-tile: clamp(80px, 22vw, 120px);
+  --shop-tile: clamp(88px, 26vw, 136px);
 }
 
 /* Desktop: fixed tile width so viewport width controls how many fit */
