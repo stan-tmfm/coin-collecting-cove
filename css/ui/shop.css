@@ -268,3 +268,43 @@
   background: hsl(0 0% 100% / .32);
 }
 
+/* Hide native scrollbars cross-browser (we’ll draw our own) */
+.shop-content {
+  scrollbar-width: none;              /* Firefox */
+}
+.shop-content::-webkit-scrollbar {    /* Chromium/WebKit (incl. iOS) */
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* Overlay scrollbar (same look on desktop + mobile) */
+.shop-scrollbar {
+  position: absolute;                 /* lives inside .shop-sheet */
+  right: 6px;
+  /* top/bottom are set from JS so it respects grabber/header/actions */
+  width: 8px;
+  border-radius: 6px;
+  background: transparent;            /* no track fill */
+  pointer-events: none;               /* won’t block clicks/scroll */
+  z-index: 4;                         /* above grid/header */
+}
+.shop-scrollbar__thumb {
+  width: 100%;
+  min-height: 28px;                   /* readable minimum */
+  border-radius: 6px;
+  background: hsl(0 0% 100% / .28);
+  box-shadow: inset 0 0 0 1px hsl(0 0% 100% / .12);
+  transform: translateY(0);           /* JS updates this */
+  transition: background .15s ease;
+}
+.shop-scrollbar__thumb:hover {        /* desktop hover only; harmless on mobile */
+  background: hsl(0 0% 100% / .36);
+}
+
+/* allow interaction (we previously set pointer-events:none) */
+.shop-scrollbar { pointer-events: auto; }
+
+/* nice cursors when dragging */
+.shop-scrollbar__thumb { cursor: grab; }
+.shop-scrollbar__thumb.dragging { cursor: grabbing; }
