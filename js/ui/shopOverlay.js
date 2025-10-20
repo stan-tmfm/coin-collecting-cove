@@ -1,11 +1,86 @@
 // js/ui/shopOverlay.js
-// Bottom-sheet Shop overlay: DOM creation, open/close, ESC, and drag-to-dismiss.
+// Bottom-sheet Shop overlay + dynamic icon grid (no purchase logic yet).
 
 let shopOverlayEl = null;
 let shopSheetEl = null;
 let shopOpen = false;
 let drag = null; // {startY, lastY, startT, moved, canceled}
 let eventsBound = false;
+
+// -------- Config (paths) --------
+const ICON_DIR = 'img/sc_upg_icons/';
+const BASE_ICON_SRC = 'img/coin/coinBase.png';
+
+// 1×1 transparent PNG (fallback when an icon is missing)
+const TRANSPARENT_PX =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
+
+// Dynamic count of upgrades (editable later via setUpgradeCount)
+let UPGRADE_COUNT = 50;
+
+// Upgrades registry (minimal for now)
+let upgrades = {};
+
+// Build (or rebuild) the upgrades object
+function buildUpgradesData(count = UPGRADE_COUNT) {
+  upgrades = {};
+  for (let i = 0; i < count; i++) {
+    const key = `upg_${i + 1}`;
+    upgrades[key] = {
+      key,
+      level: 1,
+      baseIcon: BASE_ICON_SRC,
+      // Using the same starter icon for now, as requested
+      upgradeIcon: `${ICON_DIR}faster_coins_id_1.png`,
+    };
+  }
+}
+
+// Render the grid from the upgrades object
+function renderShopGrid() {
+  const grid = shopOverlayEl?.querySelector('#shop-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  for (const key in upgrades) {
+    const upg = upgrades[key];
+
+    const btn = document.createElement('button');
+    btn.className = 'shop-upgrade';
+    btn.type = 'button';
+    btn.setAttribute('role', 'gridcell');
+    btn.dataset.key = upg.key;
+    btn.setAttribute('aria-label', `Upgrade ${upg.key.replace('upg_', '')}, level ${upg.level}`);
+
+    // Layered, perfectly centered images
+    const tile = document.createElement('div');
+    tile.className = 'shop-tile';
+
+    const baseImg = document.createElement('img');
+    baseImg.className = 'base';
+    baseImg.src = upg.baseIcon;
+    baseImg.alt = '';
+
+    const iconImg = document.createElement('img');
+    iconImg.className = 'icon';
+    iconImg.src = upg.upgradeIcon;
+    iconImg.alt = '';
+    iconImg.decoding = 'async';
+    iconImg.loading = 'lazy';
+    iconImg.addEventListener('error', () => {
+      // Fallback to invisible icon if the requested one is missing
+      iconImg.src = TRANSPARENT_PX;
+    });
+
+    const badge = document.createElement('span');
+    badge.className = 'level-badge';
+    badge.textContent = String(upg.level);
+
+    tile.append(baseImg, iconImg, badge);
+    btn.appendChild(tile);
+    grid.appendChild(btn);
+  }
+}
 
 function ensureShopOverlay() {
   if (shopOverlayEl) return;
@@ -27,14 +102,25 @@ function ensureShopOverlay() {
   grabber.className = 'shop-grabber';
   grabber.innerHTML = `<div class="grab-handle" aria-hidden="true"></div>`;
 
-  // Content placeholder (real content will come later)
-  const content = document.createElement('div');
-  content.className = 'shop-content';
-  content.innerHTML = `
-    <div class="shop-placeholder" tabindex="-1">
-      Shop UI framework is loaded. Content coming later.
-    </div>
-  `;
+    // Content: sticky header + grid (no extra scroller)
+const content = document.createElement('div');
+content.className = 'shop-content';
+
+const header = document.createElement('header');
+header.className = 'shop-header';
+header.innerHTML = `
+  <div class="shop-title">SHOP</div>
+  <div class="shop-line" aria-hidden="true"></div>
+`;
+
+const grid = document.createElement('div');
+grid.className = 'shop-grid';
+grid.id = 'shop-grid';
+grid.setAttribute('role', 'grid');
+grid.setAttribute('aria-label', 'Shop Upgrades');
+
+content.appendChild(header);
+content.appendChild(grid);
 
   // Actions
   const actions = document.createElement('div');
@@ -52,6 +138,10 @@ function ensureShopOverlay() {
   shopOverlayEl.appendChild(shopSheetEl);
   document.body.appendChild(shopOverlayEl);
 
+  // Data + first render
+  buildUpgradesData(UPGRADE_COUNT);
+  renderShopGrid();
+
   // Events (one-time)
   if (!eventsBound) {
     eventsBound = true;
@@ -62,8 +152,7 @@ function ensureShopOverlay() {
     // Drag to dismiss (grabber only)
     grabber.addEventListener('pointerdown', onDragStart);
     grabber.addEventListener('touchstart', (e) => {
-      // Prevent iOS bounce from interfering with the drag
-      e.preventDefault();
+      e.preventDefault(); // Prevent iOS bounce
     }, { passive: false });
   }
 }
@@ -84,27 +173,25 @@ export function openShop() {
   shopOpen = true;
 
   // Ensure we start from the closed state with NO inline transform
-  // (so the CSS default translateY(100%) applies)
   shopSheetEl.style.transition = 'none';
-  shopSheetEl.style.transform = '';   // <-- critical: remove any leftover inline transform
+  shopSheetEl.style.transform = '';
 
-  // Expose to a11y; pointer-events remain off until .is-open is added
+  // Expose to a11y; pointer-events stay off until .is-open is added
   shopOverlayEl.setAttribute('aria-hidden', 'false');
 
-  // Commit the closed state so the browser has a frame to diff against
+  // Commit closed state, then animate open next frame
   void shopSheetEl.offsetHeight;
-
-  // Next frame: enable transition and add the open class so it animates up
   requestAnimationFrame(() => {
-    shopSheetEl.style.transition = ''; // back to CSS transition (var(--shop-anim))
+    shopSheetEl.style.transition = ''; // back to CSS var(--shop-anim)
     shopOverlayEl.classList.add('is-open');
 
-    // Focus for keyboard users
-    const focusable = shopOverlayEl.querySelector('.shop-placeholder');
+    // Focus something useful for keyboard users
+    const focusable =
+      shopOverlayEl.querySelector('#shop-grid .shop-upgrade') ||
+      shopOverlayEl.querySelector('#shop-grid');
     if (focusable) focusable.focus();
   });
 }
-
 
 export function closeShop() {
   if (!shopOpen) return;
@@ -190,3 +277,11 @@ function cleanupDrag() {
   window.removeEventListener('pointercancel', onDragCancel);
   drag = null;
 }
+
+// ----- Tiny API for later wiring -----
+export function setUpgradeCount(n) {
+  UPGRADE_COUNT = Math.max(0, n | 0);
+  buildUpgradesData(UPGRADE_COUNT);
+  renderShopGrid();
+}
+export function getUpgrades() { return upgrades; }
