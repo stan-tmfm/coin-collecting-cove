@@ -6,6 +6,7 @@
 
 import { BigNum } from '../util/bigNum.js';
 import { formatCoin } from '../util/numFormat.js';
+import { unlockShop } from '../ui/hudButtons.js';
 
 let coinPickup = null; // to allow re-inits without double listeners
 
@@ -41,6 +42,12 @@ export function initCoinPickup({
   const updateHud = () => { amt.textContent = formatCoin(coins); };
   const save      = () => { localStorage.setItem(storageKey, coins.toStorage()); };
   updateHud();
+    // If progress already met the threshold but the flag isn't set yet, unlock now
+  const prog = parseInt(localStorage.getItem(SHOP_PROGRESS_KEY) || '0', 10);
+  if (prog >= 10 && localStorage.getItem(SHOP_UNLOCK_KEY) !== '1') {
+    unlockShop(); // shows the button and writes localStorage
+  }
+
 
   // ----- Helpers -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
@@ -177,6 +184,18 @@ export function initCoinPickup({
     coins = coins.add(BigNum.fromInt(1));
     updateHud();
     save();
+	    // --- progress toward shop unlock ---
+    if (localStorage.getItem(SHOP_UNLOCK_KEY) !== '1') {
+      const next = (parseInt(localStorage.getItem(SHOP_PROGRESS_KEY) || '0', 10) + 1);
+      if (next >= 10) {
+        // Reaching 10 pickups unlocks the shop immediately
+        localStorage.setItem(SHOP_PROGRESS_KEY, String(next));
+        unlockShop(); // updates localStorage ('ccc:unlock:shop') and reveals the button
+      } else {
+        localStorage.setItem(SHOP_PROGRESS_KEY, String(next));
+      }
+    }
+
     return true;
   }
 
@@ -246,4 +265,3 @@ export function initCoinPickup({
     destroy,
   };
 }
-
