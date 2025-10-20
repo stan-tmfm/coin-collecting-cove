@@ -8,6 +8,8 @@ import { BigNum } from '../util/bigNum.js';
 import { formatCoin } from '../util/numFormat.js';
 import { unlockShop } from '../ui/hudButtons.js';
 
+const SHOP_UNLOCK_KEY   = 'ccc:unlock:shop';          // matches HUD
+const SHOP_PROGRESS_KEY = 'ccc:unlock:shop:progress'; // simple integer counter
 let coinPickup = null; // to allow re-inits without double listeners
 
 export function initCoinPickup({
