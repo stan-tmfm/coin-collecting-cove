@@ -117,13 +117,12 @@
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--shop-tile), 1fr));
-  gap: var(--shop-gap);
+  grid-template-columns: repeat(auto-fit, minmax(var(--shop-tile), 1fr));
+  gap: clamp(8px, 2vw, 16px);
   width: min(1200px, 100%);
   margin-inline: auto;
   padding: 4px;
-  justify-items: center;
-  align-content: start;
+  justify-content: center;
 }
 
 .shop-upgrade {
