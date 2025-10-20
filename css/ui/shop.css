@@ -107,35 +107,23 @@
   .shop-sheet { transition: none; }
 }
 
-/* === Shop grid (icon gallery) === */
+/* === SHOP GRID === */
 
-/* Override the earlier centering so content can scroll */
-.shop-content {
-  display: block;
-  overflow: auto;             /* scroll when the grid overflows */
-  padding: 16px;
-}
-
-/* Responsive tile size */
-:root { --shop-tile: clamp(72px, 13vw, 128px); }
-
-/* Mobile-first: responsive tile size */
+/* Default (desktop / general) */
 .shop-sheet {
-  --shop-tile: clamp(88px, 26vw, 136px);
-}
-
-/* Desktop: fixed tile width so viewport width controls how many fit */
-@media (hover: hover) and (pointer: fine) {
-  .shop-sheet { --shop-tile: 128px; }
+  --shop-tile: clamp(84px, 24vw, 128px);
+  --shop-gap:  clamp(8px, 2.5vw, 16px);
 }
 
 .shop-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(var(--shop-tile), 1fr));
-  gap: clamp(8px, 2vw, 16px);
+  grid-template-columns: repeat(auto-fill, minmax(var(--shop-tile), 1fr));
+  gap: var(--shop-gap);
   width: min(1200px, 100%);
   margin-inline: auto;
   padding: 4px;
+  justify-items: center;
+  align-content: start;
 }
 
 .shop-upgrade {
@@ -143,18 +131,18 @@
   border: 0;
   padding: 0;
   cursor: pointer;
-  outline-offset: 4px; /* visible keyboard focus */
+  outline-offset: 4px;
 }
 
 .shop-tile {
   position: relative;
-  width: 128px;          /* fixed size for consistent icon dimensions */
-  height: 128px;         /* same height to keep them square */
+  width: var(--shop-tile);
+  height: var(--shop-tile);
   display: block;
-  margin: 0 auto;        /* keeps it centered within its grid cell */
+  margin: 0 auto;
 }
 
-/* Base coin plate fills tile */
+/* Icon layout */
 .shop-tile img.base {
   position: absolute;
   inset: 0;
@@ -164,11 +152,10 @@
   pointer-events: none;
 }
 
-/* Upgrade icon centered perfectly inside base.
-   Slightly smaller than the base so the rim is visible. */
 .shop-tile img.icon {
   position: absolute;
-  inset: 50% auto auto 50%;
+  left: 50%;
+  top: 50%;
   transform: translate(-50%, -50%);
   width: 68%;
   height: 68%;
@@ -176,22 +163,54 @@
   pointer-events: none;
 }
 
-/* Level badge on the lower portion of the icon/base */
-.level-badge {
+/* Placeholder upgrade level text */
+.shop-tile .shop-level {
   position: absolute;
   left: 50%;
-  bottom: 7%;
+  bottom: 6%;
   transform: translateX(-50%);
-  min-width: 24px;
-  padding: 2px 8px;
-  font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  color: white;
-  text-shadow: 0 1px 1px rgba(0,0,0,.5);
-  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
-  border: 1px solid hsl(210 16% 20% / 0.8);
-  border-radius: 10px;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+
+/* === Mobile-specific tweaks === */
+@media (hover: none) and (pointer: coarse) {
+  .shop-sheet {
+    --grid-pad: 12px;
+    --gap: 12px;
+    --cols: 3;
+
+    /* exact-fit tile: ensures 3 icons + gaps fit perfectly in viewport */
+    --tile-fit: calc(
+      (100vw - env(safe-area-inset-left) - env(safe-area-inset-right)
+        - (2 * var(--grid-pad)) - ((var(--cols) - 1) * var(--gap))
+      ) / var(--cols)
+    );
+
+    --shop-tile: clamp(76px, var(--tile-fit), 120px);
+  }
+
+  .shop-grid {
+    padding-inline: var(--grid-pad);
+    gap: var(--gap);
+    box-sizing: border-box;
+  }
+
+  .shop-content {
+    overflow-x: clip; /* prevents micro horizontal scroll */
+  }
 }
 
 /* === Shop header === */
