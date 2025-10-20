@@ -107,17 +107,6 @@
   .shop-sheet { transition: none; }
 }
 
-/* Mobile-first: responsive tile size */
-.shop-sheet {
-  --shop-tile: clamp(84px, 24vw, 128px);
-}
-
-/* Desktop: fixed tile width so viewport width controls how many fit */
-@media (hover: hover) and (pointer: fine) {
-  .shop-sheet { --shop-tile: 128px; }
-}
-
-
 /* === Shop grid (icon gallery) === */
 
 /* Override the earlier centering so content can scroll */
@@ -127,8 +116,15 @@
   padding: 16px;
 }
 
-/* Responsive tile size */
-:root { --shop-tile: clamp(72px, 13vw, 128px); }
+/* Mobile-first: responsive tile size */
+.shop-sheet {
+  --shop-tile: clamp(80px, 22vw, 120px);
+}
+
+/* Desktop: fixed tile width so viewport width controls how many fit */
+@media (hover: hover) and (pointer: fine) {
+  .shop-sheet { --shop-tile: 128px; }
+}
 
 .shop-grid {
   display: grid;
