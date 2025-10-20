@@ -35,8 +35,8 @@ function ensureCustomScrollbar() {
   scroller.__customScroll = { bar, thumb };
 
   const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-  const FADE_SCROLL_MS = 150;  // was 900 → snappier
-  const FADE_DRAG_MS   = 120;  // was 600
+  const FADE_SCROLL_MS = 150;
+  const FADE_DRAG_MS   = 120;
   const supportsScrollEnd = 'onscrollend' in window;
 
   const updateBounds = () => {
@@ -428,3 +428,4 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
+
