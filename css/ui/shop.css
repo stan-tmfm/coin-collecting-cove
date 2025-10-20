@@ -138,9 +138,10 @@
 
 .shop-tile {
   position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;        /* perfect square tiles */
+  width: 128px;          /* fixed size for consistent icon dimensions */
+  height: 128px;         /* same height to keep them square */
   display: block;
+  margin: 0 auto;        /* keeps it centered within its grid cell */
 }
 
 /* Base coin plate fills tile */
@@ -322,3 +323,4 @@
     pointer-events: auto;              /* interactive when visible */
   }
 }
+
