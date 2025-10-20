@@ -314,7 +314,7 @@
   .shop-scrollbar {
     opacity: 0;
     pointer-events: none;              /* don’t steal touches when hidden */
-    transition: opacity .25s ease;
+    transition: opacity .2s ease;
   }
   .shop-sheet.is-scrolling .shop-scrollbar,
   .shop-scrollbar__thumb.dragging {
