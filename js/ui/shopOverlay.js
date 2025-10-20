@@ -21,6 +21,108 @@ let UPGRADE_COUNT = 50;
 // Upgrades registry (minimal for now)
 let upgrades = {};
 
+function ensureCustomScrollbar() {
+  const scroller = shopOverlayEl?.querySelector('.shop-content');
+  if (!scroller || scroller.__customScroll) return;
+
+  const bar = document.createElement('div');
+  bar.className = 'shop-scrollbar';
+  const thumb = document.createElement('div');
+  thumb.className = 'shop-scrollbar__thumb';
+  bar.appendChild(thumb);
+  shopSheetEl.appendChild(bar);
+
+  scroller.__customScroll = { bar, thumb };
+
+  const updateBounds = () => {
+    const grab = shopOverlayEl.querySelector('.shop-grabber');
+    const header = shopOverlayEl.querySelector('.shop-header');
+    const actions = shopOverlayEl.querySelector('.shop-actions');
+
+    const top = ((grab?.offsetHeight || 0) + (header?.offsetHeight || 0)) | 0;
+    const bottom = (actions?.offsetHeight || 0) | 0;
+
+    bar.style.top = top + 'px';
+    bar.style.bottom = bottom + 'px';
+  };
+
+  const updateThumb = () => {
+    const { scrollHeight, clientHeight, scrollTop } = scroller;
+    const barH = bar.clientHeight;
+    const visibleRatio = clientHeight / Math.max(1, scrollHeight);
+    const thumbH = Math.max(28, Math.round(barH * visibleRatio));
+
+    const maxScroll = Math.max(1, scrollHeight - clientHeight);
+    const range = Math.max(0, barH - thumbH);
+    const y = Math.round((scrollTop / maxScroll) * range);
+
+    thumb.style.height = thumbH + 'px';
+    thumb.style.transform = `translateY(${y}px)`;
+    bar.style.display = (scrollHeight <= clientHeight + 1) ? 'none' : '';
+  };
+
+  const updateAll = () => { updateBounds(); updateThumb(); };
+
+  scroller.addEventListener('scroll', updateThumb, { passive: true });
+  const ro = new ResizeObserver(updateAll);
+  ro.observe(scroller);
+  window.addEventListener('resize', updateAll);
+
+  requestAnimationFrame(updateAll);
+    // --- Drag to scroll ---
+  let dragging = false;
+  let dragStartY = 0;
+  let startScrollTop = 0;
+
+  const startDrag = (e) => {
+    dragging = true;
+    dragStartY = e.clientY;
+    startScrollTop = scroller.scrollTop;
+    thumb.classList.add('dragging');
+    try { thumb.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  };
+
+  const onDragMove = (e) => {
+    if (!dragging) return;
+    const barH = bar.clientHeight;
+    const thH = thumb.clientHeight;
+    const range = Math.max(1, barH - thH);
+    const scrollMax = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
+    const deltaY = e.clientY - dragStartY;
+    const scrollDelta = (deltaY / range) * scrollMax;
+    scroller.scrollTop = startScrollTop + scrollDelta;
+  };
+
+  const endDrag = (e) => {
+    if (!dragging) return;
+    dragging = false;
+    thumb.classList.remove('dragging');
+    try { thumb.releasePointerCapture(e.pointerId); } catch {}
+  };
+
+  thumb.addEventListener('pointerdown', startDrag);
+  window.addEventListener('pointermove', onDragMove, { passive: true });
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  // --- Click track to jump ---
+  bar.addEventListener('pointerdown', (e) => {
+    if (e.target === thumb) return; // drag handled above
+    const rect = bar.getBoundingClientRect();
+    const clickY = e.clientY - rect.top;
+
+    const barH = bar.clientHeight;
+    const thH = thumb.clientHeight;
+    const range = Math.max(0, barH - thH);
+    const targetY = Math.max(0, Math.min(clickY - thH / 2, range));
+
+    const scrollMax = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
+    scroller.scrollTop = (targetY / Math.max(1, range)) * scrollMax;
+  });
+
+}
+
 // Build (or rebuild) the upgrades object
 function buildUpgradesData(count = UPGRADE_COUNT) {
   upgrades = {};
@@ -121,6 +223,7 @@ grid.setAttribute('aria-label', 'Shop Upgrades');
 
 content.appendChild(header);
 content.appendChild(grid);
+ensureCustomScrollbar();
 
   // Actions
   const actions = document.createElement('div');
@@ -184,6 +287,7 @@ export function openShop() {
   requestAnimationFrame(() => {
     shopSheetEl.style.transition = ''; // back to CSS var(--shop-anim)
     shopOverlayEl.classList.add('is-open');
+	ensureCustomScrollbar();
 
     // Focus something useful for keyboard users
     const focusable =
