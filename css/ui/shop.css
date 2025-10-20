@@ -106,3 +106,165 @@
 @media (prefers-reduced-motion: reduce) {
   .shop-sheet { transition: none; }
 }
+
+/* === Shop grid (icon gallery) === */
+
+/* Override the earlier centering so content can scroll */
+.shop-content {
+  display: block;
+  overflow: auto;             /* scroll when the grid overflows */
+  padding: 16px;
+}
+
+/* Responsive tile size */
+:root { --shop-tile: clamp(72px, 13vw, 128px); }
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--shop-tile), 1fr));
+  gap: clamp(8px, 2vw, 16px);
+  width: min(1200px, 100%);
+  margin-inline: auto;
+  padding: 4px;
+}
+
+.shop-upgrade {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  outline-offset: 4px; /* visible keyboard focus */
+}
+
+.shop-tile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;        /* perfect square tiles */
+  display: block;
+}
+
+/* Base coin plate fills tile */
+.shop-tile img.base {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Upgrade icon centered perfectly inside base.
+   Slightly smaller than the base so the rim is visible. */
+.shop-tile img.icon {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 68%;
+  height: 68%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* Level badge on the lower portion of the icon/base */
+.level-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 7%;
+  transform: translateX(-50%);
+  min-width: 24px;
+  padding: 2px 8px;
+  font: 700 12px/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: white;
+  text-shadow: 0 1px 1px rgba(0,0,0,.5);
+  background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+  border: 1px solid hsl(210 16% 20% / 0.8);
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* === Shop header === */
+/* The content area is the scroller that the header sticks to */
+.shop-content {
+  overflow-y: auto;                 /* scrolls on overflow */
+  display: block;
+  padding: 0;                       /* header/grid manage spacing */
+  min-height: 0;                    /* allows the 1fr track to shrink and scroll */
+  -webkit-overflow-scrolling: touch;
+  /* dark scrollbar (same styling you were using before) */
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 100% / .22) hsl(220 18% 7% / .55);
+  scrollbar-gutter: stable both-edges;
+}
+.shop-content::-webkit-scrollbar { width: 12px; }
+.shop-content::-webkit-scrollbar-track {
+  background: hsl(220 18% 7% / .55);
+  border-left: 1px solid var(--shop-border);
+}
+.shop-content::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 100% / .22);
+  border-radius: 10px;
+}
+.shop-content::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / .32);
+}
+
+/* Sticky SHOP + full-width line (no darker band) */
+.shop-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  /* ⬇️ NEW: occlude everything above the line; transparent at the line */
+  background: linear-gradient(
+    to bottom,
+    var(--shop-bg) 0,
+    var(--shop-bg) calc(100% - 2px),
+    transparent calc(100% - 2px)
+  );
+
+  /* keep your existing props as-is */
+  backdrop-filter: inherit;
+  -webkit-backdrop-filter: inherit;
+  display: block;
+  width: 100%;
+  padding: 10px 12px 8px;
+}
+
+
+
+.shop-title { margin: 0 0 8px 0; font-weight: 700; text-align: center; }
+
+.shop-line {
+  height: 2px;
+  width: 100%;
+  background: var(--shop-border);  /* the line itself is the clip edge */
+}
+
+/* The grid now scrolls in its own viewport so items are cut off at the line */
+.shop-scroller {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  padding: 12px 12px 16px;
+  scrollbar-gutter: stable both-edges;   /* no re-centering when scrollbar appears */
+}
+
+/* Dark scrollbar styling */
+/* Firefox */
+.shop-scroller {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 100% / .22) hsl(220 18% 7% / .55);
+}
+/* Chromium/WebKit */
+.shop-scroller::-webkit-scrollbar { width: 12px; }
+.shop-scroller::-webkit-scrollbar-track {
+  background: hsl(220 18% 7% / .55);
+  border-left: 1px solid var(--shop-border);
+}
+.shop-scroller::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 100% / .22);
+  border-radius: 10px;
+}
+.shop-scroller::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / .32);
+}
+
