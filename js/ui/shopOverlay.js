@@ -35,6 +35,9 @@ function ensureCustomScrollbar() {
   scroller.__customScroll = { bar, thumb };
 
   const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+  const FADE_SCROLL_MS = 150;  // was 900 → snappier
+  const FADE_DRAG_MS   = 120;  // was 600
+  const supportsScrollEnd = 'onscrollend' in window;
 
   const updateBounds = () => {
     const grab = shopOverlayEl.querySelector('.shop-grabber');
@@ -65,23 +68,40 @@ function ensureCustomScrollbar() {
 
   const updateAll = () => { updateBounds(); updateThumb(); };
 
-  // Mobile: fade-in while scrolling, fade-out after a delay
+  // ---- visibility helpers (mobile) ----
+  const showBar = () => {
+    if (!isTouch) return;
+    shopSheetEl.classList.add('is-scrolling');
+    clearTimeout(scroller.__fadeTimer);
+  };
+  const scheduleHide = (delay) => {
+    if (!isTouch) return;
+    clearTimeout(scroller.__fadeTimer);
+    scroller.__fadeTimer = setTimeout(() => {
+      shopSheetEl.classList.remove('is-scrolling');
+    }, delay);
+  };
+
   const onScroll = () => {
     updateThumb();
-    if (isTouch) {
-      shopSheetEl.classList.add('is-scrolling');
-      clearTimeout(scroller.__fadeTimer);
-      scroller.__fadeTimer = setTimeout(() => {
-        shopSheetEl.classList.remove('is-scrolling');
-      }, 200);
-    }
+    if (isTouch) showBar();
+    // If scrollend isn’t supported, fall back to a short timeout
+    if (!supportsScrollEnd) scheduleHide(FADE_SCROLL_MS);
+  };
+
+  const onScrollEnd = () => {
+    // Fired once momentum stops — schedule quick fade
+    scheduleHide(FADE_SCROLL_MS);
   };
 
   scroller.addEventListener('scroll', onScroll, { passive: true });
+  if (supportsScrollEnd) {
+    scroller.addEventListener('scrollend', onScrollEnd, { passive: true });
+  }
+
   const ro = new ResizeObserver(updateAll);
   ro.observe(scroller);
   window.addEventListener('resize', updateAll);
-
   requestAnimationFrame(updateAll);
 
   // --- Drag to scroll ---
@@ -94,10 +114,7 @@ function ensureCustomScrollbar() {
     dragStartY = e.clientY;
     startScrollTop = scroller.scrollTop;
     thumb.classList.add('dragging');
-    if (isTouch) {
-      shopSheetEl.classList.add('is-scrolling');
-      clearTimeout(scroller.__fadeTimer);
-    }
+    showBar();
     try { thumb.setPointerCapture(e.pointerId); } catch {}
     e.preventDefault();
   };
@@ -117,12 +134,7 @@ function ensureCustomScrollbar() {
     if (!dragging) return;
     dragging = false;
     thumb.classList.remove('dragging');
-    if (isTouch) {
-      clearTimeout(scroller.__fadeTimer);
-      scroller.__fadeTimer = setTimeout(() => {
-        shopSheetEl.classList.remove('is-scrolling');
-      }, 200);
-    }
+    scheduleHide(FADE_DRAG_MS);
     try { thumb.releasePointerCapture(e.pointerId); } catch {}
   };
 
@@ -145,13 +157,8 @@ function ensureCustomScrollbar() {
     const scrollMax = Math.max(1, scroller.scrollHeight - scroller.clientHeight);
     scroller.scrollTop = (targetY / Math.max(1, range)) * scrollMax;
 
-    if (isTouch) {
-      shopSheetEl.classList.add('is-scrolling');
-      clearTimeout(scroller.__fadeTimer);
-      scroller.__fadeTimer = setTimeout(() => {
-        shopSheetEl.classList.remove('is-scrolling');
-      }, 200);
-    }
+    showBar();
+    scheduleHide(FADE_SCROLL_MS);
   });
 }
 
