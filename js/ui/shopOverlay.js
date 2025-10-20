@@ -16,7 +16,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Dynamic count of upgrades (editable later via setUpgradeCount)
-let UPGRADE_COUNT = 100;
+let UPGRADE_COUNT = 3;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
