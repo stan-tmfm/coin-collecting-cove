@@ -73,7 +73,7 @@ function ensureCustomScrollbar() {
       clearTimeout(scroller.__fadeTimer);
       scroller.__fadeTimer = setTimeout(() => {
         shopSheetEl.classList.remove('is-scrolling');
-      }, 900);
+      }, 200);
     }
   };
 
@@ -150,7 +150,7 @@ function ensureCustomScrollbar() {
       clearTimeout(scroller.__fadeTimer);
       scroller.__fadeTimer = setTimeout(() => {
         shopSheetEl.classList.remove('is-scrolling');
-      }, 900);
+      }, 200);
     }
   });
 }
