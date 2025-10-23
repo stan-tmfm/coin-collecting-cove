@@ -199,7 +199,6 @@ position: relative;
 width: var(--coin-bar-w);                 /* centered by .hud-top flex */
 height: max(var(--coin-plus-size), var(--coin-h));
 pointer-events: auto;
-filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
 
 /* Coin+base image overlaps from the left; doesn’t affect centering */
@@ -214,6 +213,8 @@ width:  var(--coin-plus-size);
 object-fit: contain;
 border: none;
 pointer-events: none;
+filter: drop-shadow(0 8px 18px rgba(0,0,0,.35))
+          drop-shadow(0 2px 6px rgba(0,0,0,.22));
 }
 
 /* The BAR: simple centered text, symmetric padding */
@@ -231,11 +232,13 @@ align-items:center;
 justify-content:center;
 padding: 0 16px;
 box-sizing: border-box;
+box-shadow: 0 6px 10px rgba(0,0,0,.18);
 overflow: hidden;
 
 /* vertical alignment fix */
 transform: translateY(var(--bar-y-nudge));
 }
+
 
 /* Optional inner gloss */
 .coin-bar::after{
@@ -288,7 +291,6 @@ padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
 --coin-bar-w: clamp(240px, 65vw, 320px);
 --coin-plus-extra: 4px;
 --bar-underlap: 0.48;
---bar-y-nudge: 2px; 
 }
 }
 
@@ -320,4 +322,43 @@ padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
      -0.5px 0.5px 0 #000, -0.5px -0.5px 0 #000,
       0 1px 0 rgba(0,0,0,0.28) !important;
   }
+}
+
+/* Endgame nonsense */
+.infinity-symbol {
+  position: relative;
+  top: -0.11em;
+  color: #fff200;                     /* vivid yellow-gold */
+  font-weight: 900;
+  text-shadow:
+    0 0 5px  rgba(255, 240, 0, 1.0),   /* pure yellow core glow */
+    0 0 12px rgba(255, 255, 120, 0.9), /* warm mid halo */
+    0 0 25px rgba(255, 255, 180, 0.85),/* bright outer aura */
+    0 0 45px rgba(255, 255, 220, 0.8); /* faint white halo */
+}
+
+
+/* brighter, deeper pulse */
+@keyframes infinityGlow {
+  0% {
+    text-shadow:
+      0 0 5px rgba(255, 220, 80, 0.7),
+      0 0 15px rgba(255, 240, 160, 0.6),
+      0 0 25px rgba(255, 255, 200, 0.5);
+    transform: scale(1);
+  }
+  100% {
+    text-shadow:
+      0 0 10px rgba(255, 255, 150, 1),
+      0 0 25px rgba(255, 255, 200, 1),
+      0 0 60px rgba(255, 255, 230, 0.9),
+      0 0 100px rgba(255, 255, 255, 0.8);
+    transform: scale(1.15) rotate(2deg);
+  }
+}
+
+/* subtle horizontal shimmer for extra dazzle */
+@keyframes sparkleShift {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(15deg) brightness(1.3); }
 }
