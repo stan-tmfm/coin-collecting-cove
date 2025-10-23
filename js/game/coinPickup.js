@@ -148,6 +148,28 @@ export function initCoinPickup({
     if (IS_MOBILE) return playCoinWebAudio();
     return playCoinHtmlAudio();
   }
+  
+  // Prime the HTML <audio> on first gesture so later plays are allowed
+function primeMobileFallbackOnce(){
+  if (!IS_MOBILE) return;
+  if (!mobileFallback){
+    mobileFallback = new Audio(resolvedSrc);
+    mobileFallback.preload = 'auto';
+    mobileFallback.volume = MOBILE_VOLUME;
+  }
+  // play muted once to satisfy iOS user-activation gate
+  mobileFallback.muted = true;
+  try {
+    mobileFallback.currentTime = 0;
+    mobileFallback.play().then(() => {
+      // immediately stop & unmute for future normal plays
+      mobileFallback.pause();
+      mobileFallback.currentTime = 0;
+      mobileFallback.muted = false;
+    }).catch(()=>{});
+  } catch {}
+}
+
 
   // Warm WebAudio eager on any gesture (window + playfield), capture=true so overlays don’t block
   const warm = () => { if (IS_MOBILE) initWebAudioOnce(); };
@@ -238,6 +260,19 @@ export function initCoinPickup({
       });
     }
   }
+
+// --- One-time synchronous sweep so first pickup sfx runs within a gesture ---
+let firstGestureSweepDone = false;
+pf.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'mouse') {
+    if (!firstGestureSweepDone) {
+      firstGestureSweepDone = true;
+      primeMobileFallbackOnce();   // unlock mobile <audio> under a real gesture
+      // do one immediate sweep so this pickup happens inside the gesture
+      brushAt(e.clientX, e.clientY);
+    }
+  }
+}, { passive: true });
 
   // Touch / pen
   pf.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse') scheduleBrush(e.clientX, e.clientY); }, { passive: true });
