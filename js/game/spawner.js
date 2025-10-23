@@ -11,9 +11,12 @@ export function createSpawner({
     animationDurationMs = 1500,
     surgeLifetimeMs = 1400,
     surgeWidthVw = 22, // width of wave in vw of playfield
-    coinsPerSecond = 1,
+    coinsPerSecond = 20,
     perFrameBudget = 24, // max spawns committed per RAF
     backlogCap = 600, // queue backpressure
+    resumeBoostFrames = 8,       // how many frames to boost after returning to tab
+    resumeBurstMax   = 180,      // hard cap per frame during boost
+    spawnTimeBudgetMs = 4.0,     // don't spend more than ~4ms building a batch
     maxActiveCoins = 1250, // coin capacity before coins are recycled
     initialBurst = 1, // the amount of coins that spawn on room enter
 	coinTtlMs = 60000, // auto-despawn each coin after 60s
@@ -276,10 +279,15 @@ export function createSpawner({
     let rate = coinsPerSecond;
     let rafId = null;
     let last = performance.now();
-    let carry = 0; // fractional coins
-    let queued = 0; // whole coins awaiting spawn
-	let ttlCursor = null;
-	const ttlChecksPerFrame = 200;
+    let carry = 0;
+    let queued = 0;
+
+    let ttlCursor = null;
+    const ttlChecksPerFrame = 200;
+
+    const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    let boostFramesLeft = 0;
+
 
     function loop(now) {
         if (!M.pfRect || !M.wRect)
@@ -355,11 +363,11 @@ export function createSpawner({
         rate = Math.max(0, Number(n) || 0);
     }
 
-    // Resume clean when tab is visible again
     document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && !rafId)
-            start();
+      if (!document.hidden && !rafId) start();
     });
+
+
 
     return {
         start,
