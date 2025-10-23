@@ -266,7 +266,7 @@ font-feature-settings: "tnum" 1, "lnum" 1;
 
 /* --- Mobile fix: remove boxy drop-shadow on coin counter --- */
 @media (hover: none) and (pointer: coarse) {
-  .coin-counter {
+  .coin-plus {
     filter: none !important; /* disable shadow for mobile only */
   }
 }
