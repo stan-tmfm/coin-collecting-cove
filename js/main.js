@@ -2,17 +2,12 @@
 import { initSlots } from './util/slots.js';
 import { createSpawner } from './game/spawner.js';
 import { initCoinPickup } from './game/coinPickup.js';
-import {
-  initHudButtons,
-  unlockShop, unlockMap, lockShop, lockMap,
-} from './ui/hudButtons.js';
+import { initHudButtons } from './ui/hudButtons.js';
 import {
   getHasOpenedSaveSlot,
   setHasOpenedSaveSlot,
   ensureStorageDefaults,
 } from './util/storage.js';
-import { BigNum } from './util/bigNum.js';
-import { formatCoin } from './util/numFormat.js';
 
 export const AREAS = {
   MENU: 0,
@@ -22,6 +17,156 @@ export const AREAS = {
 let currentArea = AREAS.MENU;
 let spawner = null;
 
+/* ---------------------------
+   LOADER UI (immediate black + progress)
+----------------------------*/
+function showLoader(text = 'Loading assets...') {
+  const root = document.createElement('div');
+  root.className = 'loading-screen';
+  Object.assign(root.style, {
+    position: 'fixed',
+    inset: '0',
+    background: '#000',
+    color: '#fff',
+    display: 'grid',
+    placeItems: 'center',
+    zIndex: '2147483647',
+    opacity: '1',                      // spawn fully black
+    transition: 'opacity 0.4s ease',
+  });
+
+  const wrap = document.createElement('div');
+  wrap.style.textAlign = 'center';
+  wrap.style.fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif';
+
+  const label = document.createElement('div');
+  label.textContent = text;
+  Object.assign(label.style, {
+    fontSize: 'clamp(16px, 2.4vw, 22px)',
+    letterSpacing: '.04em',
+    opacity: '.92',
+  });
+
+  const bar = document.createElement('div');
+  Object.assign(bar.style, {
+    width: 'min(420px, 70vw)',
+    height: '10px',
+    background: 'rgba(255,255,255,.15)',
+    borderRadius: '999px',
+    margin: '12px auto 6px',
+    overflow: 'hidden',
+  });
+
+  const fill = document.createElement('div');
+  Object.assign(fill.style, {
+    width: '0%',
+    height: '100%',
+    background: '#fff',
+    transform: 'translateZ(0)',
+    transition: 'width .15s linear',
+  });
+
+  const pct = document.createElement('div');
+  pct.textContent = '0%';
+  Object.assign(pct.style, {
+    fontSize: '12px',
+    opacity: '.85',
+  });
+
+  bar.appendChild(fill);
+  wrap.append(label, bar, pct);
+  root.appendChild(wrap);
+  document.body.appendChild(root);
+
+  // timestamps + flags for robust finishing
+  root.__mountedAt = performance.now();
+  root.__done = false;
+  root.__fill = fill;
+  root.__pct = pct;
+  root.__label = label;
+  return root;
+}
+
+function setLoaderProgress(loaderEl, fraction) {
+  if (!loaderEl) return;
+  const f = Math.max(0, Math.min(1, fraction || 0));
+  const pct = Math.round(f * 100);
+  loaderEl.__fill.style.width = pct + '%';
+  loaderEl.__pct.textContent = pct + '%';
+}
+
+function finishAndHideLoader(loaderEl) {
+  if (!loaderEl || loaderEl.__done) return;
+  loaderEl.__done = true;
+
+  const MIN_FINISHED_DWELL_MS = 500;   // time to show "Finished loading assets"
+  const now = performance.now();
+
+  // Ensure text updates paint before we start the dwell timer
+  if (loaderEl.__label) loaderEl.__label.textContent = 'Finished loading assets';
+
+  loaderEl.offsetHeight;
+
+  // Show the finished message for at least MIN_FINISHED_DWELL_MS
+  setTimeout(() => {
+    loaderEl.style.opacity = '0';
+    // remove after the opacity transition ends (fallback 450ms)
+    const onEnd = () => loaderEl.remove();
+    loaderEl.addEventListener('transitionend', onEnd, { once: true });
+    setTimeout(onEnd, 450);
+  }, MIN_FINISHED_DWELL_MS);
+}
+
+/* ---------------------------
+   PRELOADERS (images, audio, fonts)
+----------------------------*/
+function preloadImages(sources, onEach) {
+  return sources.map(src => new Promise(resolve => {
+    const img = new Image();
+    const done = () => { try { onEach?.(src); } catch {} resolve(src); };
+    img.onload = done;
+    img.onerror = done;
+    img.src = src;
+  }));
+}
+
+function preloadAudio(sources, onEach) {
+  return sources.map(url => new Promise(resolve => {
+    const a = new Audio();
+    const done = () => { try { onEach?.(url); } catch {} resolve(url); };
+    a.addEventListener('canplaythrough', done, { once: true });
+    a.addEventListener('error', done, { once: true });
+    a.preload = 'auto';
+    a.src = url;
+    a.load?.();
+  }));
+}
+
+function preloadFonts(onEach) {
+  if (document.fonts && document.fonts.ready) {
+    return [document.fonts.ready.then(() => { try { onEach?.('fonts'); } catch {} })];
+  }
+  return [Promise.resolve().then(() => { try { onEach?.('fonts'); } catch {} })];
+}
+
+async function preloadAssetsWithProgress({ images = [], audio = [], fonts = true }, onProgress) {
+  const total = images.length + audio.length + (fonts ? 1 : 0);
+  if (total === 0) { onProgress?.(1); return; }
+  let done = 0;
+  const bump = () => { done++; onProgress?.(done / total); };
+
+  const tasks = [
+    ...preloadImages(images, bump),
+    ...preloadAudio(audio, bump),
+    ...(fonts ? preloadFonts(bump) : []),
+  ];
+
+  await Promise.all(tasks.map(p => p.catch(() => null)));
+}
+
+/* ---------------------------
+   GAME AREA CONTROL
+----------------------------*/
 function enterArea(areaID) {
   if (currentArea === areaID) return;
   currentArea = areaID;
@@ -68,7 +213,31 @@ function enterArea(areaID) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+/* ---------------------------
+   BOOT FLOW
+----------------------------*/
+document.addEventListener('DOMContentLoaded', async () => {
+  const loader = showLoader('Loading assets...');
+
+  const ASSET_MANIFEST = {
+    images: [
+	  'img/Hot_dog_with_mustard.png',
+      'img/coin/coin.png',
+      'img/coin/coinBase.png',
+      'img/coin/coinPlusBase.png',
+      'img/sc_upg_icons/faster_coins_id_1.png',
+    ],
+    audio: [
+      // 'audio/coin_pickup.ogg',
+      // 'audio/wave_spawn.ogg',
+    ],
+    fonts: true,
+  };
+
+  await preloadAssetsWithProgress(ASSET_MANIFEST, f => setLoaderProgress(loader, f));
+
+  finishAndHideLoader(loader);
+
   ensureStorageDefaults();
 
   const titleEl = document.getElementById('panel-title');
