@@ -18,6 +18,23 @@
       } catch (e) { }
     })();
   </script>
+  <!-- Inline CSS to display the black loading screen instantly -->
+  <style>
+  .loading-screen {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    z-index: 2147483647;
+  }
+  .loading-screen__text {
+    font-size: 1.2rem;
+    opacity: 0.9;
+  }
+  </style>
   <link rel="stylesheet" href="css/core/variables.css">
   <link rel="stylesheet" href="css/core/base.css">
   <link rel="stylesheet" href="css/core/layout.css">
