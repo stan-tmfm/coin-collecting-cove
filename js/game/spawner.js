@@ -22,7 +22,7 @@ export function createSpawner({
 	
 	// Mobile burst after returning from background
 	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-	const MOBILE_BACKLOG_CAP = 100;
+	const MOBILE_BACKLOG_CAP = 50;
 	let burstUntil = 0;
 
 	const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
@@ -412,3 +412,4 @@ if (due > 0) {
         setRate
     };
 }
+
