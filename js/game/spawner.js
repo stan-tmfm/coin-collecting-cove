@@ -148,12 +148,86 @@ export function createSpawner({
     }
 	
 	  // ---- Wave spawn SFX ----
+// --- Mobile-only WebAudio wave playback with procedural fallback ---
 const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
+
+// Use/keep a shared AudioContext if main.js set one up
+let ac = window.CCCAudioContext || null;
+let waveGain = null;
+let waveBuf = null;
+let waveLoading = false;
+let armedMobileAudio = !IS_MOBILE; // desktop: true
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
-let muteNextHtmlFallback = IS_MOBILE;
 
 let waveLastAt = 0;
 let wavePool = null, waveIdx = 0;
+
+function playProceduralWave() {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (!waveGain) {
+      waveGain = ac.createGain();
+      // use your mobile volume option
+      waveGain.gain.value = (typeof waveSoundMobileVolume === 'number') ? waveSoundMobileVolume : 0.10;
+      waveGain.connect(ac.destination);
+    }
+    if (ac.state === 'suspended') ac.resume();
+
+    // 200 ms soft noise with a gentle lowpass
+    const dur = 0.20;
+    const len = Math.max(1, Math.floor(dur * ac.sampleRate));
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const ch = buf.getChannelData(1 - 1); // channel 0
+    for (let i = 0; i < len; i++) {
+      // pink-ish noise (accumulate slight smoothing)
+      const n = (Math.random() * 2 - 1) * 0.25;
+      ch[i] = (i ? ch[i - 1] * 0.92 + n * 0.08 : n);
+    }
+
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+
+    // Lowpass to soften the “shh”
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1200;
+    lp.Q.value = 0.7;
+
+    // very quick fade in/out to avoid clicks
+    const g = ac.createGain();
+    const t = ac.currentTime;
+    g.gain.setValueAtTime(0.0, t);
+    g.gain.linearRampToValueAtTime(1.0, t + 0.02);
+    g.gain.linearRampToValueAtTime(0.0, t + dur);
+
+    src.connect(lp);
+    lp.connect(g);
+    g.connect(waveGain);
+    src.start();
+    src.stop(t + dur + 0.02);
+  } catch {}
+}
+
+async function ensureWaveDecoded() {
+  if (waveBuf || waveLoading) return;
+  waveLoading = true;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (!waveGain) {
+      waveGain = ac.createGain();
+      waveGain.gain.value = (typeof waveSoundMobileVolume === 'number') ? waveSoundMobileVolume : 0.10;
+      waveGain.connect(ac.destination);
+    }
+    const res = await fetch(waveURL, { cache: 'force-cache' });
+    const arr = await res.arrayBuffer();
+    waveBuf = await new Promise((ok, err) =>
+      ac.decodeAudioData ? ac.decodeAudioData(arr, ok, err) : ok(null)
+    );
+    if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
+  } catch {} finally {
+    waveLoading = false;
+  }
+}
 
 function playWaveHtmlVolume(vol) {
   if (!wavePool) {
@@ -204,20 +278,44 @@ async function ensureWaveWA() {
 }
 
 function playWaveMobile() {
-  try { if (ac && ac.state === 'suspended') ac.resume(); } catch {}
-  if (waveBuf && ac && gain) {
+  // Only WebAudio on mobile
+  if (!armedMobileAudio) {
+    // Not armed yet → soft procedural (quiet) and prep decode
+    playProceduralWave();
+    ensureWaveDecoded();
+    return;
+  }
+
+  // Armed:
+  if (waveBuf && ac && waveGain) {
     try {
+      if (ac.state === 'suspended') ac.resume();
       const src = ac.createBufferSource();
       src.buffer = waveBuf;
-      src.connect(gain);
+      src.connect(waveGain);
       src.start();
       return;
     } catch {}
   }
-  // WA not ready yet → use HTML fallback at MOBILE volume (fix for "first wave too loud")
-  playWaveHtmlVolume(waveSoundMobileVolume);
-  ensureWaveWA();
+
+  // If mp3 hasn’t decoded yet, use the procedural puff and kick decoding
+  playProceduralWave();
+  ensureWaveDecoded();
 }
+
+const armMobileOnce = () => {
+  armedMobileAudio = true;
+  ensureWaveDecoded();
+};
+['pointerdown','touchstart','mousedown','keydown'].forEach(evt =>
+  window.addEventListener(evt, armMobileOnce, { once: true, capture: true })
+);
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
+    try { ac.resume(); } catch {}
+  }
+});
 
 // Gesture warm (iOS Safari)
 const warmWave = () => { if (IS_MOBILE) ensureWaveWA(); };
