@@ -1,7 +1,7 @@
 // js/util/storage.js
 
 import { BigNum } from '../util/bigNum.js';
-import { formatCoin } from '../util/numFormat.js';
+import { formatNumber } from '../util/numFormat.js';
 
 const PREFIX = 'ccc:';  // short for Coin Collecting Cove
 
