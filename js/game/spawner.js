@@ -149,11 +149,23 @@ export function createSpawner({
 	
 	 // ---- Wave spawn SFX ----
 const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
+
+// Use the shared context if main.js already created it
+let ac = window.CCCAudioContext || null;
+let gain = null;
+let waveBuf = null;
+let waveLoading = false;
+
+// volumes provided via options (defaults from your earlier code)
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
 
 let waveLastAt = 0;
+let mobileWaveArmed = !IS_MOBILE; // desktop always true
 
-// Desktop HTMLAudio pool (desktop can use volume safely)
+// If a wave tries to play before we’re armed/decoded, remember it briefly
+let pendingWaveUntil = 0; // performance.now() timestamp (ms) cutoff
+
+// Desktop HTMLAudio pool (desktop volume is respected reliably)
 let wavePool = null, waveIdx = 0;
 function playWaveHtmlVolume(vol) {
   if (!wavePool) {
@@ -164,30 +176,35 @@ function playWaveHtmlVolume(vol) {
     });
   }
   const a = wavePool[waveIdx++ % wavePool.length];
-  a.volume = vol; // desktop only
+  a.volume = vol;
   try { a.currentTime = 0; a.play(); } catch {}
 }
 
-// Mobile WebAudio path
-let ac = null, gain = null, waveBuf = null, waveLoading = false;
-// Armed after first gesture; prevents loud HTML fallback at 1.0
-let mobileWaveArmed = !IS_MOBILE; // desktop is always armed
-
+// WebAudio loader/decoder (mobile path)
 async function ensureWaveWA() {
   if (waveBuf || waveLoading) return;
   waveLoading = true;
   try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    gain = gain || ac.createGain();
-    gain.gain.value = waveSoundMobileVolume;
-    gain.connect(ac.destination);
+    ac = ac || window.CCCAudioContext || new (window.AudioContext || window.webkitAudioContext)();
+    if (!gain) {
+      gain = ac.createGain();
+      gain.gain.value = waveSoundMobileVolume;
+      gain.connect(ac.destination);
+    }
 
     const res = await fetch(waveURL, { cache: 'force-cache' });
     const arr = await res.arrayBuffer();
     waveBuf = await new Promise((ok, err) =>
       ac.decodeAudioData ? ac.decodeAudioData(arr, ok, err) : ok(null)
     );
+
     if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
+
+    // If a wave was pending and we're armed, play it now
+    if (mobileWaveArmed && waveBuf && performance.now() <= pendingWaveUntil) {
+      pendingWaveUntil = 0;
+      playWaveMobile();
+    }
   } catch {} finally {
     waveLoading = false;
   }
@@ -204,83 +221,52 @@ function playWaveMobile() {
       return;
     } catch {}
   }
-  // Do NOT play HTML fallback on mobile (iOS forces volume=1.0).
-  // Just prep WebAudio so the next wave will be correct.
+  // Not ready yet: kick off decode but do NOT use HTML fallback on mobile
   ensureWaveWA();
 }
 
-// Arm mobile audio on first gesture
-const armMobileWave = () => { mobileWaveArmed = true; ensureWaveWA(); };
-['pointerdown','touchstart'].forEach(evt =>
-  window.addEventListener(evt, armMobileWave, { once: true, passive: true, capture: true })
+// Arm mobile audio explicitly (call on first gesture inside this module too)
+const armMobileWave = () => {
+  mobileWaveArmed = true;
+  // If a wave was pending and decode is ready, play it immediately
+  if (waveBuf && performance.now() <= pendingWaveUntil) {
+    pendingWaveUntil = 0;
+    playWaveMobile();
+  } else {
+    ensureWaveWA();
+  }
+};
+
+// In case this module loads before the first gesture, listen once here too
+['pointerdown','touchstart','keydown','mousedown'].forEach(evt =>
+  window.addEventListener(evt, armMobileWave, { once: true, capture: true })
 );
 
-// Try to auto-arm on returning to foreground if WA is already running
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && IS_MOBILE && ac && ac.state === 'running') {
-    mobileWaveArmed = true;
+  if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
+    try { ac.resume(); } catch {}
   }
 });
 
-// Play once per burst (rate-limited)
+// Rate-limited entry point (call this once per burst, e.g., in commitBatch)
 function playWaveOncePerBurst() {
   const now = performance.now();
   if (now - waveLastAt < waveSoundMinIntervalMs) return;
   waveLastAt = now;
 
   if (IS_MOBILE) {
-    if (!mobileWaveArmed) { ensureWaveWA(); return; } // avoid loud first play
-    playWaveMobile();
+    // If not armed or not decoded yet, queue the wave for a short window
+    if (!mobileWaveArmed || !waveBuf) {
+      pendingWaveUntil = now + 2000; // play within the next 2s if/when ready
+      ensureWaveWA();
+      return;
+    }
+    playWaveMobile(); // armed + decoded → play now
   } else {
     playWaveHtmlVolume(waveSoundDesktopVolume);
   }
 }
 
-function unlockMobileAudioNow() {
-  if (!IS_MOBILE) return;
-  try {
-    // Create or resume the context synchronously
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
-    if (ac.state === 'suspended') { ac.resume(); }
-
-    // Create/connect gain (use your mobile volume variable if you have one)
-    if (!gain) {
-      gain = ac.createGain();
-      // If you defined waveSoundMobileVolume in options, use it here:
-      const vol = (typeof waveSoundMobileVolume === 'number') ? waveSoundMobileVolume : 0.10;
-      gain.gain.value = vol;
-      gain.connect(ac.destination);
-    }
-
-    // Play a 1-frame silent buffer to unlock
-    const silent = ac.createBuffer(1, 1, ac.sampleRate);
-    const src = ac.createBufferSource();
-    src.buffer = silent;
-    src.connect(gain);
-    src.start(0);
-
-    // Start decoding the real wave sound in the background (don’t await)
-    if (!waveBuf && typeof ensureWaveWA === 'function') {
-      // your ensureWaveWA() should fetch+decode wave_spawn_sound.mp3
-      ensureWaveWA();
-    }
-  } catch (e) {
-    // swallow; iOS sometimes throws if called twice
-  }
-}
-
-// Attach to a broad set of gestures, capture phase, once.
-// This guarantees we arm audio before any UI handlers stop propagation.
-['pointerdown','touchstart','mousedown','click','keydown'].forEach(evt => {
-  window.addEventListener(evt, unlockMobileAudioNow, { once: true, capture: true });
-});
-
-// Also try to re-arm when returning to foreground (no harm if already armed)
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
-    try { ac.resume(); } catch {}
-  }
-});
 
     // ---------- spawn planning ----------
     function planSpawn() {
@@ -513,7 +499,7 @@ if (due > 0) {
         setTimeout(() => {
           // only fire if spawner is still running
           if (rafId) spawnBurst(initialBurst);
-        }, 100);
+        }, 50);
       }
 
     last = performance.now();
