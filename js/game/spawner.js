@@ -147,37 +147,39 @@ export function createSpawner({
             surgePool.push(el);
     }
 	
-	  // ---- Wave spawn SFX ----
+	 // ---- Wave spawn SFX ----
 const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
 
 let waveLastAt = 0;
-// Desktop/mobile-aware HTMLAudio pool
-let wavePool = null, waveIdx = 0;
 
+// Desktop HTMLAudio pool (desktop can use volume safely)
+let wavePool = null, waveIdx = 0;
 function playWaveHtmlVolume(vol) {
   if (!wavePool) {
     wavePool = Array.from({ length: 4 }, () => {
       const a = new Audio(waveURL);
       a.preload = 'auto';
-      // do not set volume here; we’ll set it right before play so it’s correct for mobile too
       return a;
     });
   }
   const a = wavePool[waveIdx++ % wavePool.length];
-  a.volume = vol;              // <-- ensure correct platform volume, every time
+  a.volume = vol; // desktop only
   try { a.currentTime = 0; a.play(); } catch {}
 }
 
-// Mobile: WebAudio (with HTML fallback if WA isn’t ready)
+// Mobile WebAudio path
 let ac = null, gain = null, waveBuf = null, waveLoading = false;
+// Armed after first gesture; prevents loud HTML fallback at 1.0
+let mobileWaveArmed = !IS_MOBILE; // desktop is always armed
+
 async function ensureWaveWA() {
   if (waveBuf || waveLoading) return;
   waveLoading = true;
   try {
     ac = ac || new (window.AudioContext || window.webkitAudioContext)();
     gain = gain || ac.createGain();
-    gain.gain.value = waveSoundMobileVolume;   // <-- mobile gain
+    gain.gain.value = waveSoundMobileVolume;
     gain.connect(ac.destination);
 
     const res = await fetch(waveURL, { cache: 'force-cache' });
@@ -186,7 +188,9 @@ async function ensureWaveWA() {
       ac.decodeAudioData ? ac.decodeAudioData(arr, ok, err) : ok(null)
     );
     if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
-  } catch (_) {} finally { waveLoading = false; }
+  } catch {} finally {
+    waveLoading = false;
+  }
 }
 
 function playWaveMobile() {
@@ -200,32 +204,37 @@ function playWaveMobile() {
       return;
     } catch {}
   }
-  // WA not ready yet → use HTML fallback at MOBILE volume (fix for "first wave too loud")
-  playWaveHtmlVolume(waveSoundMobileVolume);
+  // Do NOT play HTML fallback on mobile (iOS forces volume=1.0).
+  // Just prep WebAudio so the next wave will be correct.
   ensureWaveWA();
 }
 
-// Gesture warm (iOS Safari)
-const warmWave = () => { if (IS_MOBILE) ensureWaveWA(); };
+// Arm mobile audio on first gesture
+const armMobileWave = () => { mobileWaveArmed = true; ensureWaveWA(); };
 ['pointerdown','touchstart'].forEach(evt =>
-  window.addEventListener(evt, warmWave, { once: true, passive: true, capture: true })
+  window.addEventListener(evt, armMobileWave, { once: true, passive: true, capture: true })
 );
 
+// Try to auto-arm on returning to foreground if WA is already running
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
-    try { ac.resume(); } catch {}
+  if (!document.hidden && IS_MOBILE && ac && ac.state === 'running') {
+    mobileWaveArmed = true;
   }
 });
 
+// Play once per burst (rate-limited)
 function playWaveOncePerBurst() {
   const now = performance.now();
-  if (now - waveLastAt < waveSoundMinIntervalMs) return; // rate-limit
+  if (now - waveLastAt < waveSoundMinIntervalMs) return;
   waveLastAt = now;
-  if (IS_MOBILE) playWaveMobile();
-  else          playWaveHtmlVolume(waveSoundDesktopVolume);
+
+  if (IS_MOBILE) {
+    if (!mobileWaveArmed) { ensureWaveWA(); return; } // avoid loud first play
+    playWaveMobile();
+  } else {
+    playWaveHtmlVolume(waveSoundDesktopVolume);
+  }
 }
-
-
 
     // ---------- spawn planning ----------
     function planSpawn() {
