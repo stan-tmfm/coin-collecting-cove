@@ -262,6 +262,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     progress = f;
     setLoaderProgress(loader, f);
   });
+  // after: await preloadAssetsWithProgress(ASSET_MANIFEST, ...)
+  const hero = new Image();
+  hero.src = 'img/coin/coinPlusBase.png';
+  if (typeof hero.decode === 'function') { try { await hero.decode(); } catch {} }
+
 
   // Remove the booting CSS (which hides menu/game) but keep loader on top.
   await twoFrames();                              // give CSS/DOM a moment
