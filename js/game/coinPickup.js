@@ -122,11 +122,14 @@ export function initCoinPickup({
   function playCoinWebAudio(){
     if (ac && ac.state === 'suspended'){ try { ac.resume(); } catch {} }
 
-  if (IS_MOBILE && (!webAudioReady || !ac || !buffer || !masterGain || (ac && ac.state !== 'running'))) {
-    if (!webAudioLoading) initWebAudioOnce();
-    playCoinMobileFallback();
-    return true;
-  }
+    if (!webAudioReady || !ac || !buffer || !masterGain){
+      queuedPlays++;
+      if (!webAudioLoading) initWebAudioOnce();
+      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays >= 1){
+		playCoinMobileFallback();
+	  }
+      return true;
+    }
 
     try {
       const src = ac.createBufferSource();
