@@ -274,6 +274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ],
     audio: [
       'sounds/coin_pickup.mp3',
+	  'sounds/wave_spawn_sound.mp3',
     ],
     fonts: true,
   };
