@@ -14,14 +14,19 @@ export function createSpawner({
     coinsPerSecond = 20,
     perFrameBudget = 24, // max spawns committed per RAF
     backlogCap = 600, // queue backpressure
-    resumeBoostFrames = 8,       // how many frames to boost after returning to tab
-    resumeBurstMax   = 180,      // hard cap per frame during boost
-    spawnTimeBudgetMs = 4.0,     // don't spend more than ~4ms building a batch
     maxActiveCoins = 1250, // coin capacity before coins are recycled
     initialBurst = 1, // the amount of coins that spawn on room enter
 	coinTtlMs = 60000, // auto-despawn each coin after 60s
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
+    
+	// Mobile-only resume boost tuning
+	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+	let boostFramesLeft = 0;
+	const MOBILE_RESUME_BOOST_FRAMES = 8;   // how many frames to boost
+	const MOBILE_RESUME_BURST_MAX   = 180;  // hard cap per boosted frame
+	const MOBILE_SPAWN_TIME_BUDGET_MS = 3.5; // max ms spent building a boosted batch
+
     // ---------- resolve and keep DOM references ----------
     const refs = {
         pf: document.querySelector(playfieldSelector),
@@ -279,61 +284,81 @@ export function createSpawner({
     let rate = coinsPerSecond;
     let rafId = null;
     let last = performance.now();
-    let carry = 0;
-    let queued = 0;
-
-    let ttlCursor = null;
-    const ttlChecksPerFrame = 200;
-
-    const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-    let boostFramesLeft = 0;
-
+    let carry = 0; // fractional coins
+    let queued = 0; // whole coins awaiting spawn
+	let ttlCursor = null;
+	const ttlChecksPerFrame = 200;
 
     function loop(now) {
-        if (!M.pfRect || !M.wRect)
-            computeMetrics();
+  if (!M.pfRect || !M.wRect) computeMetrics();
 
-        const dt = (now - last) / 1000;
-        last = now;
-		
+  const dt = (now - last) / 1000; // keep backlog intact on resume
+  last = now;
+
+  // ---- TTL cleanup (matches your pooling) ----
   {
-      let checked = 0;
-      let node = ttlCursor || (refs.c && refs.c.firstElementChild);
-      while (node && checked < ttlChecksPerFrame) {
-          const next = node.nextElementSibling;
-          const dieAt = Number(node.dataset && node.dataset.dieAt || 0);
-          if (dieAt && now >= dieAt) {
-              // release (returns to pool and removes from DOM)
-              releaseCoin(node);
-          }
-          node = next;
-          checked++;
+    let checked = 0;
+    let node = ttlCursor || (refs.c && refs.c.firstElementChild);
+    while (node && checked < ttlChecksPerFrame) {
+      const next = node.nextElementSibling;
+      const dieAt = Number((node.dataset && node.dataset.dieAt) || 0);
+      if (dieAt && now >= dieAt) {
+        releaseCoin(node); // return to pool
       }
-      ttlCursor = node || null;
+      node = next;
+      checked++;
+    }
+    ttlCursor = node || null;
   }
 
-		carry += rate * dt;
-        const due = carry | 0;
-        if (due > 0) {
-            queued = Math.min(backlogCap, queued + due); // clamp backlog
-            carry -= due;
-        }
+  // ---- Backlog accumulation ----
+  carry += rate * dt;
+  const due = carry | 0;
+  if (due > 0) {
+    queued = Math.min(backlogCap, queued + due);
+    carry -= due;
+  }
 
-        const n = Math.min(queued, perFrameBudget);
-        if (n > 0) {
-            const batch = [];
-            for (let i = 0; i < n; i++) {
-                const plan = planSpawn();
-                if (plan)
-                    batch.push(plan);
-            }
-            if (batch.length)
-                commitBatch(batch);
-            queued -= batch.length;
-        }
+  // ---- Spawn: PC path unchanged; mobile gets a short boost after resume ----
+  let spawnTarget = Math.min(queued, perFrameBudget);
 
-        rafId = requestAnimationFrame(loop);
+  if (isTouch && boostFramesLeft > 0) {
+    // Adaptive burst that scales with backlog but stays capped
+    const adaptive = Math.max(perFrameBudget, Math.ceil(Math.sqrt(queued) * 8));
+    spawnTarget = Math.min(queued, MOBILE_RESUME_BURST_MAX, adaptive);
+
+    // Time-budget the planning to avoid frame hitching on phones
+    const t0 = performance.now();
+    const batch = [];
+    for (let i = 0; i < spawnTarget; i++) {
+      if (performance.now() - t0 > MOBILE_SPAWN_TIME_BUDGET_MS) break;
+      const plan = planSpawn();
+      if (plan) batch.push(plan);
     }
+    if (batch.length) {
+      commitBatch(batch);
+      queued -= batch.length;
+    }
+    boostFramesLeft--;
+  } else {
+    // Original per-frame budget (desktop + normal mobile frames)
+    const n = spawnTarget;
+    if (n > 0) {
+      const batch = [];
+      for (let i = 0; i < n; i++) {
+        const plan = planSpawn();
+        if (plan) batch.push(plan);
+      }
+      if (batch.length) {
+        commitBatch(batch);
+        queued -= batch.length;
+      }
+    }
+  }
+
+  rafId = requestAnimationFrame(loop);
+}
+
 
     function start() {
         if (rafId)
@@ -363,14 +388,18 @@ export function createSpawner({
         rate = Math.max(0, Number(n) || 0);
     }
 
+    // Resume clean when tab is visible again
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden && !rafId) start();
+      if (!document.hidden) {
+        if (isTouch) boostFramesLeft = MOBILE_RESUME_BOOST_FRAMES;
+        if (!rafId) start();
+      }
     });
-	
+
+
     return {
         start,
         stop,
         setRate
     };
 }
-
