@@ -258,7 +258,7 @@ function playWaveHtmlVolume(vol) {
 
 
 // Mobile: WebAudio (with HTML fallback if WA isn’t ready)
-let ac = null, gain = null, waveBuf = null, waveLoading = false;
+let gain = null, waveBuf = null, waveLoading = false;
 async function ensureWaveWA() {
   if (waveBuf || waveLoading) return;
   waveLoading = true;
