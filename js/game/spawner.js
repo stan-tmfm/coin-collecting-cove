@@ -236,6 +236,52 @@ function playWaveOncePerBurst() {
   }
 }
 
+function unlockMobileAudioNow() {
+  if (!IS_MOBILE) return;
+  try {
+    // Create or resume the context synchronously
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (ac.state === 'suspended') { ac.resume(); }
+
+    // Create/connect gain (use your mobile volume variable if you have one)
+    if (!gain) {
+      gain = ac.createGain();
+      // If you defined waveSoundMobileVolume in options, use it here:
+      const vol = (typeof waveSoundMobileVolume === 'number') ? waveSoundMobileVolume : 0.10;
+      gain.gain.value = vol;
+      gain.connect(ac.destination);
+    }
+
+    // Play a 1-frame silent buffer to unlock
+    const silent = ac.createBuffer(1, 1, ac.sampleRate);
+    const src = ac.createBufferSource();
+    src.buffer = silent;
+    src.connect(gain);
+    src.start(0);
+
+    // Start decoding the real wave sound in the background (don’t await)
+    if (!waveBuf && typeof ensureWaveWA === 'function') {
+      // your ensureWaveWA() should fetch+decode wave_spawn_sound.mp3
+      ensureWaveWA();
+    }
+  } catch (e) {
+    // swallow; iOS sometimes throws if called twice
+  }
+}
+
+// Attach to a broad set of gestures, capture phase, once.
+// This guarantees we arm audio before any UI handlers stop propagation.
+['pointerdown','touchstart','mousedown','click','keydown'].forEach(evt => {
+  window.addEventListener(evt, unlockMobileAudioNow, { once: true, capture: true });
+});
+
+// Also try to re-arm when returning to foreground (no harm if already armed)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
+    try { ac.resume(); } catch {}
+  }
+});
+
     // ---------- spawn planning ----------
     function planSpawn() {
         if (!validRefs())
