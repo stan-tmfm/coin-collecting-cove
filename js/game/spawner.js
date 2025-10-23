@@ -26,6 +26,7 @@ export function createSpawner({
 	
 	// Mobile burst after returning from background
 	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+	const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 	let mobileWaveArmed = !IS_MOBILE; // desktop is always armed
 	const armMobileWaveOnce = () => { mobileWaveArmed = true; ensureWaveWA(); };
 	['pointerdown','touchstart','mousedown','keydown'].forEach(evt =>
@@ -155,7 +156,6 @@ export function createSpawner({
     }
 	
 	  // ---- Wave spawn SFX ----
-const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
 
 let waveLastAt = 0;
