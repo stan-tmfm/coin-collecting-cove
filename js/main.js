@@ -132,12 +132,26 @@ function finishAndHideLoader(loaderEl) {
 function preloadImages(sources, onEach) {
   return sources.map(src => new Promise(resolve => {
     const img = new Image();
-    const done = () => { try { onEach?.(src); } catch {} resolve(src); };
-    img.onload = done;
-    img.onerror = done;
+    const finish = () => {
+      const done = () => { try { onEach?.(src); } catch {} resolve(src); };
+      // Force a raster decode before we leave the loader
+      if (typeof img.decode === 'function') {
+        img.decode().catch(() => null).finally(done);
+      } else {
+        // Older Safari fallback: briefly attach offscreen to force decode
+        const ghost = document.createElement('img');
+        ghost.src = img.src;
+        ghost.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+        document.body.appendChild(ghost);
+        requestAnimationFrame(() => { ghost.remove(); done(); });
+      }
+    };
+    img.onload = finish;
+    img.onerror = finish;
     img.src = src;
   }));
 }
+
 
 function preloadAudio(sources, onEach) {
   return sources.map(url => new Promise(resolve => {
