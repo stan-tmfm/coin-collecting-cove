@@ -111,25 +111,23 @@ export function initCoinPickup({
     } finally {
       webAudioLoading = false;
     }
-
-    // Flush queued plays if coins were collected before decode finished
-    if (webAudioReady && queuedPlays > 0){
-      const n = Math.min(queuedPlays, 64); queuedPlays = 0;
-      for (let i=0;i<n;i++) playCoinWebAudio();
-    }
   }
 
   function playCoinWebAudio(){
     if (ac && ac.state === 'suspended'){ try { ac.resume(); } catch {} }
 
-    if (!webAudioReady || !ac || !buffer || !masterGain){
-      queuedPlays++;
-      if (!webAudioLoading) initWebAudioOnce();
-      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays >= 1){
-		playCoinMobileFallback();
-	  }
-      return true;
-    }
+  if (IS_MOBILE && (!webAudioReady || !ac || !buffer || !masterGain || (ac && ac.state !== 'running'))) {
+    if (!webAudioLoading) initWebAudioOnce();
+    playCoinMobileFallback();   // respects MOBILE_VOLUME
+    return true;
+  }
+
+  // Desktop: if this ever happens (unlikely), let WA path return to caller
+  if (!webAudioReady || !ac || !buffer || !masterGain) {
+    if (!webAudioLoading) initWebAudioOnce();
+    return true;
+  }
+
 
     try {
       const src = ac.createBufferSource();
