@@ -79,21 +79,16 @@ export function initCoinPickup({
   let webAudioReady = false, webAudioLoading = false, webAudioAttempted = false;
   let queuedPlays = 0;
 
-let mobileFallback = null;
-function playCoinMobileFallback(){
-  if (!mobileFallback){
-    mobileFallback = new Audio(resolvedSrc);
-    mobileFallback.preload = 'auto';
+  // mobile fallback
+  let mobileFallback = null;
+  function playCoinMobileFallback(){
+    if (!mobileFallback){
+      mobileFallback = new Audio(resolvedSrc);
+      mobileFallback.preload = 'auto';
+      mobileFallback.volume = MOBILE_VOLUME;
+    }
+    try { mobileFallback.currentTime = 0; mobileFallback.play(); } catch {}
   }
-  // Re-apply the intended volume on every play (guards against drift)
-  mobileFallback.muted = false;
-  mobileFallback.volume = MOBILE_VOLUME;
-  try {
-    mobileFallback.currentTime = 0;
-    mobileFallback.play();
-  } catch {}
-}
-
 
   async function initWebAudioOnce(){
     if (webAudioReady || webAudioLoading) return;
@@ -116,42 +111,40 @@ function playCoinMobileFallback(){
     } finally {
       webAudioLoading = false;
     }
+
+    // Flush queued plays if coins were collected before decode finished
+    if (webAudioReady && queuedPlays > 0){
+      const n = Math.min(queuedPlays, 64); queuedPlays = 0;
+      for (let i=0;i<n;i++) playCoinWebAudio();
+    }
   }
 
   function playCoinWebAudio(){
     if (ac && ac.state === 'suspended'){ try { ac.resume(); } catch {} }
 
-  if (IS_MOBILE && (!webAudioReady || !ac || !buffer || !masterGain || (ac && ac.state !== 'running'))) {
-    if (!webAudioLoading) initWebAudioOnce();
-    playCoinMobileFallback();   // respects MOBILE_VOLUME
-    return true;
-  }
-
-  // Desktop: if this ever happens (unlikely), let WA path return to caller
-  if (!webAudioReady || !ac || !buffer || !masterGain) {
-    if (!webAudioLoading) initWebAudioOnce();
-    return true;
-  }
-
+    if (!webAudioReady || !ac || !buffer || !masterGain){
+      queuedPlays++;
+      if (!webAudioLoading) initWebAudioOnce();
+      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays >= 1){
+		playCoinMobileFallback();
+	  }
+      return true;
+    }
 
     try {
-	const src = ac.createBufferSource();
-	src.buffer = buffer;
-	try { src.detune = 0; } catch {}
-
-	// Re-assert the correct volume on every play
-	masterGain.gain.setValueAtTime(MOBILE_VOLUME, ac.currentTime);
-
-	src.connect(masterGain);
-	const t = ac.currentTime + Math.random()*0.006; // avoid phasing when many play
-	src.start(t);
-	return true;
-	} catch (e){
-	console.warn('[coinPickup] playCoinWebAudio error:', e);
-	if (IS_MOBILE) playCoinMobileFallback();
-	return false;
+      const src = ac.createBufferSource();
+      src.buffer = buffer;
+      try { src.detune = 0; } catch {}
+      src.connect(masterGain);
+      const t = ac.currentTime + Math.random()*0.006; // avoid phasing when many play
+      src.start(t);
+      return true;
+    } catch (e){
+      console.warn('[coinPickup] playCoinWebAudio error:', e);
+      if (IS_MOBILE) playCoinMobileFallback();
+      return false;
+    }
   }
-}
 
   function playSound(){
     if (IS_MOBILE) return playCoinWebAudio();
