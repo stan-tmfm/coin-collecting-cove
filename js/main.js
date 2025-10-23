@@ -20,9 +20,22 @@ let spawner = null;
 /* ---------------------------
    LOADER UI (immediate black + progress)
 ----------------------------*/
+// Yield to the browser for a frame (layout/paint opportunity)
+const nextFrame = () => new Promise(r => requestAnimationFrame(r));
+// Two frames gives slower devices time to style/layout
+const twoFrames = async () => { await nextFrame(); await nextFrame(); };
 function showLoader(text = 'Loading assets...') {
-  const root = document.createElement('div');
-  root.className = 'loading-screen';
+  // Reuse the pre-rendered loader if it exists
+  let root = document.getElementById('boot-loader');
+  if (!root) {
+    root = document.createElement('div');
+    root.id = 'boot-loader';
+    root.className = 'loading-screen';
+    document.body.appendChild(root);
+  }
+
+  // Build the inner UI (bar + %), preserve immediate black background
+  root.innerHTML = '';
   Object.assign(root.style, {
     position: 'fixed',
     inset: '0',
@@ -31,7 +44,7 @@ function showLoader(text = 'Loading assets...') {
     display: 'grid',
     placeItems: 'center',
     zIndex: '2147483647',
-    opacity: '1',                      // spawn fully black
+    opacity: '1',                     // already fully black
     transition: 'opacity 0.4s ease',
   });
 
@@ -68,17 +81,12 @@ function showLoader(text = 'Loading assets...') {
 
   const pct = document.createElement('div');
   pct.textContent = '0%';
-  Object.assign(pct.style, {
-    fontSize: '12px',
-    opacity: '.85',
-  });
+  Object.assign(pct.style, { fontSize: '12px', opacity: '.85' });
 
   bar.appendChild(fill);
   wrap.append(label, bar, pct);
   root.appendChild(wrap);
-  document.body.appendChild(root);
 
-  // timestamps + flags for robust finishing
   root.__mountedAt = performance.now();
   root.__done = false;
   root.__fill = fill;
@@ -99,19 +107,20 @@ function finishAndHideLoader(loaderEl) {
   if (!loaderEl || loaderEl.__done) return;
   loaderEl.__done = true;
 
-  const MIN_FINISHED_DWELL_MS = 500;   // time to show "Finished loading assets"
-  const now = performance.now();
-
-  // Ensure text updates paint before we start the dwell timer
+  const MIN_FINISHED_DWELL_MS = 500;
   if (loaderEl.__label) loaderEl.__label.textContent = 'Finished loading assets';
 
+  // Force layout so label change commits before timer starts
+  // eslint-disable-next-line no-unused-expressions
   loaderEl.offsetHeight;
 
-  // Show the finished message for at least MIN_FINISHED_DWELL_MS
   setTimeout(() => {
     loaderEl.style.opacity = '0';
-    // remove after the opacity transition ends (fallback 450ms)
-    const onEnd = () => loaderEl.remove();
+    const onEnd = () => {
+      loaderEl.remove();
+      // Reveal UI now that boot is complete
+      document.documentElement.classList.remove('booting');
+    };
     loaderEl.addEventListener('transitionend', onEnd, { once: true });
     setTimeout(onEnd, 450);
   }, MIN_FINISHED_DWELL_MS);
@@ -221,21 +230,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const ASSET_MANIFEST = {
     images: [
-	  'img/Hot_dog_with_mustard.png',
+      'img/Hot_dog_with_mustard.png',
       'img/coin/coin.png',
       'img/coin/coinBase.png',
       'img/coin/coinPlusBase.png',
       'img/sc_upg_icons/faster_coins_id_1.png',
     ],
     audio: [
-      // 'audio/coin_pickup.ogg',
-      // 'audio/wave_spawn.ogg',
+      'audio/coin_pickup.mp3',
     ],
     fonts: true,
   };
 
-  await preloadAssetsWithProgress(ASSET_MANIFEST, f => setLoaderProgress(loader, f));
+  // Start preloading and update progress…
+  let progress = 0;
+  await preloadAssetsWithProgress(ASSET_MANIFEST, f => {
+    progress = f;
+    setLoaderProgress(loader, f);
+  });
 
+  // Remove the booting CSS (which hides menu/game) but keep loader on top.
+  await twoFrames();                              // give CSS/DOM a moment
+  document.documentElement.classList.remove('booting');
+
+  // Give it one more frame so fonts/images settle
+  await nextFrame();
+
+  // Show "Finished…" for 0.5s, then fade out the loader
   finishAndHideLoader(loader);
 
   ensureStorageDefaults();
