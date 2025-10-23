@@ -19,6 +19,10 @@ export function createSpawner({
 	coinTtlMs = 60000, // auto-despawn each coin after 60s
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
+	
+	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+	let flushOnResume = false;
+
     // ---------- resolve and keep DOM references ----------
     const refs = {
         pf: document.querySelector(playfieldSelector),
@@ -281,10 +285,11 @@ export function createSpawner({
 	let ttlCursor = null;
 	const ttlChecksPerFrame = 200;
 
-    function loop(now) {
+   function loop(now) {
   if (!M.pfRect || !M.wRect) computeMetrics();
 
-  const dt = (now - last) / 1000;  // same on mobile & desktop
+  // Keep PC behavior: dt includes hidden time → big backlog on first frame back
+  const dt = (now - last) / 1000;
   last = now;
 
   // ---- TTL cleanup (pool-friendly) ----
@@ -295,7 +300,7 @@ export function createSpawner({
       const next = node.nextElementSibling;
       const dieAt = Number((node.dataset && node.dataset.dieAt) || 0);
       if (dieAt && now >= dieAt) {
-        releaseCoin(node); // return to pool (don’t just remove)
+        releaseCoin(node); // return to pool
       }
       node = next;
       checked++;
@@ -307,24 +312,34 @@ export function createSpawner({
   carry += rate * dt;
   const due = carry | 0;
   if (due > 0) {
-    queued = Math.min(backlogCap, queued + due); // clamp backlog like PC
+    queued = Math.min(backlogCap, queued + due); // same clamp as PC
     carry -= due;
   }
 
-  // ---- Spawn with the normal per-frame budget (identical to PC) ----
-  const n = Math.min(queued, perFrameBudget);
-  if (n > 0) {
+  // ---- Spawn: default per-frame budget...
+  let spawnTarget = Math.min(queued, perFrameBudget);
+
+  // ...but on mobile right after resume, flush EVERYTHING in one go
+  if (isTouch && flushOnResume) {
+    spawnTarget = queued;      // spit out all due coins at once
+    flushOnResume = false;     // one-shot
+  }
+
+  if (spawnTarget > 0) {
     const batch = [];
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < spawnTarget; i++) {
       const plan = planSpawn();
       if (plan) batch.push(plan);
     }
-    if (batch.length) commitBatch(batch);
-    queued -= batch.length;
+    if (batch.length) {
+      commitBatch(batch);
+      queued -= batch.length;
+    }
   }
 
   rafId = requestAnimationFrame(loop);
 }
+
 
 
     function start() {
@@ -356,10 +371,13 @@ export function createSpawner({
     }
 
     // Resume clean when tab is visible again
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && !rafId)
-            start();
+   document.addEventListener('visibilitychange', () => {
+     if (!document.hidden) {
+       if (isTouch) flushOnResume = true; // one-shot: flush all due coins next frame on mobile
+       if (!rafId) start();
+      }
     });
+
 
     return {
         start,
