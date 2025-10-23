@@ -44,7 +44,7 @@ function showLoader(text = 'Loading assets...') {
     display: 'grid',
     placeItems: 'center',
     zIndex: '2147483647',
-    opacity: '1',                     // already fully black
+    opacity: '1', 
     transition: 'opacity 0.4s ease',
   });
 
@@ -87,11 +87,6 @@ function showLoader(text = 'Loading assets...') {
   wrap.append(label, bar, pct);
   root.appendChild(wrap);
 
-  root.__mountedAt = performance.now();
-  root.__done = false;
-  root.__fill = fill;
-  root.__pct = pct;
-  root.__label = label;
   // add a stuck warning after 10s of loading screen (in case it's stuck)
   const stuckMsg = document.createElement('div');
   stuckMsg.textContent = 'If progress bar is stuck, try reloading the page.';
@@ -104,11 +99,15 @@ function showLoader(text = 'Loading assets...') {
   });
   wrap.appendChild(stuckMsg);
 
-  // Reveal after 10 seconds if loading not yet finished
   setTimeout(() => {
     if (!root.__done) stuckMsg.style.opacity = '1';
-  }, 10000);
+  }, 15000);
 
+  root.__mountedAt = performance.now();
+  root.__done = false;
+  root.__fill = fill;
+  root.__pct = pct;
+  root.__label = label;
   return root;
 }
 
