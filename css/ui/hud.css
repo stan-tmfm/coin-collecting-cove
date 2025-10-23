@@ -193,11 +193,13 @@ pointer-events: none;
 --bar-y-nudge: 9px;
 }
 
+/* Center by BAR (container width = bar width); clicks enabled on the counter */
 .coin-counter{
 position: relative;
-width: var(--coin-bar-w); 
+width: var(--coin-bar-w);                 /* centered by .hud-top flex */
 height: max(var(--coin-plus-size), var(--coin-h));
 pointer-events: auto;
+filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
 
 /* Coin+base image overlaps from the left; doesn’t affect centering */
@@ -212,7 +214,6 @@ width:  var(--coin-plus-size);
 object-fit: contain;
 border: none;
 pointer-events: none;
-filter: drop-shadow(0 4px 8px rgba(0,0,0,0.18));
 }
 
 /* The BAR: simple centered text, symmetric padding */
@@ -224,7 +225,6 @@ width: 100%;
 border: var(--coin-outline) solid #000;
 border-radius: 0;
 background: linear-gradient(180deg,#ffd34c,#ffb800);
-box-shadow: 0 6px 10px rgba(0,0,0,0.18);
 
 display:flex;              /* centers the number */
 align-items:center;
