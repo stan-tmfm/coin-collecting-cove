@@ -26,16 +26,8 @@ export function createSpawner({
 	
 	// Mobile burst after returning from background
 	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-	const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
-	let mobileWaveArmed = !IS_MOBILE; // desktop is always armed
-	const armMobileWaveOnce = () => { mobileWaveArmed = true; ensureWaveWA(); };
-	['pointerdown','touchstart','mousedown','keydown'].forEach(evt =>
-	  window.addEventListener(evt, armMobileWaveOnce, { once: true, capture: true })
-    );
-
 	const MOBILE_BACKLOG_CAP = 50;
 	let burstUntil = 0;
-	
 
 	const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
 	const BURST_TIME_BUDGET_MS   = 10.0; // per-frame time budget during burst
@@ -156,7 +148,9 @@ export function createSpawner({
     }
 	
 	  // ---- Wave spawn SFX ----
+const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
+let muteFirstWave = true;
 
 let waveLastAt = 0;
 // Desktop/mobile-aware HTMLAudio pool
@@ -207,7 +201,7 @@ function playWaveMobile() {
       return;
     } catch {}
   }
-  if (!mobileWaveArmed) { ensureWaveWA(); return; }
+  // WA not ready yet → use HTML fallback at MOBILE volume (fix for "first wave too loud")
   playWaveHtmlVolume(waveSoundMobileVolume);
   ensureWaveWA();
 }
@@ -225,12 +219,16 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function playWaveOncePerBurst() {
+  if (muteFirstWave) { muteFirstWave = false; return; }
+
   const now = performance.now();
-  if (now - waveLastAt < waveSoundMinIntervalMs) return; // rate-limit
+  if (now - waveLastAt < waveSoundMinIntervalMs) return; // existing rate-limit
   waveLastAt = now;
+
   if (IS_MOBILE) playWaveMobile();
-  else          playWaveHtmlVolume(waveSoundDesktopVolume);
+  else           playWaveHtmlVolume(waveSoundDesktopVolume);
 }
+
 
 
 
@@ -449,33 +447,28 @@ if (due > 0) {
   rafId = requestAnimationFrame(loop);
 }
 
+
+
+
     function start() {
-  if (rafId) return;
-  if (!validRefs()) {
-    console.warn('[Spawner] start() called but required nodes are missing.');
-    return;
+      if (rafId) return;
+      if (!validRefs()) {
+        console.warn('[Spawner] start() called but required nodes are missing.');
+        return;
+      }
+      computeMetrics();
+
+      // Delay initial wave/coin spawn to sync with audio
+      if (initialBurst > 0) {
+        setTimeout(() => {
+          // only fire if spawner is still running
+          if (rafId) spawnBurst(initialBurst);
+        }, 100);
+      }
+
+    last = performance.now();
+    rafId = requestAnimationFrame(loop);
   }
-  computeMetrics();
-
-  // Delay initial wave/coin spawn so audio is armed on mobile
-  if (initialBurst > 0) {
-    if (IS_MOBILE && !mobileWaveArmed) {
-      const onFirst = () => {
-        if (rafId) spawnBurst(initialBurst);
-        window.removeEventListener('pointerdown', onFirst, true);
-        window.removeEventListener('touchstart', onFirst, true);
-      };
-      window.addEventListener('pointerdown', onFirst, true);
-      window.addEventListener('touchstart', onFirst, true);
-    } else {
-      setTimeout(() => { if (rafId) spawnBurst(initialBurst); }, 100);
-    }
-  }
-
-  last = performance.now();
-  rafId = requestAnimationFrame(loop);
-}
-
 
 
     function stop() {
