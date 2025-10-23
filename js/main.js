@@ -209,6 +209,46 @@ async function preloadAssetsWithProgress({ images = [], audio = [], fonts = true
   await Promise.all(tasks.map(p => p.catch(() => null)));
 }
 
+// ===== Early mobile audio unlock (iOS-safe) =====
+(() => {
+  const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
+  if (!IS_MOBILE) return;
+
+  function unlock() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      // Create or reuse a shared context so other modules can pick it up
+      const ac = window.CCCAudioContext || new AC();
+      window.CCCAudioContext = ac;
+
+      if (ac.state === 'suspended') ac.resume();
+
+      // Play a silent tick to open the output path
+      const gain = ac.createGain();
+      gain.gain.value = 0.001; // effectively silent
+      gain.connect(ac.destination);
+
+      const buf = ac.createBuffer(1, 1, ac.sampleRate);
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      src.connect(gain);
+      src.start(0);
+    } catch {}
+    // Remove all listeners after first gesture
+    window.removeEventListener('pointerdown', unlock, true);
+    window.removeEventListener('touchstart', unlock, true);
+    window.removeEventListener('keydown', unlock, true);
+    window.removeEventListener('mousedown', unlock, true);
+  }
+
+  // Capture-phase so we definitely run inside the gesture
+  window.addEventListener('pointerdown', unlock, true);
+  window.addEventListener('touchstart', unlock, true);
+  window.addEventListener('keydown', unlock, true);
+  window.addEventListener('mousedown', unlock, true);
+})();
+
 /* ---------------------------
    GAME AREA CONTROL
 ----------------------------*/
