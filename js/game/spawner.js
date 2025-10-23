@@ -150,10 +150,9 @@ export function createSpawner({
 	  // ---- Wave spawn SFX ----
 const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 const waveURL = new URL(waveSoundSrc, document.baseURI).href;
-let muteFirstWave = true;
+let muteNextHtmlFallback = IS_MOBILE;
 
 let waveLastAt = 0;
-// Desktop/mobile-aware HTMLAudio pool
 let wavePool = null, waveIdx = 0;
 
 function playWaveHtmlVolume(vol) {
@@ -161,14 +160,28 @@ function playWaveHtmlVolume(vol) {
     wavePool = Array.from({ length: 4 }, () => {
       const a = new Audio(waveURL);
       a.preload = 'auto';
-      // do not set volume here; we’ll set it right before play so it’s correct for mobile too
       return a;
     });
   }
   const a = wavePool[waveIdx++ % wavePool.length];
-  a.volume = vol;              // <-- ensure correct platform volume, every time
+
+  // If this is the first *mobile* fallback, force it silent regardless of volume support
+  if (muteNextHtmlFallback) {
+    muteNextHtmlFallback = false;
+    a.muted = true;     // iOS respects .muted even if it ignores .volume
+    a.volume = 0;       // belt & suspenders
+    try { a.currentTime = 0; a.play(); } catch {}
+    // Unmute shortly after so subsequent plays use the intended volume
+    setTimeout(() => { a.muted = false; a.volume = vol; }, 220);
+    return;
+  }
+
+  // Normal path
+  a.muted = false;
+  a.volume = vol;
   try { a.currentTime = 0; a.play(); } catch {}
 }
+
 
 // Mobile: WebAudio (with HTML fallback if WA isn’t ready)
 let ac = null, gain = null, waveBuf = null, waveLoading = false;
@@ -219,16 +232,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function playWaveOncePerBurst() {
-  if (muteFirstWave) { muteFirstWave = false; return; }
-
   const now = performance.now();
-  if (now - waveLastAt < waveSoundMinIntervalMs) return; // existing rate-limit
+  if (now - waveLastAt < waveSoundMinIntervalMs) return; // rate-limit
   waveLastAt = now;
-
   if (IS_MOBILE) playWaveMobile();
-  else           playWaveHtmlVolume(waveSoundDesktopVolume);
+  else          playWaveHtmlVolume(waveSoundDesktopVolume);
 }
-
 
 
 
