@@ -199,6 +199,7 @@ position: relative;
 width: var(--coin-bar-w);                 /* centered by .hud-top flex */
 height: max(var(--coin-plus-size), var(--coin-h));
 pointer-events: auto;
+filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
 
 /* Coin+base image overlaps from the left; doesn’t affect centering */
@@ -213,8 +214,6 @@ width:  var(--coin-plus-size);
 object-fit: contain;
 border: none;
 pointer-events: none;
-filter: drop-shadow(0 8px 18px rgba(0,0,0,.35))
-          drop-shadow(0 2px 6px rgba(0,0,0,.22));
 }
 
 /* The BAR: simple centered text, symmetric padding */
@@ -232,13 +231,11 @@ align-items:center;
 justify-content:center;
 padding: 0 16px;
 box-sizing: border-box;
-box-shadow: 0 6px 10px rgba(0,0,0,.18);
 overflow: hidden;
 
 /* vertical alignment fix */
 transform: translateY(var(--bar-y-nudge));
 }
-
 
 /* Optional inner gloss */
 .coin-bar::after{
@@ -265,6 +262,19 @@ text-shadow: 0 1px 0 rgba(0,0,0,.35);
 line-height: 1;
 font-variant-numeric: tabular-nums lining-nums;
 font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* --- Mobile fix: remove boxy drop-shadow on coin counter --- */
+@media (hover: none) and (pointer: coarse) {
+  .coin-counter {
+    filter: none !important; /* disable shadow for mobile only */
+  }
+
+  /* Add a circular alpha-safe shadow only for the coin part */
+  .coin-plus {
+    filter: drop-shadow(0 8px 18px rgba(0,0,0,.35))
+            drop-shadow(0 2px 6px rgba(0,0,0,.22));
+  }
 }
 
 /* ===== Mobile tweaks ===== */
