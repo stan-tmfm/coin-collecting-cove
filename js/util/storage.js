@@ -3,7 +3,7 @@
 import { BigNum } from '../util/bigNum.js';
 import { formatNumber } from '../util/numFormat.js';
 
-const PREFIX = 'ccc:';  // short for Coin Collecting Cove
+const PREFIX = 'ccc:';
 
 const KEYS = {
   HAS_OPENED_SAVE_SLOT: `${PREFIX}hasOpenedSaveSlot`,
