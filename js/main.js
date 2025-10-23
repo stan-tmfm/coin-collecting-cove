@@ -92,6 +92,23 @@ function showLoader(text = 'Loading assets...') {
   root.__fill = fill;
   root.__pct = pct;
   root.__label = label;
+  // add a stuck warning after 10s of loading screen (in case it's stuck)
+  const stuckMsg = document.createElement('div');
+  stuckMsg.textContent = 'If progress bar is stuck, try reloading the page.';
+  Object.assign(stuckMsg.style, {
+    marginTop: '16px',
+    fontSize: '14px',
+    opacity: '0',
+    transition: 'opacity 0.5s ease',
+    color: 'rgba(255,255,255,0.65)',
+  });
+  wrap.appendChild(stuckMsg);
+
+  // Reveal after 10 seconds if loading not yet finished
+  setTimeout(() => {
+    if (!root.__done) stuckMsg.style.opacity = '1';
+  }, 10000);
+
   return root;
 }
 
