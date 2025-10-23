@@ -135,24 +135,23 @@ function playCoinMobileFallback(){
 
 
     try {
-  const src = ac.createBufferSource();
-  src.buffer = buffer;
-  try { src.detune = 0; } catch {}
+	const src = ac.createBufferSource();
+	src.buffer = buffer;
+	try { src.detune = 0; } catch {}
 
-  // Re-assert the correct volume on every play
-  masterGain.gain.setValueAtTime(MOBILE_VOLUME, ac.currentTime);
+	// Re-assert the correct volume on every play
+	masterGain.gain.setValueAtTime(MOBILE_VOLUME, ac.currentTime);
 
-  src.connect(masterGain);
-  const t = ac.currentTime + Math.random()*0.006; // avoid phasing when many play
-  src.start(t);
-  return true;
-} catch (e){
-  console.warn('[coinPickup] playCoinWebAudio error:', e);
-  if (IS_MOBILE) playCoinMobileFallback();
-  return false;
-}
-
+	src.connect(masterGain);
+	const t = ac.currentTime + Math.random()*0.006; // avoid phasing when many play
+	src.start(t);
+	return true;
+	} catch (e){
+	console.warn('[coinPickup] playCoinWebAudio error:', e);
+	if (IS_MOBILE) playCoinMobileFallback();
+	return false;
   }
+}
 
   function playSound(){
     if (IS_MOBILE) return playCoinWebAudio();
