@@ -125,9 +125,9 @@ export function initCoinPickup({
     if (!webAudioReady || !ac || !buffer || !masterGain){
       queuedPlays++;
       if (!webAudioLoading) initWebAudioOnce();
-      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays > 1){
-        playCoinMobileFallback();
-      }
+      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays >= 1){
+		playCoinMobileFallback();
+	  }
       return true;
     }
 
