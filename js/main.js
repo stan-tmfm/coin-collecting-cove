@@ -129,29 +129,35 @@ function finishAndHideLoader(loaderEl) {
 /* ---------------------------
    PRELOADERS (images, audio, fonts)
 ----------------------------*/
+async function warmImage(url) {
+  const img = new Image();
+  img.src = url;
+
+  try {
+    if (img.decode) await img.decode();
+  } catch (_) {
+  }
+
+  await new Promise((resolve) => {
+    const ghost = document.createElement('img');
+    ghost.src = url;
+    ghost.alt = '';
+    ghost.style.cssText =
+      'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+    document.body.appendChild(ghost);
+    requestAnimationFrame(() => { ghost.remove(); resolve(); });
+  });
+}
+
 function preloadImages(sources, onEach) {
   return sources.map(src => new Promise(resolve => {
     const img = new Image();
-    const finish = () => {
-      const done = () => { try { onEach?.(src); } catch {} resolve(src); };
-      // Force a raster decode before we leave the loader
-      if (typeof img.decode === 'function') {
-        img.decode().catch(() => null).finally(done);
-      } else {
-        // Older Safari fallback: briefly attach offscreen to force decode
-        const ghost = document.createElement('img');
-        ghost.src = img.src;
-        ghost.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
-        document.body.appendChild(ghost);
-        requestAnimationFrame(() => { ghost.remove(); done(); });
-      }
-    };
-    img.onload = finish;
-    img.onerror = finish;
+    const done = () => { try { onEach?.(src); } catch {} resolve(src); };
+    img.onload = done;
+    img.onerror = done;
     img.src = src;
   }));
 }
-
 
 function preloadAudio(sources, onEach) {
   return sources.map(url => new Promise(resolve => {
@@ -262,11 +268,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     progress = f;
     setLoaderProgress(loader, f);
   });
-  // after: await preloadAssetsWithProgress(ASSET_MANIFEST, ...)
-  const hero = new Image();
-  hero.src = 'img/coin/coinPlusBase.png';
-  if (typeof hero.decode === 'function') { try { await hero.decode(); } catch {} }
-
 
   // Remove the booting CSS (which hides menu/game) but keep loader on top.
   await twoFrames();                              // give CSS/DOM a moment
@@ -278,6 +279,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Show "Finished…" for 0.5s, then fade out the loader
   finishAndHideLoader(loader);
 
+  await warmImage('img/coin/coinPlusBase.png');
+  
   ensureStorageDefaults();
 
   const titleEl = document.getElementById('panel-title');
