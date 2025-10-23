@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       'img/sc_upg_icons/faster_coins_id_1.png',
     ],
     audio: [
-      'audio/coin_pickup.mp3',
+      'sounds/coin_pickup.mp3',
     ],
     fonts: true,
   };
