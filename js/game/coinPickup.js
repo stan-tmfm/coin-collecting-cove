@@ -1,11 +1,7 @@
-// js/game/coinPickup.js — fixed mobile pickup + safe volume handling
-// Works on touch + mouse. Mobile uses WebAudio with a master GainNode (respects MOBILE_VOLUME)
-// and falls back to <audio> if decode/autoplay fails. Desktop uses a small HTMLAudio pool.
-// Picking coins works via: (a) brush sweep using elementsFromPoint, (b) direct coin pointerdown/mouseenter.
-// No reliance on CSS animations for pickup on mobile; desktop animation class is optional.
+// js/game/coinPickup.js
 
 import { BigNum } from '../util/bigNum.js';
-import { formatCoin } from '../util/numFormat.js';
+import { formatNumber } from '../util/numFormat.js';
 import { unlockShop } from '../ui/hudButtons.js';
 
 const SHOP_UNLOCK_KEY   = 'ccc:unlock:shop';          // matches HUD
@@ -41,7 +37,15 @@ export function initCoinPickup({
 
   // ----- HUD / storage -----
   let coins = BigNum.fromStorage(localStorage.getItem(storageKey)) || BigNum.zero();
-  const updateHud = () => { amt.textContent = formatCoin(coins); };
+  const updateHud = () => {
+    const formatted = formatNumber(coins);
+    if (formatted.includes('<span')) {
+      amt.innerHTML = formatted;
+    } else {
+      amt.textContent = formatted;
+    }
+  };
+
   const save      = () => { localStorage.setItem(storageKey, coins.toStorage()); };
   updateHud();
     // If progress already met the threshold but the flag isn't set yet, unlock now
