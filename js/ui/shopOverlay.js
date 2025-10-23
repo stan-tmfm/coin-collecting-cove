@@ -14,7 +14,7 @@ const BASE_ICON_SRC = 'img/coin/coinBase.png';
 const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
-// Dynamic count of upgrades (editable later via setUpgradeCount)
+// Currently setting manual upgrades but will change it to dynamic later
 let UPGRADE_COUNT = 5;
 
 // Upgrades registry (minimal for now)
@@ -427,6 +427,7 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
+
 
 
 
