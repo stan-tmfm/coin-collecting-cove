@@ -18,8 +18,8 @@ export function createSpawner({
     initialBurst = 1, // the amount of coins that spawn on room enter
 	coinTtlMs = 60000, // auto-despawn each coin after 60s
 	waveSoundSrc = 'sounds/wave_spawn_sound.mp3',
-    waveSoundDesktopVolume = 0.16,
-    waveSoundMobileVolume  = 0.08,
+    waveSoundDesktopVolume = 0.18,
+    waveSoundMobileVolume  = 0.1,
     waveSoundMinIntervalMs = 160,
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
