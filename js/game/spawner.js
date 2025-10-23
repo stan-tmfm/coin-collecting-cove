@@ -20,8 +20,16 @@ export function createSpawner({
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
 	
-	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-	let flushOnResume = false;
+	// Mobile "burst" after returning from background
+const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+let burstUntil = 0;
+
+const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
+const BURST_TIME_BUDGET_MS   = 10.0; // per-frame time budget during burst
+const BURST_HARD_CAP         = 400;  // max coins to spawn in a single burst frame
+const ONE_SHOT_THRESHOLD     = 180;  // if backlog <= this, flush in ~1 frame
+const NORMAL_TIME_BUDGET_MS  = 2.0;  // small safety cap for normal frames
+
 
     // ---------- resolve and keep DOM references ----------
     const refs = {
@@ -288,8 +296,7 @@ export function createSpawner({
    function loop(now) {
   if (!M.pfRect || !M.wRect) computeMetrics();
 
-  // Keep PC behavior: dt includes hidden time → big backlog on first frame back
-  const dt = (now - last) / 1000;
+  const dt = (now - last) / 1000;  // keep backlog intact on resume
   last = now;
 
   // ---- TTL cleanup (pool-friendly) ----
@@ -300,7 +307,7 @@ export function createSpawner({
       const next = node.nextElementSibling;
       const dieAt = Number((node.dataset && node.dataset.dieAt) || 0);
       if (dieAt && now >= dieAt) {
-        releaseCoin(node); // return to pool
+        releaseCoin(node);
       }
       node = next;
       checked++;
@@ -312,22 +319,33 @@ export function createSpawner({
   carry += rate * dt;
   const due = carry | 0;
   if (due > 0) {
-    queued = Math.min(backlogCap, queued + due); // same clamp as PC
+    queued = Math.min(backlogCap, queued + due);
     carry -= due;
   }
 
-  // ---- Spawn: default per-frame budget...
+  // ---- Spawn targets & time budgets ----
   let spawnTarget = Math.min(queued, perFrameBudget);
+  let timeBudgetMs = NORMAL_TIME_BUDGET_MS;
 
-  // ...but on mobile right after resume, flush EVERYTHING in one go
-  if (isTouch && flushOnResume) {
-    spawnTarget = queued;      // spit out all due coins at once
-    flushOnResume = false;     // one-shot
+  // Mobile burst window: make it feel "all at once" but cap work per frame
+  if (isTouch && now < burstUntil && queued > 0) {
+    // If backlog is modest, allow a one-shot flush (within a higher time budget)
+    if (queued <= ONE_SHOT_THRESHOLD) {
+      spawnTarget  = queued;
+      timeBudgetMs = BURST_TIME_BUDGET_MS;
+    } else {
+      // Large backlog: aggressive but capped
+      spawnTarget  = Math.min(queued, BURST_HARD_CAP);
+      timeBudgetMs = BURST_TIME_BUDGET_MS;
+    }
   }
 
+  // ---- Build batch under time budget ----
   if (spawnTarget > 0) {
+    const t0 = performance.now();
     const batch = [];
     for (let i = 0; i < spawnTarget; i++) {
+      if (performance.now() - t0 > timeBudgetMs) break;
       const plan = planSpawn();
       if (plan) batch.push(plan);
     }
@@ -339,6 +357,7 @@ export function createSpawner({
 
   rafId = requestAnimationFrame(loop);
 }
+
 
 
 
@@ -372,11 +391,12 @@ export function createSpawner({
 
     // Resume clean when tab is visible again
    document.addEventListener('visibilitychange', () => {
-     if (!document.hidden) {
-       if (isTouch) flushOnResume = true; // one-shot: flush all due coins next frame on mobile
-       if (!rafId) start();
-      }
-    });
+  if (!document.hidden) {
+    if (isTouch) burstUntil = performance.now() + BURST_WINDOW_MS;
+    if (!rafId) start();
+  }
+});
+
 
 
     return {
