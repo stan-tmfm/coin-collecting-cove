@@ -81,14 +81,45 @@ export function initCoinPickup({
 
   // mobile fallback
   let mobileFallback = null;
-  function playCoinMobileFallback(){
-    if (!mobileFallback){
-      mobileFallback = new Audio(resolvedSrc);
-      mobileFallback.preload = 'auto';
-      mobileFallback.volume = MOBILE_VOLUME;
+  // Single mobile fallback element + WA pipe so volume is always correct
+let pickupFallbackEl = null;      // <audio> element for the coin sfx
+let pickupFallbackNode = null;    // MediaElementSourceNode -> masterGain
+
+function playCoinMobileFallback() {
+  try {
+    // Ensure WA and master gain exist (and resume if needed)
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    try { if (ac.state === 'suspended') ac.resume(); } catch {}
+
+    // Create/connect masterGain if missing
+    if (!masterGain) {
+      masterGain = ac.createGain();
+      masterGain.connect(ac.destination);
     }
-    try { mobileFallback.currentTime = 0; mobileFallback.play(); } catch {}
-  }
+    // IMPORTANT: set gain every time to expected volume
+    masterGain.gain.value = MOBILE_VOLUME;
+
+    // Reuse one <audio> element and feed it through WA gain
+    if (!pickupFallbackEl) {
+      pickupFallbackEl = new Audio(resolvedSrc);
+      pickupFallbackEl.preload = 'auto';
+      pickupFallbackEl.playsInline = true;
+      pickupFallbackEl.crossOrigin = 'anonymous';
+    }
+    if (!pickupFallbackNode) {
+      // Route the element into WebAudio so our gain controls loudness
+      pickupFallbackNode = ac.createMediaElementSource(pickupFallbackEl);
+      pickupFallbackNode.connect(masterGain);
+    }
+
+    // Keep element at unity; GainNode enforces the real volume
+    pickupFallbackEl.muted = false;
+    pickupFallbackEl.volume = 1.0;
+    pickupFallbackEl.currentTime = 0;
+    pickupFallbackEl.play().catch(() => {});
+  } catch {}
+}
+
 
   async function initWebAudioOnce(){
     if (webAudioReady || webAudioLoading) return;
@@ -135,6 +166,9 @@ export function initCoinPickup({
       try { src.detune = 0; } catch {}
       src.connect(masterGain);
       const t = ac.currentTime + Math.random()*0.006; // avoid phasing when many play
+	  masterGain.gain.value = IS_MOBILE ? MOBILE_VOLUME : DESKTOP_VOLUME;
+	  src.connect(masterGain);
+	  src.start(ac.currentTime + startJitter);
       src.start(t);
       return true;
     } catch (e){
@@ -170,6 +204,27 @@ function primeMobileFallbackOnce(){
   } catch {}
 }
 
+const primePickupAudioOnce = () => {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (!masterGain) {
+      masterGain = ac.createGain();
+      masterGain.connect(ac.destination);
+    }
+    masterGain.gain.value = IS_MOBILE ? MOBILE_VOLUME : DESKTOP_VOLUME;
+
+    // 1-sample silent tick to open the output path
+    const buf = ac.createBuffer(1, 1, ac.sampleRate);
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    src.connect(masterGain);
+    src.start(0);
+  } catch {}
+  window.removeEventListener('pointerdown', primePickupAudioOnce, true);
+  window.removeEventListener('touchstart', primePickupAudioOnce, true);
+};
+window.addEventListener('pointerdown', primePickupAudioOnce, true);
+window.addEventListener('touchstart', primePickupAudioOnce, true);
 
   // Warm WebAudio eager on any gesture (window + playfield), capture=true so overlays don’t block
   const warm = () => { if (IS_MOBILE) initWebAudioOnce(); };
