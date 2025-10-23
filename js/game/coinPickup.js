@@ -122,15 +122,14 @@ export function initCoinPickup({
   function playCoinWebAudio(){
     if (ac && ac.state === 'suspended'){ try { ac.resume(); } catch {} }
 
-   // If WA not ready OR context not running, always play a mobile fallback now.
-// (Still spin up/repair WA in the background.)
-if (!webAudioReady || !ac || !buffer || !masterGain || (ac && ac.state !== 'running')) {
-  queuedPlays++;
-  if (!webAudioLoading) initWebAudioOnce();
-  if (IS_MOBILE) playCoinMobileFallback();
-  return true;
-}
-
+    if (!webAudioReady || !ac || !buffer || !masterGain){
+      queuedPlays++;
+      if (!webAudioLoading) initWebAudioOnce();
+      if (IS_MOBILE && webAudioAttempted && !webAudioLoading && buffer == null && queuedPlays >= 1){
+		playCoinMobileFallback();
+	  }
+      return true;
+    }
 
     try {
       const src = ac.createBufferSource();
