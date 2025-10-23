@@ -239,18 +239,6 @@ function playWaveHtmlVolume(vol) {
   }
   const a = wavePool[waveIdx++ % wavePool.length];
 
-  // If this is the first *mobile* fallback, force it silent regardless of volume support
-  if (muteNextHtmlFallback) {
-    muteNextHtmlFallback = false;
-    a.muted = true;     // iOS respects .muted even if it ignores .volume
-    a.volume = 0;       // belt & suspenders
-    try { a.currentTime = 0; a.play(); } catch {}
-    // Unmute shortly after so subsequent plays use the intended volume
-    setTimeout(() => { a.muted = false; a.volume = vol; }, 220);
-    return;
-  }
-
-  // Normal path
   a.muted = false;
   a.volume = vol;
   try { a.currentTime = 0; a.play(); } catch {}
@@ -258,7 +246,6 @@ function playWaveHtmlVolume(vol) {
 
 
 // Mobile: WebAudio (with HTML fallback if WA isn’t ready)
-let gain = null, waveBuf = null, waveLoading = false;
 async function ensureWaveWA() {
   if (waveBuf || waveLoading) return;
   waveLoading = true;
