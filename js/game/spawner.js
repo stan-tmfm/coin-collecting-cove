@@ -20,15 +20,16 @@ export function createSpawner({
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
 	
-	// Mobile "burst" after returning from background
-const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
-let burstUntil = 0;
+	// Mobile burst after returning from background
+	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+	const MOBILE_BACKLOG_CAP = 100;
+	let burstUntil = 0;
 
-const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
-const BURST_TIME_BUDGET_MS   = 10.0; // per-frame time budget during burst
-const BURST_HARD_CAP         = 400;  // max coins to spawn in a single burst frame
-const ONE_SHOT_THRESHOLD     = 180;  // if backlog <= this, flush in ~1 frame
-const NORMAL_TIME_BUDGET_MS  = 2.0;  // small safety cap for normal frames
+	const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
+	const BURST_TIME_BUDGET_MS   = 10.0; // per-frame time budget during burst
+	const BURST_HARD_CAP         = 400;  // max coins to spawn in a single burst frame
+	const ONE_SHOT_THRESHOLD     = 180;  // if backlog <= this, flush in ~1 frame
+	const NORMAL_TIME_BUDGET_MS  = 2.0;  // small safety cap for normal frames
 
 
     // ---------- resolve and keep DOM references ----------
@@ -315,13 +316,19 @@ const NORMAL_TIME_BUDGET_MS  = 2.0;  // small safety cap for normal frames
     ttlCursor = node || null;
   }
 
-  // ---- Backlog accumulation ----
+  // ---- Backlog accumulation (mobile cap = 100) ----
   carry += rate * dt;
   const due = carry | 0;
-  if (due > 0) {
-    queued = Math.min(backlogCap, queued + due);
-    carry -= due;
-  }
+ const cap = isTouch ? MOBILE_BACKLOG_CAP : backlogCap;
+
+  // keep any existing queued clamped to the active cap
+  if (queued > cap) queued = cap;
+
+if (due > 0) {
+  queued = Math.min(cap, queued + due);
+  carry -= due;
+}
+
 
   // ---- Spawn targets & time budgets ----
   let spawnTarget = Math.min(queued, perFrameBudget);
@@ -391,11 +398,11 @@ const NORMAL_TIME_BUDGET_MS  = 2.0;  // small safety cap for normal frames
 
     // Resume clean when tab is visible again
    document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) {
-    if (isTouch) burstUntil = performance.now() + BURST_WINDOW_MS;
-    if (!rafId) start();
-  }
-});
+    if (!document.hidden) {
+      if (isTouch) burstUntil = performance.now() + BURST_WINDOW_MS;
+      if (!rafId) start();
+    }
+  });
 
 
 
