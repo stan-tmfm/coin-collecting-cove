@@ -26,8 +26,15 @@ export function createSpawner({
 	
 	// Mobile burst after returning from background
 	const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+	let mobileWaveArmed = !IS_MOBILE; // desktop is always armed
+	const armMobileWaveOnce = () => { mobileWaveArmed = true; ensureWaveWA(); };
+	['pointerdown','touchstart','mousedown','keydown'].forEach(evt =>
+	  window.addEventListener(evt, armMobileWaveOnce, { once: true, capture: true })
+    );
+
 	const MOBILE_BACKLOG_CAP = 50;
 	let burstUntil = 0;
+	
 
 	const BURST_WINDOW_MS        = 120;  // how long we allow boosted spawning
 	const BURST_TIME_BUDGET_MS   = 10.0; // per-frame time budget during burst
@@ -200,7 +207,7 @@ function playWaveMobile() {
       return;
     } catch {}
   }
-  // WA not ready yet → use HTML fallback at MOBILE volume (fix for "first wave too loud")
+  if (!mobileWaveArmed) { ensureWaveWA(); return; }
   playWaveHtmlVolume(waveSoundMobileVolume);
   ensureWaveWA();
 }
