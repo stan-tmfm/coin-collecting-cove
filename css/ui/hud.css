@@ -264,19 +264,6 @@ font-variant-numeric: tabular-nums lining-nums;
 font-feature-settings: "tnum" 1, "lnum" 1;
 }
 
-/* --- Mobile fix: remove boxy drop-shadow on coin counter --- */
-@media (hover: none) and (pointer: coarse) {
-  .coin-counter {
-    filter: none !important; /* disable shadow for mobile only */
-  }
-
-  /* Add a circular alpha-safe shadow only for the coin part */
-  .coin-plus {
-    filter: drop-shadow(0 8px 18px rgba(0,0,0,.35))
-            drop-shadow(0 2px 6px rgba(0,0,0,.22));
-  }
-}
-
 /* ===== Mobile tweaks ===== */
 
 /* Phone PORTRAIT:
