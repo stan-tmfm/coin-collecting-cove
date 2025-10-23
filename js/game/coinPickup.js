@@ -58,7 +58,7 @@ export function initCoinPickup({
   // ----- Helpers -----
   const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   const DESKTOP_VOLUME = 0.3;
-  const MOBILE_VOLUME  = 0.1;
+  const MOBILE_VOLUME  = 0.12;
   const resolvedSrc = new URL(soundSrc, document.baseURI).href;
 
   // coins test
