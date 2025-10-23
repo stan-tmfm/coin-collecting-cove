@@ -366,12 +366,11 @@ export function createSpawner({
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && !rafId) start();
     });
-
-
-
+	
     return {
         start,
         stop,
         setRate
     };
 }
+
