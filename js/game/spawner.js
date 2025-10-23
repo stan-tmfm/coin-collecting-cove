@@ -11,12 +11,16 @@ export function createSpawner({
     animationDurationMs = 1500,
     surgeLifetimeMs = 1400,
     surgeWidthVw = 22, // width of wave in vw of playfield
-    coinsPerSecond = 20,
+    coinsPerSecond = 1,
     perFrameBudget = 24, // max spawns committed per RAF
     backlogCap = 600, // queue backpressure
     maxActiveCoins = 1250, // coin capacity before coins are recycled
     initialBurst = 1, // the amount of coins that spawn on room enter
 	coinTtlMs = 60000, // auto-despawn each coin after 60s
+	waveSoundSrc = 'sounds/wave_spawn_sound.mp3',
+    waveSoundDesktopVolume = 0.16,
+    waveSoundMobileVolume  = 0.08,
+    waveSoundMinIntervalMs = 160,
     enableDropShadow = false, // if I ever want to enable drop shadow on the spawned coins
 } = {}) {
 	
@@ -142,6 +146,78 @@ export function createSpawner({
         if (surgePool.length < SURGE_POOL_MAX)
             surgePool.push(el);
     }
+	
+	  // ---- Wave spawn SFX ----
+  const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
+  const waveURL = new URL(waveSoundSrc, document.baseURI).href;
+
+  let waveLastAt = 0;
+  // Desktop: small HTMLAudio pool
+  let wavePool = null, waveIdx = 0;
+  function playWaveHtml() {
+    if (!wavePool) {
+      wavePool = Array.from({ length: 4 }, () => {
+        const a = new Audio(waveURL);
+        a.preload = 'auto';
+        a.volume = waveSoundDesktopVolume;
+        return a;
+      });
+    }
+    const a = wavePool[waveIdx++ % wavePool.length];
+    try { a.currentTime = 0; a.play(); } catch {}
+  }
+
+  // Mobile: WebAudio (with HTML fallback if WA isn’t ready)
+  let ac = null, gain = null, waveBuf = null, waveLoading = false;
+  async function ensureWaveWA() {
+    if (waveBuf || waveLoading) return;
+    waveLoading = true;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      gain = gain || ac.createGain();
+      gain.gain.value = waveSoundMobileVolume;
+      gain.connect(ac.destination);
+
+      const res = await fetch(waveURL, { cache: 'force-cache' });
+      const arr = await res.arrayBuffer();
+      waveBuf = await new Promise((ok, err) =>
+        ac.decodeAudioData ? ac.decodeAudioData(arr, ok, err) : ok(null)
+      );
+      if (ac.state === 'suspended') { try { await ac.resume(); } catch {} }
+    } catch (_) {} finally { waveLoading = false; }
+  }
+  function playWaveMobile() {
+    try { if (ac && ac.state === 'suspended') ac.resume(); } catch {}
+    if (waveBuf && ac && gain) {
+      try {
+        const src = ac.createBufferSource();
+        src.buffer = waveBuf;
+        src.connect(gain);
+        src.start();
+        return;
+      } catch {}
+    }
+    playWaveHtml();
+    ensureWaveWA();
+  }
+
+  const warmWave = () => { if (IS_MOBILE) ensureWaveWA(); };
+  ['pointerdown','touchstart'].forEach(evt =>
+    window.addEventListener(evt, warmWave, { once: true, passive: true, capture: true })
+  );
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && IS_MOBILE && ac && ac.state === 'suspended') {
+      try { ac.resume(); } catch {}
+    }
+  });
+
+  function playWaveOncePerBurst() {
+    const now = performance.now();
+    if (now - waveLastAt < waveSoundMinIntervalMs) return; // rate-limit
+    waveLastAt = now;
+    if (IS_MOBILE) playWaveMobile(); else playWaveHtml();
+  }
+
 
     // ---------- spawn planning ----------
     function planSpawn() {
@@ -245,29 +321,22 @@ export function createSpawner({
 
         // Kick animations after append (pool-safe, restart-safe)
         requestAnimationFrame(() => {
-            for (const surge of newSurges) {
-                surge.classList.remove('run');
-                // force reflow to restart CSS animation even if element comes from pool
-                void surge.offsetWidth;
-                surge.classList.add('run');
-                // reclaim when wave animation ends
-                const onEnd = (e) => {
-                    if (e.target === surge)
-                        releaseSurge(surge);
-                };
-                surge.addEventListener('animationend', onEnd, {
-                    once: true
-                });
-            }
-            for (const el of newCoins) {
-                const jitter = Number(el.dataset.jitter) || 0;
-                el.style.animation = 'none';
-                void el.offsetWidth; // reset
-                el.style.animation = `${animationName} ${animationDurationMs}ms ease-out ${jitter}ms 1 both`;
-                // Optional auto-recycle after landing:
-                // el.addEventListener('animationend', () => releaseCoin(el), { once: true });
-            }
-        });
+  if (newSurges.length) playWaveOncePerBurst();  // <-- add this line
+
+  for (const surge of newSurges) {
+    surge.classList.remove('run');
+    void surge.offsetWidth;
+    surge.classList.add('run');
+    const onEnd = (e) => { if (e.target === surge) releaseSurge(surge); };
+    surge.addEventListener('animationend', onEnd, { once: true });
+  }
+  for (const el of newCoins) {
+    const jitter = Number(el.dataset.jitter) || 0;
+    el.style.animation = 'none';
+    void el.offsetWidth;
+    el.style.animation = `${animationName} ${animationDurationMs}ms ease-out ${jitter}ms 1 both`;
+  }
+});
     }
 
     function spawnBurst(n = 1) {
@@ -369,21 +438,25 @@ if (due > 0) {
 
 
     function start() {
-        if (rafId)
-            return;
-        if (!validRefs()) {
-            console.warn('[Spawner] start() called but required nodes are missing.');
-            return;
-        }
-        computeMetrics();
+      if (rafId) return;
+      if (!validRefs()) {
+        console.warn('[Spawner] start() called but required nodes are missing.');
+        return;
+      }
+      computeMetrics();
 
-        // Instant wave/coin spawn before the first RAF tick:
-        if (initialBurst > 0)
-            spawnBurst(initialBurst);
+      // Delay initial wave/coin spawn to sync with audio
+      if (initialBurst > 0) {
+        setTimeout(() => {
+          // only fire if spawner is still running
+          if (rafId) spawnBurst(initialBurst);
+        }, 100);
+      }
 
-        last = performance.now();
-        rafId = requestAnimationFrame(loop);
-    }
+    last = performance.now();
+    rafId = requestAnimationFrame(loop);
+  }
+
 
     function stop() {
         if (!rafId)
@@ -412,4 +485,3 @@ if (due > 0) {
         setRate
     };
 }
-
