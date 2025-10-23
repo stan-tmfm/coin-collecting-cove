@@ -1,5 +1,4 @@
 // js/ui/shopOverlay.js
-// Bottom-sheet Shop overlay + dynamic icon grid (no purchase logic yet).
 
 let shopOverlayEl = null;
 let shopSheetEl = null;
@@ -428,5 +427,6 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
+
 
 
