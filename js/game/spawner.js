@@ -515,11 +515,10 @@ if (due > 0) {
     }
   });
 
-
-
     return {
         start,
         stop,
         setRate
     };
 }
+
