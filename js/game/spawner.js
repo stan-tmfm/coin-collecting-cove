@@ -492,7 +492,7 @@ if (due > 0) {
         setTimeout(() => {
           // only fire if spawner is still running
           if (rafId) spawnBurst(initialBurst);
-        }, 100);
+        }, 50);
       }
 
     last = performance.now();
@@ -527,4 +527,3 @@ if (due > 0) {
         setRate
     };
 }
-
