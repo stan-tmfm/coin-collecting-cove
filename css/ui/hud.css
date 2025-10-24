@@ -83,7 +83,7 @@ text-shadow: 0 1px 0 rgba(0,0,0,0.35); /* small helper shadow for browsers witho
 
 
 /* Portrait / phone: 2x2 layout, keep gaps, adjust sizes */
-@media (max-aspect-ratio: 1/1) {
+@media (hover: none) and (pointer: coarse) and (max-aspect-ratio: 1/1) {
 .hud-bottom {
 grid-template-columns: repeat(2, 1fr);
 grid-auto-rows: minmax(72px, 1fr);
@@ -123,6 +123,12 @@ padding-bottom: calc(env(safe-area-inset-bottom) + 6px);
 font-size: clamp(15px, 4.8vw, 24px);
 line-height: 1.1;
 }
+}
+
+.hud-bottom { container-type: inline-size; }
+.hud-bottom .game-btn { white-space: nowrap; }
+.hud-bottom .game-btn[data-btn="stats"] {
+  font-size: clamp(18px, 2.5cqw, 32px);
 }
 
 /* ===== Layout helpers driven by JS ===== */
@@ -327,4 +333,43 @@ padding-right: max(env(safe-area-inset-right), var(--pp-reserve));
      -0.5px 0.5px 0 #000, -0.5px -0.5px 0 #000,
       0 1px 0 rgba(0,0,0,0.28) !important;
   }
+}
+
+/* Endgame nonsense */
+.infinity-symbol {
+  position: relative;
+  top: -0.11em;
+  color: #fff200;                     /* vivid yellow-gold */
+  font-weight: 900;
+  text-shadow:
+    0 0 5px  rgba(255, 240, 0, 1.0),   /* pure yellow core glow */
+    0 0 12px rgba(255, 255, 120, 0.9), /* warm mid halo */
+    0 0 25px rgba(255, 255, 180, 0.85),/* bright outer aura */
+    0 0 45px rgba(255, 255, 220, 0.8); /* faint white halo */
+}
+
+
+/* brighter, deeper pulse */
+@keyframes infinityGlow {
+  0% {
+    text-shadow:
+      0 0 5px rgba(255, 220, 80, 0.7),
+      0 0 15px rgba(255, 240, 160, 0.6),
+      0 0 25px rgba(255, 255, 200, 0.5);
+    transform: scale(1);
+  }
+  100% {
+    text-shadow:
+      0 0 10px rgba(255, 255, 150, 1),
+      0 0 25px rgba(255, 255, 200, 1),
+      0 0 60px rgba(255, 255, 230, 0.9),
+      0 0 100px rgba(255, 255, 255, 0.8);
+    transform: scale(1.15) rotate(2deg);
+  }
+}
+
+/* subtle horizontal shimmer for extra dazzle */
+@keyframes sparkleShift {
+  0%, 100% { filter: hue-rotate(0deg) brightness(1); }
+  50% { filter: hue-rotate(15deg) brightness(1.3); }
 }
