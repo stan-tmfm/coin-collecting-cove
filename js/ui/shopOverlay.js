@@ -5,6 +5,15 @@ let shopSheetEl = null;
 let shopOpen = false;
 let drag = null; // {startY, lastY, startT, moved, canceled}
 let eventsBound = false;
+let merchantOverlayEl = null;
+let merchantSheetEl = null;
+let merchantOpen = false;
+let merchantDrag = null;
+let merchantEventsBound = false;
+
+const MERCHANT_ICON_SRC = 'img/misc/merchant.png';
+const MERCHANT_MET_KEY = 'ccc:merchantMet'
+
 
 // -------- Config (paths) --------
 const ICON_DIR = 'img/sc_upg_icons/';
@@ -273,13 +282,15 @@ ensureCustomScrollbar();
   closeBtn.textContent = 'Close';
 
   const delveBtn = document.createElement('button');
-  delveBtn.type = 'button';
-  delveBtn.className = 'shop-delve';
-  delveBtn.textContent = 'Delve';
+ delveBtn.type = 'button';
+ delveBtn.className = 'shop-delve';
+ delveBtn.textContent = 'Delve';
 
-// Order matters: Delve sits to the RIGHT of Close
-actions.appendChild(closeBtn);
-actions.appendChild(delveBtn);
+  actions.appendChild(closeBtn);
+  actions.appendChild(delveBtn);
+  
+  delveBtn.addEventListener('click', openMerchant);
+
 
 
   // Compose
@@ -428,6 +439,230 @@ function cleanupDrag() {
   window.removeEventListener('pointerup', onDragEnd);
   window.removeEventListener('pointercancel', onDragCancel);
   drag = null;
+}
+
+function ensureMerchantOverlay() {
+  if (merchantOverlayEl) return;
+
+  // Overlay
+  merchantOverlayEl = document.createElement('div');
+  merchantOverlayEl.className = 'merchant-overlay';
+  merchantOverlayEl.id = 'merchant-overlay';
+  merchantOverlayEl.setAttribute('aria-hidden', 'true');
+
+  // Sheet
+  merchantSheetEl = document.createElement('div');
+  merchantSheetEl.className = 'merchant-sheet';
+  merchantSheetEl.setAttribute('role', 'dialog');
+  merchantSheetEl.setAttribute('aria-modal', 'false');
+  merchantSheetEl.setAttribute('aria-label', 'Merchant');
+
+  // Pull bar / grabber (same UX as shop)
+  const grabber = document.createElement('div');
+  grabber.className = 'merchant-grabber';
+  grabber.innerHTML = `<div class="grab-handle" aria-hidden="true"></div>`;
+
+  // Content
+  const content = document.createElement('div');
+  content.className = 'merchant-content';
+
+  const header = document.createElement('header');
+  header.className = 'merchant-header';
+  header.innerHTML = `
+    <div class="merchant-title">Merchant</div>
+    <div class="merchant-line" aria-hidden="true"></div>
+  `;
+
+  // Main dialog row: icon left, text right (placeholder text for now)
+  const dialog = document.createElement('div');
+  dialog.className = 'merchant-dialog';
+  dialog.setAttribute('role', 'group');
+  dialog.setAttribute('aria-label', 'Dialogue');
+
+  const bubble = document.createElement('div');
+  bubble.className = 'merchant-bubble';
+
+  const avatar = document.createElement('img');
+  avatar.className = 'merchant-icon';
+  avatar.src = MERCHANT_ICON_SRC;
+  avatar.alt = '';
+
+  const text = document.createElement('div');
+  text.className = 'merchant-text';
+  text.textContent = '…'; // placeholder; you’ll fill this later
+
+  bubble.append(avatar, text);
+  dialog.appendChild(bubble);
+
+  content.append(header, dialog);
+
+  // Actions (optional "Close" for keyboard/mouse parity)
+  const actions = document.createElement('div');
+  actions.className = 'merchant-actions';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'merchant-close';
+  closeBtn.textContent = 'Close';
+  actions.appendChild(closeBtn);
+
+  // First-time chat overlay (no animation; centered card)
+  const firstChat = document.createElement('div');
+  firstChat.className = 'merchant-firstchat';
+  firstChat.innerHTML = `
+    <div class="merchant-firstchat__card" role="dialog" aria-label="First chat">
+      <div class="merchant-firstchat__header">
+        <div class="name">Merchant</div>
+        <div class="rule" aria-hidden="true"></div>
+      </div>
+      <div class="merchant-firstchat__row">
+        <img class="merchant-firstchat__icon" src="${MERCHANT_ICON_SRC}" alt="">
+        <div class="merchant-firstchat__text">…</div>
+      </div>
+      <div class="merchant-firstchat__actions">
+        <button type="button" class="merchant-firstchat__continue">Continue</button>
+      </div>
+    </div>
+  `;
+
+  merchantSheetEl.append(grabber, content, actions, firstChat);
+  merchantOverlayEl.appendChild(merchantSheetEl);
+  document.body.appendChild(merchantOverlayEl);
+
+  // Events (one-time)
+  if (!merchantEventsBound) {
+    merchantEventsBound = true;
+
+    closeBtn.addEventListener('click', closeMerchant);
+    document.addEventListener('keydown', onKeydownForMerchant);
+
+    grabber.addEventListener('pointerdown', onMerchantDragStart);
+    grabber.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+
+    const cont = firstChat.querySelector('.merchant-firstchat__continue');
+    cont.addEventListener('click', () => {
+      try { localStorage.setItem(MERCHANT_MET_KEY, '1'); } catch {}
+      firstChat.classList.remove('is-visible');
+	  merchantOverlayEl.classList.remove('firstchat-active');
+    });
+  }
+}
+
+export function openMerchant() {
+  ensureMerchantOverlay();
+  if (merchantOpen) return;
+
+  merchantOpen = true;
+
+  // Reset transform and transition (same pattern as shop)
+  merchantSheetEl.style.transition = 'none';
+  merchantSheetEl.style.transform = '';
+  merchantOverlayEl.setAttribute('aria-hidden', 'false');
+
+  // Animate in next frame
+  void merchantSheetEl.offsetHeight;
+  requestAnimationFrame(() => {
+    merchantSheetEl.style.transition = ''; // picks up CSS var(--shop-anim)
+    merchantOverlayEl.classList.add('is-open');
+
+    // Show first-time chat overlay (no animation)
+    let met = false;
+    try { met = localStorage.getItem(MERCHANT_MET_KEY) === '1'; } catch {}
+    if (!met) {
+      const fc = merchantOverlayEl.querySelector('.merchant-firstchat');
+      fc?.classList.add('is-visible');
+	  merchantOverlayEl.classList.add('firstchat-active');
+    }
+  });
+}
+
+export function closeMerchant() {
+  if (!merchantOpen) return;
+
+  merchantOpen = false;
+  merchantSheetEl.style.transition = '';
+  merchantSheetEl.style.transform = '';
+  merchantOverlayEl.classList.remove('is-open');
+  merchantOverlayEl.setAttribute('aria-hidden', 'true');
+}
+
+function onKeydownForMerchant(e) {
+  if (!merchantOpen) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    closeMerchant();
+  }
+}
+
+// ---- Drag to dismiss (Merchant) ----
+function onMerchantDragStart(e) {
+  if (!merchantOpen) return;
+
+  const clientY = typeof e.clientY === 'number'
+    ? e.clientY
+    : (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+
+  merchantDrag = {
+    startY: clientY,
+    lastY: clientY,
+    startT: performance.now(),
+    moved: 0,
+    canceled: false,
+  };
+
+  merchantSheetEl.style.transition = 'none';
+
+  window.addEventListener('pointermove', onMerchantDragMove);
+  window.addEventListener('pointerup', onMerchantDragEnd);
+  window.addEventListener('pointercancel', onMerchantDragCancel);
+}
+
+function onMerchantDragMove(e) {
+  if (!merchantDrag || merchantDrag.canceled) return;
+  const y = e.clientY;
+  if (typeof y !== 'number') return;
+
+  const dy = Math.max(0, y - merchantDrag.startY);
+  merchantDrag.lastY = y;
+  merchantDrag.moved = dy;
+
+  merchantSheetEl.style.transform = `translateY(${dy}px)`;
+}
+
+function onMerchantDragEnd() {
+  if (!merchantDrag || merchantDrag.canceled) { cleanupMerchantDrag(); return; }
+
+  const dt = Math.max(1, performance.now() - merchantDrag.startT);
+  const dy = merchantDrag.moved;
+  const velocity = dy / dt;
+
+  const shouldClose = (velocity > 0.55 && dy > 40) || dy > 140;
+
+  if (shouldClose) {
+    merchantSheetEl.style.transition = 'transform 140ms ease-out';
+    merchantSheetEl.style.transform = 'translateY(100%)';
+    setTimeout(() => { closeMerchant(); }, 150);
+  } else {
+    merchantSheetEl.style.transition = 'transform 180ms ease';
+    merchantSheetEl.style.transform = 'translateY(0)';
+  }
+
+  cleanupMerchantDrag();
+}
+
+function onMerchantDragCancel() {
+  if (!merchantDrag) return;
+  merchantDrag.canceled = true;
+  merchantSheetEl.style.transition = 'transform 180ms ease';
+  merchantSheetEl.style.transform = 'translateY(0)';
+  cleanupMerchantDrag();
+}
+
+function cleanupMerchantDrag() {
+  window.removeEventListener('pointermove', onMerchantDragMove);
+  window.removeEventListener('pointerup', onMerchantDragEnd);
+  window.removeEventListener('pointercancel', onMerchantDragCancel);
+  merchantDrag = null;
 }
 
 // ----- Tiny API for later wiring -----
