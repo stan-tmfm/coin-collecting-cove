@@ -487,13 +487,9 @@ if (due > 0) {
       }
       computeMetrics();
 
-      // Delay initial wave/coin spawn to sync with audio
-      if (initialBurst > 0) {
-        setTimeout(() => {
-          // only fire if spawner is still running
-          if (rafId) spawnBurst(initialBurst);
-        }, 50);
-      }
+    if (initialBurst > 0 && rafId === null) {
+      spawnBurst(initialBurst);
+	}
 
     last = performance.now();
     rafId = requestAnimationFrame(loop);
