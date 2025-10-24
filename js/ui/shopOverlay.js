@@ -266,11 +266,21 @@ ensureCustomScrollbar();
   // Actions
   const actions = document.createElement('div');
   actions.className = 'shop-actions';
+
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'shop-close';
   closeBtn.textContent = 'Close';
-  actions.appendChild(closeBtn);
+
+  const delveBtn = document.createElement('button');
+  delveBtn.type = 'button';
+  delveBtn.className = 'shop-delve';
+  delveBtn.textContent = 'Delve';
+
+// Order matters: Delve sits to the RIGHT of Close
+actions.appendChild(closeBtn);
+actions.appendChild(delveBtn);
+
 
   // Compose
   shopSheetEl.appendChild(grabber);
@@ -427,23 +437,3 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
