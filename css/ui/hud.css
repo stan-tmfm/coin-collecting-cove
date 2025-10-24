@@ -32,15 +32,12 @@ display: grid;
 place-items: center;
 cursor: pointer;
 outline: none;
-
-/* large bold label */
 font-weight: 900;
 font-size: clamp(18px, 3.5vw, 32px);
 color: #fff;
-
-/* subtle drop shadow for depth */
 box-shadow: 0 6px 10px rgba(0,0,0,0.18);
 transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+user-select: none;
 }
 
 /* Pressed state */
@@ -195,7 +192,6 @@ pointer-events: none;
 --bar-underlap: 0.50;                     /* bar tucks under coin */
 --hud-x-nudge: 0px;
 
-/* NEW: tiny vertical alignment fix so bar goes through coin center */
 --bar-y-nudge: 9px;
 }
 
@@ -220,6 +216,7 @@ width:  var(--coin-plus-size);
 object-fit: contain;
 border: none;
 pointer-events: none;
+user-select: none;
 }
 
 /* The BAR: simple centered text, symmetric padding */
