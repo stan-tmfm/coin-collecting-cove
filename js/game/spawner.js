@@ -479,22 +479,25 @@ if (due > 0) {
 
 
 
-   function start() {
-     if (rafId) return;
-     if (!validRefs()) {
-     console.warn('[Spawner] start() called but required nodes are missing.');
-     return;
-    }
-    computeMetrics();
+    function start() {
+      if (rafId) return;
+      if (!validRefs()) {
+        console.warn('[Spawner] start() called but required nodes are missing.');
+        return;
+      }
+      computeMetrics();
 
-    if (initialBurst > 0) {
-      spawnBurst(initialBurst);
-    }
+      // Delay initial wave/coin spawn to sync with audio
+      if (initialBurst > 0) {
+        setTimeout(() => {
+          // only fire if spawner is still running
+          if (rafId) spawnBurst(initialBurst);
+        }, 50);
+      }
 
     last = performance.now();
     rafId = requestAnimationFrame(loop);
   }
-
 
 
     function stop() {
