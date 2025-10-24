@@ -17,6 +17,7 @@
   inset: 0;
   z-index: 4000;              /* Above HUD */
   pointer-events: none;       /* disabled until open */
+  user-select: none;
 }
 
 .shop-overlay.is-open {
