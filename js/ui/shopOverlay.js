@@ -25,54 +25,80 @@ const MERCHANT_TABS_DEF = [
 ];
 
 let merchantTabs = { buttons: {}, panels: {}, tablist: null };
-// ---- Typing SFX (loop) + WebAudio gain so mobile volume works ----
-const TYPING_SFX_SOURCE = ['sounds/merchant_typing.mp3']; // ensure this matches your asset
+// ---- Typing SFX (loop) ----
+const TYPING_SFX_SOURCE = [
+  'sounds/merchant_typing.mp3',
+  // add .ogg/.wav variants if you have them
+];
 
-let __typingSfx = null;
-let __typingSfxPrimed = false;
-let __isTypingActive = false;           // <- only allow sound while a line is animating
-
-// WebAudio graph
 let __audioCtx = null;
-let __typingSource = null;  // MediaElementSource (can only be created once per element)
-let __typingGain = null;    // GainNode for reliable volume on iOS
+let __typingGain = null;
+let __typingBuffer = null;     // decoded buffer (once)
+let __bufferLoadPromise = null;
 
-function ensureTypingSfx() {
-  if (__typingSfx) return __typingSfx;
-  const a = new Audio();
-  a.loop = true;
-  a.preload = 'auto';
-  a.muted = false;
+let __typingSfx = null;        // fallback <audio> element (kept for compatibility)
+let __typingSource = null;     // <audio> → MediaElementSource (once)
+let __bufferSource = null;     // current BufferSource (recreated each start)
 
-  // Element volume isn't reliable on iOS; final volume comes from GainNode.
-  a.volume = 1.0;
+let __typingSfxPrimed = false;
+let __isTypingActive = false;  // set in typeText()
 
-  // Pick the first supported source
-  for (const src of TYPING_SFX_SOURCE) {
-    const mime = src.endsWith('.ogg') ? 'audio/ogg'
-              : src.endsWith('.mp3') ? 'audio/mpeg'
-              : 'audio/wav';
-    if (a.canPlayType(mime)) { a.src = src; break; }
-  }
-  __typingSfx = a;
-  return a;
-}
-
-function ensureAudioGraph() {
+function ensureAudioCtx() {
   if (!__audioCtx) {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     __audioCtx = new Ctx();
   }
   if (!__typingGain) {
     __typingGain = __audioCtx.createGain();
-    // Use your global IS_MOBILE flag for volume difference
     const mobile = (typeof IS_MOBILE !== 'undefined' && IS_MOBILE);
     __typingGain.gain.value = mobile ? 0.15 : 0.3;
+    __typingGain.connect(__audioCtx.destination);
   }
+}
+
+function pickSupportedSrc() {
+  // naive picker — first one is fine in most setups
+  return TYPING_SFX_SOURCE[0];
+}
+
+async function loadTypingBuffer() {
+  ensureAudioCtx();
+  if (__typingBuffer) return __typingBuffer;
+  if (__bufferLoadPromise) return __bufferLoadPromise;
+
+  const url = pickSupportedSrc();
+  __bufferLoadPromise = (async () => {
+    const res = await fetch(url, { cache: 'force-cache' });
+    const arr = await res.arrayBuffer();
+    return await __audioCtx.decodeAudioData(arr);
+  })().then(buf => (__typingBuffer = buf))
+     .catch(err => { console.warn('Typing SFX decode failed:', err); __bufferLoadPromise = null; });
+
+  return __bufferLoadPromise;
+}
+
+function ensureTypingAudioElement() {
+  if (__typingSfx) return __typingSfx;
+  const a = new Audio();
+  a.loop = true;
+  a.preload = 'auto';
+  a.muted = false;
+  a.volume = 1.0; // volume handled by gain in element path as well (iOS ignores this)
+
+  const url = pickSupportedSrc();
+  a.src = url;
+
+  __typingSfx = a;
+  return a;
+}
+
+function ensureElementGraph() {
+  // Route the <audio> element through the same gain node (mobile volume)
+  ensureAudioCtx();
+  ensureTypingAudioElement();
   if (!__typingSource) {
-    // IMPORTANT: You can only create ONE MediaElementSource for a given element
     __typingSource = __audioCtx.createMediaElementSource(__typingSfx);
-    __typingSource.connect(__typingGain).connect(__audioCtx.destination);
+    __typingSource.connect(__typingGain);
   }
 }
 
@@ -82,50 +108,80 @@ function setTypingGainForDevice() {
   __typingGain.gain.value = mobile ? 0.15 : 0.3;
 }
 
-// Prime from a user gesture; make it truly silent (no audible blip)
+// Prime from a user gesture — silently
 function primeTypingSfx() {
   if (__typingSfxPrimed) return;
-  const a = ensureTypingSfx();
-  ensureAudioGraph();
+  __typingSfxPrimed = true;
+
+  ensureAudioCtx();
   __audioCtx.resume().catch(()=>{});
 
-  __typingSfxPrimed = true;
+  // Kick off buffer decode early so it's ready when typing starts
+  loadTypingBuffer();
+
+  // Silent play/pause on the element path to satisfy autoplay policies (some browsers)
+  const a = ensureTypingAudioElement();
+  ensureElementGraph();
 
   const prevLoop = a.loop;
   const prevMuted = a.muted;
   a.loop = false;
   a.muted = true;
-
-  a.play()
-    .then(() => { a.pause(); a.currentTime = 0; })
-    .catch(() => { __typingSfxPrimed = false; })
+  a.play().then(() => { a.pause(); a.currentTime = 0; })
     .finally(() => { a.loop = prevLoop; a.muted = prevMuted; });
 }
 
 async function startTypingSfx() {
-  ensureTypingSfx();
-  ensureAudioGraph();
-  __audioCtx?.resume?.();
-  __typingSfx.currentTime = 0;
+  ensureAudioCtx();
+  await __audioCtx.resume().catch(()=>{});
 
-  try {
-    // Only start if a line is actively typing
-    if (__isTypingActive) await __typingSfx.play();
-  } catch {
-    // Retry on next gesture ONLY if still typing
-    const once = () => {
-      if (__isTypingActive) { __typingSfx.play().catch(()=>{}); }
-      document.removeEventListener('click', once);
-    };
-    document.addEventListener('click', once, { once: true });
+  // Prefer zero-latency buffer if available (or fall back if decode not ready yet)
+  await loadTypingBuffer();
+
+  if (__isTypingActive && __typingBuffer) {
+    // stop previous buffer source if any
+    if (__bufferSource) {
+      try { __bufferSource.stop(0); } catch {}
+      try { __bufferSource.disconnect(); } catch {}
+      __bufferSource = null;
+    }
+    __bufferSource = __audioCtx.createBufferSource();
+    __bufferSource.buffer = __typingBuffer;
+    __bufferSource.loop = true;
+    __bufferSource.connect(__typingGain);
+    __bufferSource.start(0);
+    return;
+  }
+
+  // Fallback: element path (first ever line before decode finishes)
+  ensureElementGraph();
+  if (__isTypingActive && __typingSfx) {
+    __typingSfx.currentTime = 0;
+    try { await __typingSfx.play(); }
+    catch {
+      const once = () => { if (__isTypingActive) __typingSfx.play().catch(()=>{}); document.removeEventListener('click', once); };
+      document.addEventListener('click', once, { once: true });
+    }
   }
 }
 
 function stopTypingSfx() {
-  if (!__typingSfx) return;
-  __typingSfx.pause();
-  __typingSfx.currentTime = 0;
+  // stop buffer path
+  if (__bufferSource) {
+    try { __bufferSource.stop(0); } catch {}
+    try { __bufferSource.disconnect(); } catch {}
+    __bufferSource = null;
+  }
+  // stop element path
+  if (__typingSfx) {
+    __typingSfx.pause();
+    __typingSfx.currentTime = 0;
+  }
 }
+
+// React to device/orientation changes so gain stays correct
+window.matchMedia?.('(any-pointer: coarse)')?.addEventListener?.('change', setTypingGainForDevice);
+window.addEventListener('orientationchange', setTypingGainForDevice);
 
 // === React to device/orientation changes so gain stays correct ===
 window.matchMedia?.('(any-pointer: coarse)')?.addEventListener?.('change', setTypingGainForDevice);
@@ -140,7 +196,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 5;
+let UPGRADE_COUNT = 10;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
