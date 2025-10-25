@@ -13,6 +13,7 @@ let merchantOpen = false;
 let merchantDrag = null;
 let merchantEventsBound = false;
 
+
 const MERCHANT_ICON_SRC = 'img/misc/merchant.png';
 const MERCHANT_MET_KEY = 'ccc:merchantMet'
 const MERCHANT_TAB_KEY = 'ccc:merchantTab';
@@ -23,6 +24,60 @@ const MERCHANT_TABS_DEF = [
 ];
 
 let merchantTabs = { buttons: {}, panels: {}, tablist: null };
+// ---- Typing SFX (plays while text animates) ----
+const TYPING_SFX_SOURCE = ['sounds/merchant_typing.mp3']; // make sure this matches your file name
+
+let __typingSfx = null;
+let __typingSfxPrimed = false;
+
+function ensureTypingSfx() {
+  if (__typingSfx) return __typingSfx;
+  const a = new Audio();
+  a.loop = true;
+  a.preload = 'auto';
+  a.volume = 0.3;
+  a.muted = false;
+
+  // Pick the first source the browser can play
+  for (const src of TYPING_SFX_SOURCE) {
+    const mime = src.endsWith('.ogg') ? 'audio/ogg'
+              : src.endsWith('.mp3') ? 'audio/mpeg'
+              : 'audio/wav';
+    if (a.canPlayType(mime)) { a.src = src; break; }
+  }
+  __typingSfx = a;
+  return a;
+}
+
+// Call from a user gesture to unlock audio on mobile
+function primeTypingSfx() {
+  if (__typingSfxPrimed) return;
+  const a = ensureTypingSfx();
+  __typingSfxPrimed = true;
+  a.play().then(() => { a.pause(); a.currentTime = 0; })
+          .catch(() => { __typingSfxPrimed = false; }); // will retry on next gesture
+}
+
+async function startTypingSfx() {
+  const a = ensureTypingSfx();
+  // Ensure the element is in a playable state
+  if (a.readyState < 2) { a.load(); }
+  a.currentTime = 0;
+  a.muted = false;
+  try {
+    await a.play();
+  } catch (err) {
+    // If blocked, retry automatically on the next user click/tap
+    const once = () => { a.play().catch(()=>{}); document.removeEventListener('click', once); };
+    document.addEventListener('click', once, { once: true });
+  }
+}
+
+function stopTypingSfx() {
+  if (!__typingSfx) return;
+  __typingSfx.pause();
+  __typingSfx.currentTime = 0;
+}
 
 // -------- Config (paths) --------
 const ICON_DIR = 'img/sc_upg_icons/';
@@ -50,7 +105,7 @@ function typeText(el, full, msPerChar = 22, skipTargets = []) {
 
     const targets = skipTargets.length ? skipTargets : [el];
 
-    // Delay arming so the *same* click that chose an option can't skip the new line
+    // Delay arming so the same click that chose an option can't skip the new line
     requestAnimationFrame(() => {
       armed = true;
       targets.forEach(t => t.addEventListener('click', skip, { once: true }));
@@ -59,11 +114,14 @@ function typeText(el, full, msPerChar = 22, skipTargets = []) {
 
     el.classList.add('is-typing');
     el.textContent = '';
+    startTypingSfx();
 
     const cleanup = () => {
       targets.forEach(t => t.removeEventListener('click', skip));
       document.removeEventListener('keydown', onKey);
       el.classList.remove('is-typing');
+      // 🔇 stop SFX when typing is done (or skipped)
+      stopTypingSfx();
     };
 
     const tick = () => {
@@ -455,7 +513,7 @@ ensureCustomScrollbar();
   actions.appendChild(closeBtn);
   actions.appendChild(delveBtn);
   
-  delveBtn.addEventListener('click', openMerchant);
+  delveBtn.addEventListener('click', () => { primeTypingSfx(); openMerchant(); });
 
 
 
