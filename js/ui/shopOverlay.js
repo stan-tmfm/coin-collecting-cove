@@ -196,7 +196,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 10;
+let UPGRADE_COUNT = 17;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -1097,3 +1097,4 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
+
