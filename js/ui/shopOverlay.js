@@ -1,6 +1,6 @@
 // js/ui/shopOverlay.js
 
-import { MERCHANT_DIALOGUES } from '/js/misc/merchantDialogues.js';
+import { MERCHANT_DIALOGUES } from '../misc/merchantDialogues.js';
 
 let shopOverlayEl = null;
 let shopSheetEl = null;
