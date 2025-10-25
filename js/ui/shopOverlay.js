@@ -35,16 +35,22 @@ function ensureTypingSfx() {
   const a = new Audio();
   a.loop = true;
   a.preload = 'auto';
-  a.volume = 0.3;
+  a.volume = 0.3; // default desktop volume
   a.muted = false;
 
-  // Pick the first source the browser can play
+  // Use your global detection constant
+  if (typeof IS_MOBILE !== 'undefined' && IS_MOBILE) {
+    a.volume = 0.15; // reduce volume for mobile
+  }
+
+  // Pick the first supported source
   for (const src of TYPING_SFX_SOURCE) {
     const mime = src.endsWith('.ogg') ? 'audio/ogg'
               : src.endsWith('.mp3') ? 'audio/mpeg'
               : 'audio/wav';
     if (a.canPlayType(mime)) { a.src = src; break; }
   }
+
   __typingSfx = a;
   return a;
 }
