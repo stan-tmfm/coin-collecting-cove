@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       'img/coin/coinBase.png',
       'img/coin/coinPlusBase.png',
       'img/sc_upg_icons/faster_coins_id_1.png',
+	  'img/misc/merchant.png',
     ],
     audio: [
       'sounds/coin_pickup.mp3',
