@@ -24,21 +24,27 @@ const MERCHANT_TABS_DEF = [
 ];
 
 let merchantTabs = { buttons: {}, panels: {}, tablist: null };
-// ---- Typing SFX (plays while text animates) ----
-const TYPING_SFX_SOURCE = ['sounds/merchant_typing.mp3']; // make sure this matches your file name
+// ---- Typing SFX (loop) + WebAudio gain so mobile volume works ----
+const TYPING_SFX_SOURCE = ['sounds/merchant_typing.mp3']; // ensure this matches your asset
 
 let __typingSfx = null;
 let __typingSfxPrimed = false;
+let __isTypingActive = false;           // <- only allow sound while a line is animating
+
+// WebAudio graph
+let __audioCtx = null;
+let __typingSource = null;  // MediaElementSource (can only be created once per element)
+let __typingGain = null;    // GainNode for reliable volume on iOS
 
 function ensureTypingSfx() {
-  const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   if (__typingSfx) return __typingSfx;
   const a = new Audio();
   a.loop = true;
   a.preload = 'auto';
-  a.volume = IS_MOBILE ? 0.12 : 0.3;
   a.muted = false;
 
+  // Element volume isn't reliable on iOS; final volume comes from GainNode.
+  a.volume = 1.0;
 
   // Pick the first supported source
   for (const src of TYPING_SFX_SOURCE) {
@@ -47,31 +53,69 @@ function ensureTypingSfx() {
               : 'audio/wav';
     if (a.canPlayType(mime)) { a.src = src; break; }
   }
-
   __typingSfx = a;
   return a;
 }
 
-// Call from a user gesture to unlock audio on mobile
+function ensureAudioGraph() {
+  if (!__audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    __audioCtx = new Ctx();
+  }
+  if (!__typingGain) {
+    __typingGain = __audioCtx.createGain();
+    // Use your global IS_MOBILE flag for volume difference
+    const mobile = (typeof IS_MOBILE !== 'undefined' && IS_MOBILE);
+    __typingGain.gain.value = mobile ? 0.15 : 0.3;
+  }
+  if (!__typingSource) {
+    // IMPORTANT: You can only create ONE MediaElementSource for a given element
+    __typingSource = __audioCtx.createMediaElementSource(__typingSfx);
+    __typingSource.connect(__typingGain).connect(__audioCtx.destination);
+  }
+}
+
+function setTypingGainForDevice() {
+  if (!__typingGain) return;
+  const mobile = (typeof IS_MOBILE !== 'undefined' && IS_MOBILE);
+  __typingGain.gain.value = mobile ? 0.15 : 0.3;
+}
+
+// Prime from a user gesture; make it truly silent (no audible blip)
 function primeTypingSfx() {
   if (__typingSfxPrimed) return;
   const a = ensureTypingSfx();
+  ensureAudioGraph();
+  __audioCtx.resume().catch(()=>{});
+
   __typingSfxPrimed = true;
-  a.play().then(() => { a.pause(); a.currentTime = 0; })
-          .catch(() => { __typingSfxPrimed = false; }); // will retry on next gesture
+
+  const prevLoop = a.loop;
+  const prevMuted = a.muted;
+  a.loop = false;
+  a.muted = true;
+
+  a.play()
+    .then(() => { a.pause(); a.currentTime = 0; })
+    .catch(() => { __typingSfxPrimed = false; })
+    .finally(() => { a.loop = prevLoop; a.muted = prevMuted; });
 }
 
 async function startTypingSfx() {
-  const a = ensureTypingSfx();
-  // Ensure the element is in a playable state
-  if (a.readyState < 2) { a.load(); }
-  a.currentTime = 0;
-  a.muted = false;
+  ensureTypingSfx();
+  ensureAudioGraph();
+  __audioCtx?.resume?.();
+  __typingSfx.currentTime = 0;
+
   try {
-    await a.play();
-  } catch (err) {
-    // If blocked, retry automatically on the next user click/tap
-    const once = () => { a.play().catch(()=>{}); document.removeEventListener('click', once); };
+    // Only start if a line is actively typing
+    if (__isTypingActive) await __typingSfx.play();
+  } catch {
+    // Retry on next gesture ONLY if still typing
+    const once = () => {
+      if (__isTypingActive) { __typingSfx.play().catch(()=>{}); }
+      document.removeEventListener('click', once);
+    };
     document.addEventListener('click', once, { once: true });
   }
 }
@@ -82,6 +126,10 @@ function stopTypingSfx() {
   __typingSfx.currentTime = 0;
 }
 
+// === React to device/orientation changes so gain stays correct ===
+window.matchMedia?.('(any-pointer: coarse)')?.addEventListener?.('change', setTypingGainForDevice);
+window.addEventListener('orientationchange', setTypingGainForDevice);
+
 // -------- Config (paths) --------
 const ICON_DIR = 'img/sc_upg_icons/';
 const BASE_ICON_SRC = 'img/coin/coinBase.png';
@@ -91,7 +139,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 12;
+let UPGRADE_COUNT = 7;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -103,12 +151,15 @@ function typeText(el, full, msPerChar = 22, skipTargets = []) {
     let i = 0, skipping = false;
     let armed = false;
 
+    __isTypingActive = true;       // <- start of typing
+    startTypingSfx();
+
     const skip = (e) => { if (!armed) return; e.preventDefault(); skipping = true; };
     const onKey = (e) => { if (!armed) return; if (e.key === 'Enter' || e.key === ' ') skipping = true; };
 
     const targets = skipTargets.length ? skipTargets : [el];
 
-    // Delay arming so the same click that chose an option can't skip the new line
+    // Delay arming so the same click that chose a choice can't insta-skip next line
     requestAnimationFrame(() => {
       armed = true;
       targets.forEach(t => t.addEventListener('click', skip, { once: true }));
@@ -117,25 +168,20 @@ function typeText(el, full, msPerChar = 22, skipTargets = []) {
 
     el.classList.add('is-typing');
     el.textContent = '';
-    startTypingSfx();
 
     const cleanup = () => {
       targets.forEach(t => t.removeEventListener('click', skip));
       document.removeEventListener('keydown', onKey);
       el.classList.remove('is-typing');
-      // 🔇 stop SFX when typing is done (or skipped)
       stopTypingSfx();
+      __isTypingActive = false;    // <- end of typing
     };
 
     const tick = () => {
       if (skipping) { el.textContent = full; cleanup(); resolve(); return; }
       el.textContent = full.slice(0, i++);
-      if (i <= full.length) {
-        setTimeout(tick, msPerChar);
-      } else {
-        cleanup();
-        resolve();
-      }
+      if (i <= full.length) setTimeout(tick, msPerChar);
+      else { cleanup(); resolve(); }
     };
     tick();
   });
@@ -517,6 +563,7 @@ ensureCustomScrollbar();
   actions.appendChild(delveBtn);
   
   delveBtn.addEventListener('click', () => { primeTypingSfx(); openMerchant(); });
+  merchantOverlayEl.addEventListener('pointerdown', primeTypingSfx, { once: true });
 
 
 
@@ -856,6 +903,8 @@ export function openMerchant() {
     let last = 'dialogue';
     try { last = localStorage.getItem(MERCHANT_TAB_KEY) || 'dialogue'; } catch {}
     selectMerchantTab(last);
+	stopTypingSfx(); // ensure no orphaned loop
+
 
     // Show first-time chat overlay (no animation)
     let met = false;
@@ -877,6 +926,8 @@ export function closeMerchant() {
   merchantSheetEl.style.transform = '';
   merchantOverlayEl.classList.remove('is-open');
   merchantOverlayEl.setAttribute('aria-hidden', 'true');
+  stopTypingSfx();
+  __isTypingActive = false;
 }
 
 function onKeydownForMerchant(e) {
