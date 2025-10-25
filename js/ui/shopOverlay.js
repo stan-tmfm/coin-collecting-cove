@@ -40,7 +40,7 @@ function ensureTypingSfx() {
 
   // Use your global detection constant
   if (typeof IS_MOBILE !== 'undefined' && IS_MOBILE) {
-    a.volume = 0.15; // reduce volume for mobile
+    a.volume = 0.01; // reduce volume for mobile
   }
 
   // Pick the first supported source
@@ -995,5 +995,6 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
+
 
 
