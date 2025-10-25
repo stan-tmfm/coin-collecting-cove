@@ -1,5 +1,7 @@
 // js/ui/shopOverlay.js
 
+import { MERCHANT_DIALOGUES } from '/js/misc/merchantDialogues.js';
+
 let shopOverlayEl = null;
 let shopSheetEl = null;
 let shopOpen = false;
@@ -28,6 +30,163 @@ let UPGRADE_COUNT = 10;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
+
+const FIRST_LINE = 'So you want to delve deeper within my shop, do you?';
+
+function typeText(el, full, msPerChar = 22, skipTargets = []) {
+  return new Promise((resolve) => {
+    let i = 0, skipping = false;
+    let armed = false;
+
+    const skip = (e) => { if (!armed) return; e.preventDefault(); skipping = true; };
+    const onKey = (e) => { if (!armed) return; if (e.key === 'Enter' || e.key === ' ') skipping = true; };
+
+    const targets = skipTargets.length ? skipTargets : [el];
+
+    // Delay arming so the *same* click that chose an option can't skip the new line
+    requestAnimationFrame(() => {
+      armed = true;
+      targets.forEach(t => t.addEventListener('click', skip, { once: true }));
+      document.addEventListener('keydown', onKey, { once: true });
+    });
+
+    el.classList.add('is-typing');
+    el.textContent = '';
+
+    const cleanup = () => {
+      targets.forEach(t => t.removeEventListener('click', skip));
+      document.removeEventListener('keydown', onKey);
+      el.classList.remove('is-typing');
+    };
+
+    const tick = () => {
+      if (skipping) { el.textContent = full; cleanup(); resolve(); return; }
+      el.textContent = full.slice(0, i++);
+      if (i <= full.length) {
+        setTimeout(tick, msPerChar);
+      } else {
+        cleanup();
+        resolve();
+      }
+    };
+    tick();
+  });
+}
+
+class DialogueEngine {
+  constructor({ textEl, choicesEl, skipTargets, onEnd }) {
+    this.textEl = textEl;
+    this.choicesEl = choicesEl;
+    this.skipTargets = skipTargets;
+    this.onEnd = onEnd || (() => {});
+    this.nodes = {};
+    this.current = null;
+	this.deferNextChoices = false; 
+	this._reservedH = 0; 
+  }
+
+  load(script) {
+    this.nodes = script.nodes || {};
+    this.startId = script.start;
+  }
+
+  async start() {
+    if (!this.startId) return;
+    await this.goto(this.startId);
+  }
+
+  async goto(id) {
+    const node = this.nodes[id];
+    if (!node) return;
+    this.current = id;
+
+   if (node.type === 'line') {
+  const nextNode = this.nodes[node.next];
+
+  // Only pre-render if we are NOT deferring (keeps initial line smooth)
+  if (!this.deferNextChoices && nextNode && nextNode.type === 'choice') {
+    this._renderChoices(nextNode.options || [], /*prepare=*/true);
+  } else {
+    this._hideChoices();
+  }
+
+  await typeText(this.textEl, node.say, node.msPerChar ?? 22, this.skipTargets);
+
+  if (nextNode && nextNode.type === 'choice') {
+    this.current = node.next;
+
+    if (this.deferNextChoices) {
+      // We just came from a choice → line transition.
+      // Now that typing is done, render the new choices and release the height lock.
+      this.deferNextChoices = false;
+      this._renderChoices(nextNode.options || [], /*prepare=*/false); // builds & reveals
+      this.choicesEl.style.minHeight = '';  // release reserved height
+      return;
+    }
+
+    // Normal path (e.g., initial line): reveal the already prepared buttons
+    this._revealPreparedChoices();
+    return;
+  }
+
+  // No choices after this line
+  this.choicesEl.style.minHeight = '';
+  if (node.next === 'end' || node.end === true) return this.onEnd();
+  if (node.next) return this.goto(node.next);
+  return;
+}
+
+
+    if (node.type === 'choice') {
+      // (rare path) direct jump to a choice node
+      this._renderChoices(node.options || [], /*prepare=*/false);
+    }
+  }
+  
+  _hideChoices() {
+    this.choicesEl.classList.remove('is-visible');
+    this.choicesEl.setAttribute('aria-hidden', 'true');
+  }
+
+  _renderChoices(options, prepare = false) {
+    this.choicesEl.innerHTML = '';
+
+    for (const opt of options) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'choice';
+      btn.textContent = opt.label;
+      btn.addEventListener('click', async (e) => {
+		e.stopPropagation();                // <<< prevents this click from hitting the card/text skip
+		this._reservedH = this.choicesEl.offsetHeight | 0;
+		this.choicesEl.style.minHeight = this._reservedH + 'px';
+		this._hideChoices();
+		this.choicesEl.innerHTML = '';
+
+		this.deferNextChoices = true;
+
+		if (opt.to === 'end') return this.onEnd();
+		await this.goto(opt.to);
+		}, { once: true });
+
+      this.choicesEl.appendChild(btn);
+    }
+
+    if (prepare) {
+      this.choicesEl.classList.remove('is-visible');
+      this.choicesEl.setAttribute('aria-hidden', 'true');
+      return; // in-flow, invisible, non-clickable — reserves height
+    }
+
+    this.choicesEl.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => this.choicesEl.classList.add('is-visible'));
+  }
+
+  _revealPreparedChoices() {
+    this.choicesEl.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => this.choicesEl.classList.add('is-visible'));
+  }
+}
 
 function ensureCustomScrollbar() {
   const scroller = shopOverlayEl?.querySelector('.shop-content');
@@ -510,20 +669,21 @@ function ensureMerchantOverlay() {
   const firstChat = document.createElement('div');
   firstChat.className = 'merchant-firstchat';
   firstChat.innerHTML = `
-    <div class="merchant-firstchat__card" role="dialog" aria-label="First chat">
-      <div class="merchant-firstchat__header">
-        <div class="name">Merchant</div>
-        <div class="rule" aria-hidden="true"></div>
-      </div>
-      <div class="merchant-firstchat__row">
-        <img class="merchant-firstchat__icon" src="${MERCHANT_ICON_SRC}" alt="">
-        <div class="merchant-firstchat__text">…</div>
-      </div>
-      <div class="merchant-firstchat__actions">
-        <button type="button" class="merchant-firstchat__continue">Continue</button>
-      </div>
+  <div class="merchant-firstchat__card" role="dialog" aria-label="First chat">
+    <div class="merchant-firstchat__header">
+      <div class="name">Merchant</div>
+      <div class="rule" aria-hidden="true"></div>
     </div>
-  `;
+    <div class="merchant-firstchat__row">
+      <img class="merchant-firstchat__icon" src="${MERCHANT_ICON_SRC}" alt="">
+      <div class="merchant-firstchat__text" id="merchant-first-line">…</div>
+    </div>
+    <div class="merchant-firstchat__choices" id="merchant-first-choices"></div>
+  </div>
+`;
+
+
+
 
   merchantSheetEl.append(grabber, content, actions, firstChat);
   merchantOverlayEl.appendChild(merchantSheetEl);
@@ -538,14 +698,29 @@ function ensureMerchantOverlay() {
 
     grabber.addEventListener('pointerdown', onMerchantDragStart);
     grabber.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
-
-    const cont = firstChat.querySelector('.merchant-firstchat__continue');
-    cont.addEventListener('click', () => {
-      try { localStorage.setItem(MERCHANT_MET_KEY, '1'); } catch {}
-      firstChat.classList.remove('is-visible');
-	  merchantOverlayEl.classList.remove('firstchat-active');
-    });
   }
+}
+
+function runFirstMeet() {
+  const fc = merchantOverlayEl.querySelector('.merchant-firstchat');
+  const textEl = fc.querySelector('#merchant-first-line');
+  const rowEl = fc.querySelector('.merchant-firstchat__row');
+  const cardEl = fc.querySelector('.merchant-firstchat__card');
+  const choicesEl = fc.querySelector('#merchant-first-choices');
+
+  const engine = new DialogueEngine({
+    textEl,
+    choicesEl,
+    skipTargets: [textEl, rowEl, cardEl], // click anywhere to skip typing
+    onEnd: () => {
+      try { localStorage.setItem(MERCHANT_MET_KEY, '1'); } catch {}
+      fc.classList.remove('is-visible');
+      merchantOverlayEl.classList.remove('firstchat-active');
+    }
+  });
+
+  engine.load(MERCHANT_DIALOGUES.intro);
+  engine.start();
 }
 
 export function openMerchant() {
@@ -572,6 +747,7 @@ export function openMerchant() {
       const fc = merchantOverlayEl.querySelector('.merchant-firstchat');
       fc?.classList.add('is-visible');
 	  merchantOverlayEl.classList.add('firstchat-active');
+	  runFirstMeet();  	  
     }
   });
 }
