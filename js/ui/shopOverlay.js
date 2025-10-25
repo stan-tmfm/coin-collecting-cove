@@ -15,7 +15,14 @@ let merchantEventsBound = false;
 
 const MERCHANT_ICON_SRC = 'img/misc/merchant.png';
 const MERCHANT_MET_KEY = 'ccc:merchantMet'
+const MERCHANT_TAB_KEY = 'ccc:merchantTab';
+const MERCHANT_TABS_DEF = [
+  { key: 'dialogue', label: 'Dialogue', unlocked: true },
+  { key: 'reset',    label: '???',      unlocked: false },
+  { key: 'minigames',label: '???',      unlocked: false },
+];
 
+let merchantTabs = { buttons: {}, panels: {}, tablist: null };
 
 // -------- Config (paths) --------
 const ICON_DIR = 'img/sc_upg_icons/';
@@ -625,6 +632,7 @@ function ensureMerchantOverlay() {
   const content = document.createElement('div');
   content.className = 'merchant-content';
 
+  // Header
   const header = document.createElement('header');
   header.className = 'merchant-header';
   header.innerHTML = `
@@ -632,7 +640,20 @@ function ensureMerchantOverlay() {
     <div class="merchant-line" aria-hidden="true"></div>
   `;
 
-  // Main dialog row: icon left, text right (placeholder text for now)
+  // Tabs + panels --------------------------------------------
+  const tabs = document.createElement('div');
+  tabs.className = 'merchant-tabs';
+  tabs.setAttribute('role', 'tablist');
+
+  const panelsWrap = document.createElement('div');
+  panelsWrap.className = 'merchant-panels';
+
+  // Dialogue panel (main)
+  const panelDialogue = document.createElement('section');
+  panelDialogue.className = 'merchant-panel is-active';
+  panelDialogue.id = 'merchant-panel-dialogue';
+
+  // Merchant dialogue bubble
   const dialog = document.createElement('div');
   dialog.className = 'merchant-dialog';
   dialog.setAttribute('role', 'group');
@@ -648,43 +669,74 @@ function ensureMerchantOverlay() {
 
   const text = document.createElement('div');
   text.className = 'merchant-text';
-  text.textContent = '…'; // placeholder; you’ll fill this later
+  text.textContent = '…'; // placeholder
 
   bubble.append(avatar, text);
   dialog.appendChild(bubble);
+  panelDialogue.appendChild(dialog);
 
-  content.append(header, dialog);
+  // Other panels (locked at start)
+  const panelReset = document.createElement('section');
+  panelReset.className = 'merchant-panel';
+  panelReset.id = 'merchant-panel-reset';
 
-  // Actions (optional "Close" for keyboard/mouse parity)
+  const panelMinigames = document.createElement('section');
+  panelMinigames.className = 'merchant-panel';
+  panelMinigames.id = 'merchant-panel-minigames';
+
+  // Tabs setup
+  MERCHANT_TABS_DEF.forEach(def => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'merchant-tab';
+    btn.dataset.tab = def.key;
+    btn.textContent = def.unlocked ? def.label : '???';
+    if (!def.unlocked) {
+      btn.classList.add('is-locked');
+      btn.disabled = true;
+      btn.title = 'Locked';
+    }
+    btn.addEventListener('click', () => selectMerchantTab(def.key));
+    tabs.appendChild(btn);
+    merchantTabs.buttons[def.key] = btn;
+  });
+
+  merchantTabs.panels['dialogue']  = panelDialogue;
+  merchantTabs.panels['reset']     = panelReset;
+  merchantTabs.panels['minigames'] = panelMinigames;
+  merchantTabs.tablist = tabs;
+
+  panelsWrap.append(panelDialogue, panelReset, panelMinigames);
+  content.append(header, tabs, panelsWrap);
+  // -----------------------------------------------------------
+
+  // Actions (Close button)
   const actions = document.createElement('div');
   actions.className = 'merchant-actions';
-
   const closeBtn = document.createElement('button');
   closeBtn.type = 'button';
   closeBtn.className = 'merchant-close';
   closeBtn.textContent = 'Close';
   actions.appendChild(closeBtn);
 
-  // First-time chat overlay (no animation; centered card)
+  // First-time chat overlay (stays centered on first visit)
   const firstChat = document.createElement('div');
   firstChat.className = 'merchant-firstchat';
   firstChat.innerHTML = `
-  <div class="merchant-firstchat__card" role="dialog" aria-label="First chat">
-    <div class="merchant-firstchat__header">
-      <div class="name">Merchant</div>
-      <div class="rule" aria-hidden="true"></div>
+    <div class="merchant-firstchat__card" role="dialog" aria-label="First chat">
+      <div class="merchant-firstchat__header">
+        <div class="name">Merchant</div>
+        <div class="rule" aria-hidden="true"></div>
+      </div>
+      <div class="merchant-firstchat__row">
+        <img class="merchant-firstchat__icon" src="${MERCHANT_ICON_SRC}" alt="">
+        <div class="merchant-firstchat__text" id="merchant-first-line">…</div>
+      </div>
+      <div class="merchant-firstchat__choices" id="merchant-first-choices"></div>
     </div>
-    <div class="merchant-firstchat__row">
-      <img class="merchant-firstchat__icon" src="${MERCHANT_ICON_SRC}" alt="">
-      <div class="merchant-firstchat__text" id="merchant-first-line">…</div>
-    </div>
-    <div class="merchant-firstchat__choices" id="merchant-first-choices"></div>
-  </div>
-`;
+  `;
 
-
-
-
+  // Compose overlay
   merchantSheetEl.append(grabber, content, actions, firstChat);
   merchantOverlayEl.appendChild(merchantSheetEl);
   document.body.appendChild(merchantOverlayEl);
@@ -697,7 +749,7 @@ function ensureMerchantOverlay() {
     document.addEventListener('keydown', onKeydownForMerchant);
 
     grabber.addEventListener('pointerdown', onMerchantDragStart);
-    grabber.addEventListener('touchstart', (e) => { e.preventDefault(); }, { passive: false });
+    grabber.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
   }
 }
 
@@ -740,14 +792,18 @@ export function openMerchant() {
     merchantSheetEl.style.transition = ''; // picks up CSS var(--shop-anim)
     merchantOverlayEl.classList.add('is-open');
 
+    let last = 'dialogue';
+    try { last = localStorage.getItem(MERCHANT_TAB_KEY) || 'dialogue'; } catch {}
+    selectMerchantTab(last);
+
     // Show first-time chat overlay (no animation)
     let met = false;
     try { met = localStorage.getItem(MERCHANT_MET_KEY) === '1'; } catch {}
     if (!met) {
       const fc = merchantOverlayEl.querySelector('.merchant-firstchat');
       fc?.classList.add('is-visible');
-	  merchantOverlayEl.classList.add('firstchat-active');
-	  runFirstMeet();  	  
+      merchantOverlayEl.classList.add('firstchat-active');
+      runFirstMeet();  	  
     }
   });
 }
@@ -839,6 +895,33 @@ function cleanupMerchantDrag() {
   window.removeEventListener('pointerup', onMerchantDragEnd);
   window.removeEventListener('pointercancel', onMerchantDragCancel);
   merchantDrag = null;
+}
+
+function selectMerchantTab(key) {
+  const def = MERCHANT_TABS_DEF.find(t => t.key === key);
+  if (!def || !def.unlocked) key = 'dialogue'; // fallback
+
+  for (const k in merchantTabs.buttons) {
+    merchantTabs.buttons[k].classList.toggle('is-active', k === key);
+  }
+  for (const k in merchantTabs.panels) {
+    merchantTabs.panels[k].classList.toggle('is-active', k === key);
+  }
+  try { localStorage.setItem(MERCHANT_TAB_KEY, key); } catch {}
+}
+
+export function unlockMerchantTabs(keys = []) {
+  keys.forEach(key => {
+    const def = MERCHANT_TABS_DEF.find(t => t.key === key);
+    if (!def) return;
+    def.unlocked = true;
+    const btn = merchantTabs.buttons[key];
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-locked');
+      btn.textContent = def.label; // replace ??? with real label
+    }
+  });
 }
 
 // ----- Tiny API for later wiring -----
