@@ -629,3 +629,17 @@
 .merchant-panels { padding: 12px; }
 .merchant-panel { display: none; }
 .merchant-panel.is-active { display: block; }
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .merchant-firstchat {
+    align-items: flex-start; 
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px 0;
+  }
+
+  .merchant-firstchat__card {
+    margin: auto;
+    max-height: unset;
+  }
+}
