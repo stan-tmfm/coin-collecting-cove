@@ -12,6 +12,7 @@ let merchantSheetEl = null;
 let merchantOpen = false;
 let merchantDrag = null;
 let merchantEventsBound = false;
+const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
 
 
 const MERCHANT_ICON_SRC = 'img/misc/merchant.png';
@@ -139,7 +140,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 7;
+let UPGRADE_COUNT = 5;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -563,9 +564,6 @@ ensureCustomScrollbar();
   actions.appendChild(delveBtn);
   
   delveBtn.addEventListener('click', () => { primeTypingSfx(); openMerchant(); });
-  merchantOverlayEl.addEventListener('pointerdown', primeTypingSfx, { once: true });
-
-
 
   // Compose
   shopSheetEl.appendChild(grabber);
