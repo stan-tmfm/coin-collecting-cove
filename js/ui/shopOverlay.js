@@ -31,6 +31,7 @@ let __typingSfx = null;
 let __typingSfxPrimed = false;
 
 function ensureTypingSfx() {
+  const IS_MOBILE = (window.matchMedia?.('(any-pointer: coarse)')?.matches) || ('ontouchstart' in window);
   if (__typingSfx) return __typingSfx;
   const a = new Audio();
   a.loop = true;
@@ -90,7 +91,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 11;
+let UPGRADE_COUNT = 12;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -991,4 +992,3 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
-
