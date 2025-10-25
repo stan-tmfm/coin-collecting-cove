@@ -114,7 +114,7 @@ function primeTypingSfx() {
   __typingSfxPrimed = true;
 
   ensureAudioCtx();
-  __audioCtx.resume().catch(()=>{});
+  __audioCtx.resume().catch(() => {});
 
   // Kick off buffer decode early so it's ready when typing starts
   loadTypingBuffer();
@@ -127,8 +127,22 @@ function primeTypingSfx() {
   const prevMuted = a.muted;
   a.loop = false;
   a.muted = true;
-  a.play().then(() => { a.pause(); a.currentTime = 0; })
-    .finally(() => { a.loop = prevLoop; a.muted = prevMuted; });
+
+  a.play()
+    .then(() => {
+      a.pause();
+      a.currentTime = 0;
+    })
+    .catch((err) => {
+      if (err.name !== 'AbortError') {
+        console.warn('Typing SFX prime error:', err);
+        __typingSfxPrimed = false;
+      }
+    })
+    .finally(() => {
+      a.loop = prevLoop;
+      a.muted = prevMuted;
+    });
 }
 
 async function startTypingSfx() {
@@ -196,7 +210,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 17;
+let UPGRADE_COUNT = 10;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -1097,4 +1111,3 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
-
