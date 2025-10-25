@@ -31,8 +31,8 @@ button:focus-visible {
 
 html, body {
   height: 100%;
-  touch-action: manipulation;
-  -ms-touch-action: manipulation;
+  touch-action: none;
+  -ms-touch-action: none;
   overscroll-behavior: none;
 }
 
