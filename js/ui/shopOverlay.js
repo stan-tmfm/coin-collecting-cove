@@ -35,13 +35,9 @@ function ensureTypingSfx() {
   const a = new Audio();
   a.loop = true;
   a.preload = 'auto';
-  a.volume = 0.3; // default desktop volume
+  a.volume = IS_MOBILE ? 0.12 : 0.3;
   a.muted = false;
 
-  // Use your global detection constant
-  if (typeof IS_MOBILE !== 'undefined' && IS_MOBILE) {
-    a.volume = 0.01; // reduce volume for mobile
-  }
 
   // Pick the first supported source
   for (const src of TYPING_SFX_SOURCE) {
@@ -94,7 +90,7 @@ const TRANSPARENT_PX =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO3x0S8AAAAASUVORK5CYII=';
 
 // Currently setting manual upgrades but will change it to dynamic later
-let UPGRADE_COUNT = 13;
+let UPGRADE_COUNT = 10;
 
 // Upgrades registry (minimal for now)
 let upgrades = {};
@@ -995,6 +991,3 @@ export function setUpgradeCount(n) {
   renderShopGrid();
 }
 export function getUpgrades() { return upgrades; }
-
-
-
