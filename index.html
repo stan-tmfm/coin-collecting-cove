@@ -6,6 +6,10 @@
     <title>CCC | Coin Collecting Cove</title>
     <meta name="robots" content="noindex, nofollow"/>
     <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+
       html,
       body {
         height: 100%;
@@ -19,11 +23,13 @@
         text-align: center;
         padding: 24px;
       }
+      
       .msg {
         white-space: nowrap;
         font-size: clamp(16px, 2.4vw, 22px);
         opacity: 0.92;
       }
+      
       @media (max-width: 420px) {
         .msg {
           white-space: normal;
